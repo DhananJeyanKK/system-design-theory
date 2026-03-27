@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Quality Attributes — Connected</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --border:#1e1e2e;
+  --c1:#00f5c4; --c2:#7c3aed; --c3:#f59e0b; --c4:#ef4444; --c5:#3b82f6;
+  --text:#e2e8f0; --muted:#64748b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow-x:hidden;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;background:rgba(10,10,15,0.97);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:0 12px;display:flex;align-items:center;gap:3px;height:50px;overflow-x:auto;scrollbar-width:none;}
+nav::-webkit-scrollbar{display:none;}
+.nb{background:none;border:1px solid transparent;color:var(--muted);font-family:'Space Mono',monospace;font-size:9.5px;padding:4px 9px;border-radius:4px;cursor:pointer;white-space:nowrap;transition:all .2s;letter-spacing:.4px;}
+.nb:hover{color:var(--text);border-color:var(--border);}
+.nb.active{color:var(--c1);border-color:var(--c1);background:rgba(0,245,196,.08);}
+.nb.chain{color:var(--c3);border-color:var(--c3);background:rgba(245,158,11,.08);}
+.nb.chain.active{color:var(--c3);border-color:var(--c3);}
+
+/* SECTIONS */
+.sec{display:none;min-height:100vh;padding:62px 20px 48px;max-width:1080px;margin:0 auto;}
+.sec.active{display:block;}
+
+/* HEADER */
+.sh{margin-bottom:28px;}
+.st{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+.stitle{font-size:clamp(26px,5vw,48px);font-weight:800;line-height:1.1;}
+.sdesc{margin-top:10px;color:var(--muted);font-size:14px;max-width:620px;line-height:1.65;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+.ct{font-size:11px;font-family:'Space Mono',monospace;letter-spacing:1px;margin-bottom:14px;color:var(--c1);}
+
+/* CHAIN CARD — the cause-effect connector */
+.chain-card{background:linear-gradient(135deg,rgba(245,158,11,.06),rgba(124,58,237,.06));border:1.5px solid var(--c3);border-radius:12px;padding:18px;margin-bottom:16px;}
+.chain-title{font-size:11px;font-family:'Space Mono',monospace;letter-spacing:1.5px;color:var(--c3);margin-bottom:14px;}
+.chain-flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;gap:4px;}
+.chain-node{background:#0d0d14;border-radius:8px;padding:10px 14px;font-size:11px;font-family:'Space Mono',monospace;line-height:1.5;border:1px solid;}
+.chain-arrow{font-size:18px;color:var(--c3);flex-shrink:0;padding:0 2px;}
+.chain-result{background:rgba(239,68,68,.1);border:1px solid var(--c4);border-radius:8px;padding:10px 14px;font-size:11px;font-family:'Space Mono',monospace;color:var(--c4);line-height:1.5;}
+.chain-good{background:rgba(0,245,196,.1);border:1px solid var(--c1);border-radius:8px;padding:10px 14px;font-size:11px;font-family:'Space Mono',monospace;color:var(--c1);line-height:1.5;}
+
+/* SIM AREA */
+.sim{background:#0d0d14;border:1px solid var(--border);border-radius:10px;padding:18px;min-height:180px;position:relative;overflow:hidden;}
+.sim-label{font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);letter-spacing:1px;margin-bottom:10px;}
+
+/* BUTTONS */
+.btn{background:none;border:1px solid var(--c1);color:var(--c1);font-family:'Space Mono',monospace;font-size:10px;padding:7px 16px;border-radius:6px;cursor:pointer;transition:all .2s;margin-right:6px;margin-top:10px;letter-spacing:.4px;}
+.btn:hover{background:rgba(0,245,196,.1);}
+.btn.r{border-color:var(--c4);color:var(--c4);} .btn.r:hover{background:rgba(239,68,68,.1);}
+.btn.y{border-color:var(--c3);color:var(--c3);} .btn.y:hover{background:rgba(245,158,11,.1);}
+.btn.b{border-color:var(--c5);color:var(--c5);} .btn.b:hover{background:rgba(59,130,246,.1);}
+.btn.p{border-color:var(--c2);color:var(--c2);} .btn.p:hover{background:rgba(124,58,237,.1);}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+@media(max-width:680px){.g2,.g3,.g4{grid-template-columns:1fr 1fr;}}
+@media(max-width:400px){.g2,.g3,.g4{grid-template-columns:1fr;}}
+
+/* STAT */
+.stat{background:#0d0d14;border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
+.sv{font-size:26px;font-weight:800;color:var(--c1);font-family:'Space Mono',monospace;}
+.sl{font-size:10px;color:var(--muted);margin-top:3px;letter-spacing:1px;text-transform:uppercase;}
+
+/* LOG */
+.log{background:#060609;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Space Mono',monospace;font-size:10.5px;color:var(--c1);min-height:70px;max-height:110px;overflow-y:auto;line-height:1.9;margin-top:10px;}
+
+/* GRADIENT TEXT */
+.g-c{background:linear-gradient(135deg,var(--c1),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.g-y{background:linear-gradient(135deg,var(--c3),var(--c4));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.g-b{background:linear-gradient(135deg,var(--c5),var(--c2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+
+/* QUEUE VISUAL */
+.queue-lane{display:flex;align-items:center;gap:4px;padding:8px;background:#0a0a12;border-radius:8px;border:1px solid var(--border);min-height:52px;flex-wrap:wrap;}
+.req-ball{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'Space Mono',monospace;font-weight:700;flex-shrink:0;animation:pop .25s ease;transition:all .3s;}
+@keyframes pop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+.req-ball.processing{background:rgba(0,245,196,.2);border:2px solid var(--c1);color:var(--c1);}
+.req-ball.queued{background:rgba(245,158,11,.15);border:2px solid var(--c3);color:var(--c3);}
+.req-ball.done{background:rgba(0,245,196,.07);border:2px solid #1e3830;color:#2a5a4a;}
+.req-ball.dropped{background:rgba(239,68,68,.15);border:2px solid var(--c4);color:var(--c4);}
+
+/* SERVER BOXES */
+.srv{background:#1a1a2e;border:2px solid #2a2a4a;border-radius:10px;padding:10px;text-align:center;transition:all .4s;cursor:pointer;}
+.srv.up{border-color:var(--c1);box-shadow:0 0 16px rgba(0,245,196,.15);}
+.srv.down{border-color:var(--c4);background:rgba(239,68,68,.08);}
+.srv.busy{border-color:var(--c3);}
+.srv-icon{font-size:24px;margin-bottom:4px;}
+.srv-lbl{font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;}
+.capbar{height:5px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden;}
+.capfill{height:100%;border-radius:3px;transition:width .5s,background .5s;}
+
+/* NODE GRID */
+.node-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.node{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid var(--border);transition:all .4s;cursor:pointer;}
+.node.up{border-color:var(--c1);background:rgba(0,245,196,.08);}
+.node.down{border-color:var(--c4);background:rgba(239,68,68,.08);}
+.node.recovering{border-color:var(--c3);background:rgba(245,158,11,.08);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
+
+/* PIPE */
+.pipe{height:20px;background:#1a1a2e;border:1px solid var(--border);border-radius:4px;overflow:hidden;position:relative;flex:1;}
+.pipe-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--c1),rgba(0,245,196,.3));transition:width .5s;}
+.packet{position:absolute;top:50%;transform:translateY(-50%);width:10px;height:10px;border-radius:50%;background:var(--c1);animation:flowP linear forwards;}
+@keyframes flowP{from{left:-10px;opacity:1;}to{left:calc(100% + 10px);opacity:0;}}
+
+/* IMPACT METER */
+.impact-meter{display:flex;align-items:center;gap:8px;margin:6px 0;}
+.im-label{font-size:10px;font-family:'Space Mono',monospace;width:130px;flex-shrink:0;color:var(--muted);}
+.im-bar{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden;}
+.im-fill{height:100%;border-radius:4px;transition:width .7s ease,background .7s;}
+.im-val{font-size:10px;font-family:'Space Mono',monospace;width:50px;text-align:right;}
+
+/* BADGE */
+.badge{display:inline-block;font-size:9px;font-family:'Space Mono',monospace;padding:2px 7px;border-radius:4px;margin:2px;}
+.badge.g{background:rgba(0,245,196,.15);color:var(--c1);}
+.badge.y{background:rgba(245,158,11,.15);color:var(--c3);}
+.badge.r{background:rgba(239,68,68,.15);color:var(--c4);}
+
+/* PILL */
+.pill{display:inline-block;background:rgba(0,245,196,.08);border:1px solid rgba(0,245,196,.25);color:var(--c1);font-size:10px;font-family:'Space Mono',monospace;padding:2px 9px;border-radius:20px;margin:2px;}
+
+/* IMPACT PANEL — quality impact summary */
+.impact-panel{background:linear-gradient(135deg,rgba(239,68,68,.06),rgba(245,158,11,.04));border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:16px;margin-top:12px;}
+.ip-title{font-size:10px;font-family:'Space Mono',monospace;letter-spacing:2px;color:var(--c4);margin-bottom:10px;}
+
+/* SECTION LINK ROW */
+.related{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.rel-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'Space Mono',monospace;font-size:9.5px;padding:4px 10px;border-radius:20px;cursor:pointer;transition:all .2s;}
+.rel-btn:hover{border-color:var(--c3);color:var(--c3);}
+
+/* CONTRACT BOXES */
+.cbox{border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid;}
+.cbox.sla{border-color:var(--c2);background:rgba(124,58,237,.07);}
+.cbox.slo{border-color:var(--c3);background:rgba(245,158,11,.07);}
+.cbox.sli{border-color:var(--c5);background:rgba(59,130,246,.07);}
+
+/* ORG NODE */
+.org-node{background:#1a1a2e;border:2px solid #2a2a4a;border-radius:8px;padding:7px 12px;font-size:10px;font-family:'Space Mono',monospace;text-align:center;transition:all .4s;white-space:nowrap;}
+.org-node.hi{border-color:var(--c1);color:var(--c1);background:rgba(0,245,196,.07);}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;}
+.hero-tag{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:4px;color:var(--muted);margin-bottom:20px;}
+.hero-title{font-size:clamp(34px,8vw,76px);font-weight:800;line-height:1.0;margin-bottom:20px;}
+.hero-chips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:580px;width:100%;margin-top:20px;}
+@media(max-width:480px){.hero-chips{grid-template-columns:repeat(2,1fr);}}
+.hchip{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:11px;cursor:pointer;transition:all .2s;font-family:'Space Mono',monospace;letter-spacing:.4px;}
+.hchip:hover{border-color:var(--c1);color:var(--c1);transform:translateY(-2px);}
+.hchip .ci{font-size:18px;margin-bottom:5px;}
+.hchip.chain-chip{border-color:rgba(245,158,11,.4);color:var(--c3);}
+.hchip.chain-chip:hover{border-color:var(--c3);background:rgba(245,158,11,.08);}
+
+/* BG GLOW */
+.glow{position:fixed;width:360px;height:360px;border-radius:50%;filter:blur(110px);pointer-events:none;z-index:0;opacity:.05;}
+
+/* AVAIL TABLE */
+.av-table{width:100%;border-collapse:collapse;font-family:'Space Mono',monospace;font-size:11px;}
+.av-table th{text-align:left;padding:7px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:1px;color:var(--muted);}
+.av-table td{padding:8px 7px;border-bottom:1px solid rgba(30,30,46,.5);}
+
+/* HA FAILOVER BOX */
+.ha-box{text-align:center;padding:16px;border:2px solid var(--border);border-radius:10px;min-width:110px;transition:all .4s;}
+.ha-box.active-node{border-color:var(--c1);background:rgba(0,245,196,.07);}
+.ha-box.standby{background:#0d0d14;}
+.ha-box.failed{border-color:var(--c4);background:rgba(239,68,68,.07);}
+
+/* BURN BAR */
+.burn-bg{height:18px;background:var(--border);border-radius:4px;overflow:hidden;margin:4px 0;}
+.burn-fill{height:100%;background:linear-gradient(90deg,var(--c1),var(--c4));border-radius:4px;transition:width .6s;}
+
+/* SLI ROW */
+.sli-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);}
+.sli-row:last-child{border-bottom:none;}
+.sli-name{font-size:11px;font-family:'Space Mono',monospace;width:130px;flex-shrink:0;}
+
+/* TIMELINE BAR */
+.tl-bar{height:22px;background:#0d0d14;border-radius:5px;overflow:hidden;display:flex;margin:4px 0;}
+
+/* Phases */
+.ph{display:inline-block;font-size:9px;font-family:'Space Mono',monospace;padding:4px 10px;border-radius:4px;margin:2px;opacity:.3;transition:all .3s;}
+.ph.on{opacity:1;background:rgba(245,158,11,.2);color:var(--c3);}
+.ph.done{opacity:1;background:rgba(0,245,196,.15);color:var(--c1);}
+
+input[type=range]{width:100%;accent-color:var(--c1);}
+
+/* MTTR progress */
+#mttr-bar{height:100%;background:linear-gradient(90deg,var(--c4),var(--c3));border-radius:6px;width:0%;transition:width .3s;}
+
+/* Section z-index */
+.sec{position:relative;z-index:1;}
+
+/* range wrap */
+.rw label{display:block;font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:5px;}
+
+/* CHAIN MASTER PAGE */
+.chain-master-node{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;cursor:pointer;transition:all .3s;}
+.chain-master-node:hover{border-color:var(--c3);}
+.chain-master-node .cmn-icon{font-size:28px;margin-bottom:6px;}
+.chain-master-node .cmn-title{font-size:12px;font-family:'Space Mono',monospace;font-weight:700;}
+.chain-master-node .cmn-desc{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.chain-arrow-big{font-size:24px;color:var(--c3);text-align:center;margin:4px 0;}
+.chain-impact{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:12px;font-size:11px;color:var(--c4);font-family:'Space Mono',monospace;line-height:1.7;}
+.chain-fix{background:rgba(0,245,196,.08);border:1px solid rgba(0,245,196,.3);border-radius:8px;padding:12px;font-size:11px;color:var(--c1);font-family:'Space Mono',monospace;line-height:1.7;}
+
+</style>
+</head>
+<body>
+
+<div class="glow" style="background:var(--c1);top:5%;left:15%;"></div>
+<div class="glow" style="background:var(--c2);bottom:10%;right:10%;"></div>
+
+<nav id="nav">
+  <button class="nb active" onclick="go('home')">🏠 Home</button>
+  <button class="nb chain" onclick="go('chains')">🔗 How They Connect</button>
+  <button class="nb" onclick="go('perf-rt')">⚡ Response Time</button>
+  <button class="nb" onclick="go('perf-tp')">🔄 Throughput</button>
+  <button class="nb" onclick="go('scale-v')">📈 Vertical Scale</button>
+  <button class="nb" onclick="go('scale-h')">📊 Horizontal Scale</button>
+  <button class="nb" onclick="go('scale-o')">🏢 Org Scale</button>
+  <button class="nb" onclick="go('av-up')">✅ Uptime</button>
+  <button class="nb" onclick="go('av-mttr')">🔧 MTTR</button>
+  <button class="nb" onclick="go('av-ft')">🛡️ Fault Tolerance</button>
+  <button class="nb" onclick="go('av-ha')">💎 High Availability</button>
+  <button class="nb" onclick="go('sla')">📋 SLA/SLO/SLI</button>
+</nav>
+
+<!-- ============================================================ HOME -->
+<section id="home" class="sec active">
+  <div class="hero">
+    <div class="hero-tag">SYSTEM DESIGN · QUALITY ATTRIBUTES</div>
+    <h1 class="hero-title"><span class="g-c">System</span><br>Quality<br><span class="g-y">Attributes</span></h1>
+    <p style="color:var(--muted);font-size:14px;max-width:480px;line-height:1.7;margin-bottom:8px;">Interactive simulations showing how each concept works — <strong style="color:var(--c3)">and how they all connect to impact your system's quality.</strong></p>
+    <div class="hero-chips">
+      <div class="hchip chain-chip" onclick="go('chains')"><div class="ci">🔗</div>How They Connect</div>
+      <div class="hchip" onclick="go('perf-rt')"><div class="ci">⚡</div>Response Time</div>
+      <div class="hchip" onclick="go('perf-tp')"><div class="ci">🔄</div>Throughput</div>
+      <div class="hchip" onclick="go('scale-v')"><div class="ci">📈</div>Vertical Scale</div>
+      <div class="hchip" onclick="go('scale-h')"><div class="ci">📊</div>Horizontal Scale</div>
+      <div class="hchip" onclick="go('scale-o')"><div class="ci">🏢</div>Org Scale</div>
+      <div class="hchip" onclick="go('av-up')"><div class="ci">✅</div>Uptime</div>
+      <div class="hchip" onclick="go('av-mttr')"><div class="ci">🔧</div>MTTR</div>
+      <div class="hchip" onclick="go('av-ft')"><div class="ci">🛡️</div>Fault Tolerance</div>
+      <div class="hchip" onclick="go('av-ha')"><div class="ci">💎</div>High Availability</div>
+      <div class="hchip" onclick="go('sla')"><div class="ci">📋</div>SLA / SLO / SLI</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ HOW THEY CONNECT (CHAIN MASTER) -->
+<section id="chains" class="sec">
+  <div class="sh">
+    <div class="st">Master View · All Connections</div>
+    <h1 class="stitle"><span class="g-y">How Everything</span><br>Connects</h1>
+    <p class="sdesc">Every quality attribute affects others. Here's the complete cause → effect chain. Click each to simulate it live.</p>
+  </div>
+
+  <!-- CHAIN 1 -->
+  <div class="card" style="border-color:rgba(245,158,11,.4);">
+    <div class="ct" style="color:var(--c3)">CHAIN 1 · THE THROUGHPUT → RESPONSE TIME → PERFORMANCE CASCADE</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;">
+        <div class="chain-master-node" style="flex:1;min-width:140px;" onclick="go('perf-tp')">
+          <div class="cmn-icon">🔄</div>
+          <div class="cmn-title" style="color:var(--c1)">THROUGHPUT</div>
+          <div class="cmn-desc">System handles max 4 requests at once</div>
+        </div>
+        <div class="chain-arrow-big" style="display:flex;align-items:center;">→</div>
+        <div class="chain-master-node" style="flex:1;min-width:140px;" onclick="go('perf-rt')">
+          <div class="cmn-icon">⏱️</div>
+          <div class="cmn-title" style="color:var(--c3)">QUEUE BUILDS UP</div>
+          <div class="cmn-desc">5th request waits. Wait time = response time ↑</div>
+        </div>
+        <div class="chain-arrow-big" style="display:flex;align-items:center;">→</div>
+        <div class="chain-master-node" style="flex:1;min-width:140px;">
+          <div class="cmn-icon">🐌</div>
+          <div class="cmn-title" style="color:var(--c4)">SLOW PERFORMANCE</div>
+          <div class="cmn-desc">Users experience degraded app speed</div>
+        </div>
+        <div class="chain-arrow-big" style="display:flex;align-items:center;">→</div>
+        <div class="chain-master-node" style="flex:1;min-width:140px;" onclick="go('scale-v')">
+          <div class="cmn-icon">📈</div>
+          <div class="cmn-title" style="color:var(--c1)">FIX: SCALE</div>
+          <div class="cmn-desc">Add CPU/RAM (vertical) or more servers (horizontal)</div>
+        </div>
+      </div>
+      <div id="chain1-sim" style="margin-top:8px;">
+        <div class="sim-label">LIVE SIMULATION — Press "Add Requests" to fill the pipe</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;">
+            <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:5px;">PROCESSING SLOTS (capacity = <span id="c1-cap" style="color:var(--c1)">4</span>)</div>
+            <div class="queue-lane" id="c1-processing"></div>
+            <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;margin:6px 0 5px;">WAITING QUEUE → causes response time ↑</div>
+            <div class="queue-lane" id="c1-queue"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div class="stat" style="padding:10px 16px;">
+              <div class="sv" id="c1-rt" style="font-size:22px;">0ms</div>
+              <div class="sl">Avg Response</div>
+            </div>
+            <div class="stat" style="padding:10px 16px;">
+              <div class="sv" id="c1-qlen" style="font-size:22px;color:var(--c3);">0</div>
+              <div class="sl">Queue Depth</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn" onclick="c1AddReq()">➕ Add Request</button>
+        <button class="btn y" onclick="c1Burst()">🔥 Burst (10 reqs)</button>
+        <button class="btn r" onclick="c1Reset()">Reset</button>
+        <button class="btn" onclick="c1ScaleUp()">⬆ Scale (double capacity)</button>
+        <div class="log" id="c1-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAIN 2 -->
+  <div class="card" style="border-color:rgba(124,58,237,.4);">
+    <div class="ct" style="color:var(--c2)">CHAIN 2 · SCALABILITY → AVAILABILITY → SLA COMPLIANCE</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:stretch;margin-bottom:10px;">
+      <div class="chain-master-node" style="flex:1;min-width:130px;" onclick="go('scale-h')">
+        <div class="cmn-icon">📊</div>
+        <div class="cmn-title" style="color:var(--c1)">HORIZONTAL SCALE</div>
+        <div class="cmn-desc">Multiple servers → no single point of failure</div>
+      </div>
+      <div class="chain-arrow-big" style="display:flex;align-items:center;">→</div>
+      <div class="chain-master-node" style="flex:1;min-width:130px;" onclick="go('av-ft')">
+        <div class="cmn-icon">🛡️</div>
+        <div class="cmn-title" style="color:var(--c1)">FAULT TOLERANCE</div>
+        <div class="cmn-desc">One server fails, others absorb traffic</div>
+      </div>
+      <div class="chain-arrow-big" style="display:flex;align-items:center;">→</div>
+      <div class="chain-master-node" style="flex:1;min-width:130px;" onclick="go('av-up')">
+        <div class="cmn-icon">✅</div>
+        <div class="cmn-title" style="color:var(--c1)">HIGH UPTIME</div>
+        <div class="cmn-desc">System stays available 99.99%</div>
+      </div>
+      <div class="chain-arrow-big" style="display:flex;align-items:center;">→</div>
+      <div class="chain-master-node" style="flex:1;min-width:130px;" onclick="go('sla')">
+        <div class="cmn-icon">📋</div>
+        <div class="cmn-title" style="color:var(--c1)">SLA MET</div>
+        <div class="cmn-desc">SLI ≥ SLO ≥ SLA. No penalties.</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;padding:10px;background:#0d0d14;border-radius:8px;">
+      ⬆ Without horizontal scaling → single server fails → availability drops → SLA breached → customer credits / penalties
+    </div>
+  </div>
+
+  <!-- CHAIN 3 -->
+  <div class="card" style="border-color:rgba(59,130,246,.4);">
+    <div class="ct" style="color:var(--c5)">CHAIN 3 · DOWNTIME → MTTR → AVAILABILITY CALCULATION</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:stretch;margin-bottom:10px;">
+      <div class="chain-master-node" style="flex:1;min-width:130px;" onclick="go('av-up')">
+        <div class="cmn-icon">💥</div>
+        <div class="cmn-title" style="color:var(--c4)">FAILURE OCCURS</div>
+        <div class="cmn-desc">Server crashes → downtime begins</div>
+      </div>
+      <div class="chain-arrow-big" style="display:flex;align-items:center;">→</div>
+      <div class="chain-master-node" style="flex:1;min-width:130px;" onclick="go('av-mttr')">
+        <div class="cmn-icon">🔧</div>
+        <div class="cmn-title" style="color:var(--c3)">MTTR CLOCK</div>
+        <div class="cmn-desc">Detect → Alert → Fix → Verify</div>
+      </div>
+      <div class="chain-arrow-big" style="display:flex;align-items:center;">→</div>
+      <div class="chain-master-node" style="flex:1;min-width:130px;" onclick="go('av-up')">
+        <div class="cmn-icon">📉</div>
+        <div class="cmn-title" style="color:var(--c4)">AVAILABILITY ↓</div>
+        <div class="cmn-desc">Longer MTTR = lower availability %</div>
+      </div>
+      <div class="chain-arrow-big" style="display:flex;align-items:center;">→</div>
+      <div class="chain-master-node" style="flex:1;min-width:130px;" onclick="go('sla')">
+        <div class="cmn-icon">📊</div>
+        <div class="cmn-title" style="color:var(--c4)">SLI DROPS</div>
+        <div class="cmn-desc">Measured SLI falls below SLO → SLA risk</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;padding:10px;background:#0d0d14;border-radius:8px;">
+      Key insight: Same uptime (99.9%) can mean 1 failure of 8h or 10 failures of 52min. Improving MTTR (fast recovery) is often better than trying to prevent all failures.
+    </div>
+  </div>
+
+  <!-- MASTER IMPACT TABLE -->
+  <div class="card">
+    <div class="ct">COMPLETE IMPACT MAP — HOW EACH METRIC AFFECTS OTHERS</div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-family:'Space Mono',monospace;font-size:10.5px;">
+        <thead>
+          <tr style="color:var(--muted);font-size:9px;letter-spacing:1px;">
+            <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);width:130px;">IF THIS ↓</th>
+            <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);">THEN THIS HAPPENS</th>
+            <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);">QUALITY IMPACT</th>
+            <th style="text-align:left;padding:8px;border-bottom:1px solid var(--border);">FIX</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid rgba(30,30,46,.6);">
+            <td style="padding:8px;color:var(--c3);">Throughput ↓</td>
+            <td style="padding:8px;color:var(--muted);">Queue depth ↑, requests wait</td>
+            <td style="padding:8px;color:var(--c4);">Response time ↑, perf ↓</td>
+            <td style="padding:8px;color:var(--c1);">Scale vertically/horizontally</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(30,30,46,.6);">
+            <td style="padding:8px;color:var(--c3);">Response Time ↑</td>
+            <td style="padding:8px;color:var(--muted);">Users wait, timeouts occur</td>
+            <td style="padding:8px;color:var(--c4);">Error rate ↑, SLI drops</td>
+            <td style="padding:8px;color:var(--c1);">Optimize code, scale, cache</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(30,30,46,.6);">
+            <td style="padding:8px;color:var(--c3);">Single server (no H-scale)</td>
+            <td style="padding:8px;color:var(--muted);">SPOF — one crash = total outage</td>
+            <td style="padding:8px;color:var(--c4);">Availability drops → SLA breach</td>
+            <td style="padding:8px;color:var(--c1);">Add redundant servers (HA)</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(30,30,46,.6);">
+            <td style="padding:8px;color:var(--c3);">High MTTR</td>
+            <td style="padding:8px;color:var(--muted);">Recovery takes hours not minutes</td>
+            <td style="padding:8px;color:var(--c4);">Availability % falls significantly</td>
+            <td style="padding:8px;color:var(--c1);">Automate recovery, runbooks</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(30,30,46,.6);">
+            <td style="padding:8px;color:var(--c3);">No Fault Tolerance</td>
+            <td style="padding:8px;color:var(--muted);">Partial failure = full failure</td>
+            <td style="padding:8px;color:var(--c4);">Downtime ↑, availability ↓</td>
+            <td style="padding:8px;color:var(--c1);">Circuit breakers, redundancy</td>
+          </tr>
+          <tr style="border-bottom:1px solid rgba(30,30,46,.6);">
+            <td style="padding:8px;color:var(--c3);">SLO too close to SLA</td>
+            <td style="padding:8px;color:var(--muted);">No buffer — any incident breaches SLA</td>
+            <td style="padding:8px;color:var(--c4);">Customer penalties, trust loss</td>
+            <td style="padding:8px;color:var(--c1);">Set SLO 0.1% tighter than SLA</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;color:var(--c3);">Monolith (no org scale)</td>
+            <td style="padding:8px;color:var(--muted);">200 devs step on each other</td>
+            <td style="padding:8px;color:var(--c4);">Deploy freq ↓, bugs ↑</td>
+            <td style="padding:8px;color:var(--c1);">Microservices + team ownership</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ RESPONSE TIME -->
+<section id="perf-rt" class="sec">
+  <div class="sh">
+    <div class="st">Performance · 01</div>
+    <h1 class="stitle"><span class="g-c">Response Time</span></h1>
+    <p class="sdesc">Time from request sent → response received. When throughput is saturated, requests queue — and queue wait time directly inflates response time.</p>
+  </div>
+
+  <!-- CHAIN CALLOUT -->
+  <div class="chain-card">
+    <div class="chain-title">🔗 CAUSE → EFFECT CHAIN</div>
+    <div class="chain-flow">
+      <div class="chain-node" style="border-color:var(--c1);color:var(--c1);">Throughput<br>Limit Hit</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c3);color:var(--c3);">New requests<br>join queue</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c3);color:var(--c3);">Queue wait<br>time adds up</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-result">Response Time ↑<br>Performance ↓</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-good">Fix: Scale UP<br>or Scale OUT</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ct">RESPONSE TIME COMPONENTS</div>
+      <div style="font-family:'Space Mono',monospace;font-size:12px;padding:12px;background:#0d0d14;border-radius:8px;">
+        <div style="color:var(--c1)">Response = Network + Processing + <span style="color:var(--c4)">Queue Wait</span></div>
+        <div style="color:var(--muted);margin-top:8px;font-size:10.5px;line-height:1.8;">
+          → Queue Wait is 0 when throughput has headroom<br>
+          → Queue Wait → ∞ when system is saturated<br>
+          → P50/P95/P99 percentiles matter for users
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+        <span class="pill">&lt;200ms = Excellent</span>
+        <span class="pill" style="border-color:rgba(245,158,11,.3);color:var(--c3);background:rgba(245,158,11,.07);">200–1000ms = OK</span>
+        <span class="pill" style="border-color:rgba(239,68,68,.3);color:var(--c4);background:rgba(239,68,68,.07);">&gt;1s = Poor</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">LIVE METRICS</div>
+      <div class="g3" style="gap:8px;">
+        <div class="stat"><div class="sv" id="rt-avg">—</div><div class="sl">Avg ms</div></div>
+        <div class="stat"><div class="sv" id="rt-p95" style="color:var(--c3);">—</div><div class="sl">P95 ms</div></div>
+        <div class="stat"><div class="sv" id="rt-max" style="color:var(--c4);">—</div><div class="sl">Max ms</div></div>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="impact-meter">
+          <span class="im-label">THROUGHPUT LOAD</span>
+          <div class="im-bar"><div class="im-fill" id="rt-load-bar" style="width:10%;background:var(--c1);"></div></div>
+          <span class="im-val" id="rt-load-val" style="color:var(--c1);">10%</span>
+        </div>
+        <div class="impact-meter">
+          <span class="im-label">RESPONSE TIME</span>
+          <div class="im-bar"><div class="im-fill" id="rt-resp-bar" style="width:5%;background:var(--c1);"></div></div>
+          <span class="im-val" id="rt-resp-val" style="color:var(--c1);">fast</span>
+        </div>
+        <div class="impact-meter">
+          <span class="im-label">USER EXPERIENCE</span>
+          <div class="im-bar"><div class="im-fill" id="rt-ux-bar" style="width:90%;background:var(--c1);"></div></div>
+          <span class="im-val" id="rt-ux-val" style="color:var(--c1);">😊</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — THROUGHPUT CAP CAUSES RESPONSE TIME TO GROW</div>
+    <div class="sim">
+      <div class="sim-label">PROCESSING SLOTS (MAX CONCURRENT = <span id="rt-cap-label" style="color:var(--c1);">4</span>) — add more requests to fill & overflow</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:220px;">
+          <div style="font-size:9px;color:var(--c1);font-family:'Space Mono',monospace;margin-bottom:4px;">🟢 PROCESSING</div>
+          <div class="queue-lane" id="rt-processing" style="min-height:46px;"></div>
+          <div style="font-size:9px;color:var(--c3);font-family:'Space Mono',monospace;margin:8px 0 4px;">🟡 QUEUE (each ball = +50ms wait)</div>
+          <div class="queue-lane" id="rt-queue" style="min-height:46px;"></div>
+          <div style="font-size:9px;color:var(--c4);font-family:'Space Mono',monospace;margin:8px 0 4px;">❌ DROPPED (queue full &gt; 8)</div>
+          <div class="queue-lane" id="rt-dropped" style="min-height:36px;"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:120px;">
+          <div class="stat"><div class="sv" id="rt-queue-depth" style="font-size:24px;color:var(--c3);">0</div><div class="sl">Queue Depth</div></div>
+          <div class="stat"><div class="sv" id="rt-wait-time" style="font-size:24px;color:var(--c4);">0ms</div><div class="sl">Wait Added</div></div>
+          <div class="stat"><div class="sv" id="rt-total-dropped" style="font-size:24px;color:var(--c4);">0</div><div class="sl">Dropped</div></div>
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="rtAddReq()">➕ Add Request</button>
+    <button class="btn y" onclick="rtBurst()">🔥 Burst (10)</button>
+    <button class="btn" onclick="rtComplete()">✅ Complete One</button>
+    <button class="btn r" onclick="rtReset()">Reset</button>
+    <button class="btn" onclick="rtScaleUp()">⬆ Scale Up (cap ×2)</button>
+    <div class="log" id="rt-log"></div>
+    <div class="impact-panel" id="rt-impact" style="display:none;">
+      <div class="ip-title">⚠ QUALITY IMPACT DETECTED</div>
+      <div id="rt-impact-text" style="font-size:11px;color:var(--c4);font-family:'Space Mono',monospace;line-height:1.8;"></div>
+    </div>
+    <div style="margin-top:10px;" class="related">
+      <span style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;align-self:center;">Related:</span>
+      <button class="rel-btn" onclick="go('perf-tp')">→ Throughput</button>
+      <button class="rel-btn" onclick="go('scale-v')">→ Fix: Vertical Scale</button>
+      <button class="rel-btn" onclick="go('scale-h')">→ Fix: Horizontal Scale</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ THROUGHPUT -->
+<section id="perf-tp" class="sec">
+  <div class="sh">
+    <div class="st">Performance · 02</div>
+    <h1 class="stitle"><span class="g-c">Throughput</span></h1>
+    <p class="sdesc">How many requests/sec the system can handle. When throughput is capped, additional requests queue up — directly causing response time to increase.</p>
+  </div>
+
+  <div class="chain-card">
+    <div class="chain-title">🔗 CAUSE → EFFECT CHAIN</div>
+    <div class="chain-flow">
+      <div class="chain-node" style="border-color:var(--c1);color:var(--c1);">Low Throughput<br>(4 RPS cap)</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c3);color:var(--c3);">5th request<br>must wait</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c4);color:var(--c4);">Response Time<br>spikes</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-result">App feels slow<br>Errors rise</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-good">Fix: More servers<br>= more throughput</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ct">THROUGHPUT vs RESPONSE TIME RELATIONSHIP</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8;font-family:'Space Mono',monospace;background:#0d0d14;padding:12px;border-radius:8px;">
+        <div style="color:var(--c1);">Load &lt; Capacity → Response time is FLAT</div>
+        <div style="color:var(--c3);">Load = Capacity → Response time RISES</div>
+        <div style="color:var(--c4);">Load &gt; Capacity → Response time → ∞</div>
+        <div style="margin-top:8px;color:var(--muted);">This is "Little's Law":<br>Response Time = Queue Length / Throughput</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">SYSTEM THROUGHPUT METER</div>
+      <div class="stat" style="margin-bottom:8px;"><div class="sv" id="tp-rps" style="font-size:36px;">0</div><div class="sl">Current RPS</div></div>
+      <div class="impact-meter" style="margin-top:8px;">
+        <span class="im-label">PIPE FULLNESS</span>
+        <div class="im-bar"><div class="im-fill" id="tp-pipe-bar" style="width:0%;background:var(--c1);"></div></div>
+        <span class="im-val" id="tp-pipe-pct" style="color:var(--c1);">0%</span>
+      </div>
+      <div class="impact-meter">
+        <span class="im-label">RESPONSE TIME EFFECT</span>
+        <div class="im-bar"><div class="im-fill" id="tp-rt-bar" style="width:0%;background:var(--c1);"></div></div>
+        <span class="im-val" id="tp-rt-val" style="color:var(--c1);">low</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — PIPE FILLS UP → RESPONSE TIME CLIMBS</div>
+    <div class="sim" id="tp-sim-area">
+      <div id="tp-pipes-wrap">
+        <div style="margin-bottom:14px;">
+          <div style="font-size:9px;font-family:'Space Mono',monospace;color:var(--muted);margin-bottom:5px;">SMALL PIPE — 10 RPS MAX</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>🖥️</span>
+            <div class="pipe" style="height:16px;" id="tp-p1"><div class="pipe-fill" id="tp-p1-fill" style="width:0%;"></div></div>
+            <span>👥</span>
+            <span id="tp-p1-rt" style="font-size:10px;font-family:'Space Mono',monospace;color:var(--c1);width:60px;">0ms</span>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:9px;font-family:'Space Mono',monospace;color:var(--muted);margin-bottom:5px;">MEDIUM PIPE — 100 RPS MAX</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>🖥️</span>
+            <div class="pipe" style="height:26px;" id="tp-p2"><div class="pipe-fill" id="tp-p2-fill" style="width:0%;"></div></div>
+            <span>👥</span>
+            <span id="tp-p2-rt" style="font-size:10px;font-family:'Space Mono',monospace;color:var(--c1);width:60px;">0ms</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-family:'Space Mono',monospace;color:var(--muted);margin-bottom:5px;">LARGE PIPE — 1000 RPS MAX</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>🖥️</span>
+            <div class="pipe" style="height:40px;" id="tp-p3"><div class="pipe-fill" id="tp-p3-fill" style="width:0%;"></div></div>
+            <span>👥</span>
+            <span id="tp-p3-rt" style="font-size:10px;font-family:'Space Mono',monospace;color:var(--c1);width:60px;">0ms</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);">
+        👆 Watch response time (right column) — stays flat until pipe is full, then explodes
+      </div>
+    </div>
+    <button class="btn" onclick="tpSet(10)">10 RPS</button>
+    <button class="btn" onclick="tpSet(80)">80 RPS</button>
+    <button class="btn y" onclick="tpSet(150)">150 RPS (overload sm)</button>
+    <button class="btn r" onclick="tpSet(1200)">1200 RPS (overload all)</button>
+    <button class="btn b" onclick="tpStop()">⏹ Stop</button>
+    <div class="log" id="tp-log"></div>
+    <div style="margin-top:10px;" class="related">
+      <span style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;align-self:center;">Related:</span>
+      <button class="rel-btn" onclick="go('perf-rt')">→ Response Time</button>
+      <button class="rel-btn" onclick="go('scale-h')">→ Fix: Scale Horizontally</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ VERTICAL SCALE -->
+<section id="scale-v" class="sec">
+  <div class="sh">
+    <div class="st">Scalability · 01</div>
+    <h1 class="stitle"><span class="g-y">Vertical</span><br>Scalability</h1>
+    <p class="sdesc">Add more power (CPU/RAM/Disk) to the SAME machine. Directly increases throughput capacity — which reduces queue depth — which reduces response time.</p>
+  </div>
+
+  <div class="chain-card">
+    <div class="chain-title">🔗 HOW VERTICAL SCALING IMPROVES QUALITY</div>
+    <div class="chain-flow">
+      <div class="chain-node" style="border-color:var(--c4);color:var(--c4);">Overloaded<br>Server<br>(CPU 90%)</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c3);color:var(--c3);">Add CPU/RAM<br>to same machine</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c1);color:var(--c1);">Throughput<br>Capacity ↑</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-good">Queue shrinks<br>→ Resp Time ↓<br>→ Performance ↑</div>
+    </div>
+    <div style="margin-top:10px;padding:10px;background:#0d0d14;border-radius:8px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;">
+      ⚠ LIMIT: Vertical scaling has a physical ceiling. At max tier, you MUST switch to horizontal scaling.
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ct">CURRENT SERVER SPEC</div>
+      <div style="display:flex;flex-direction:column;gap:8px;" id="vs-specs">
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);">CPU</span><span style="font-family:'Space Mono',monospace;font-size:12px;color:var(--c1);" id="vs-cpu">2 cores</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);">RAM</span><span style="font-family:'Space Mono',monospace;font-size:12px;color:var(--c1);" id="vs-ram">4 GB</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);">Max RPS</span><span style="font-family:'Space Mono',monospace;font-size:12px;color:var(--c3);" id="vs-rps">~100</span></div>
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);">Avg Resp Time</span><span style="font-family:'Space Mono',monospace;font-size:12px;" id="vs-resp-time" style="color:var(--c4);">800ms</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">QUALITY IMPACT METERS</div>
+      <div class="impact-meter"><span class="im-label">CPU UTILIZATION</span><div class="im-bar"><div class="im-fill" id="vs-cpu-bar" style="width:90%;background:var(--c4);"></div></div><span class="im-val" id="vs-cpu-val" style="color:var(--c4);">90%</span></div>
+      <div class="impact-meter"><span class="im-label">THROUGHPUT</span><div class="im-bar"><div class="im-fill" id="vs-tp-bar" style="width:20%;background:var(--c4);"></div></div><span class="im-val" id="vs-tp-val" style="color:var(--c4);">low</span></div>
+      <div class="impact-meter"><span class="im-label">RESPONSE TIME</span><div class="im-bar"><div class="im-fill" id="vs-rt-bar" style="width:80%;background:var(--c4);"></div></div><span class="im-val" id="vs-rt-val" style="color:var(--c4);">slow</span></div>
+      <div class="impact-meter"><span class="im-label">PERFORMANCE</span><div class="im-bar"><div class="im-fill" id="vs-perf-bar" style="width:15%;background:var(--c4);"></div></div><span class="im-val" id="vs-perf-val" style="color:var(--c4);">poor</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — SCALE UP & WATCH ALL QUALITY METRICS IMPROVE</div>
+    <div class="sim" style="display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;min-height:240px;">
+      <div style="text-align:center;transition:all .5s;">
+        <div style="font-size:80px;transition:font-size .5s;" id="vs-icon">🖥️</div>
+        <div style="font-family:'Space Mono',monospace;font-size:12px;margin-top:6px;" id="vs-tier-label">STARTER SERVER</div>
+        <div style="font-size:11px;margin-top:4px;" id="vs-status-label"><span style="color:var(--c4);">⚠ OVERLOADED — Queue: 45 requests waiting</span></div>
+      </div>
+      <div style="width:100%;max-width:320px;">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:3px;"><span>CPU LOAD</span><span id="vs-cpu-pct">90%</span></div>
+        <div style="height:6px;background:var(--border);border-radius:3px;margin-bottom:6px;"><div id="vs-cpu-bar2" style="height:100%;border-radius:3px;background:var(--c4);width:90%;transition:all .6s;"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:3px;"><span>RAM LOAD</span><span id="vs-ram-pct">85%</span></div>
+        <div style="height:6px;background:var(--border);border-radius:3px;"><div id="vs-ram-bar2" style="height:100%;border-radius:3px;background:var(--c4);width:85%;transition:all .6s;"></div></div>
+      </div>
+    </div>
+    <button class="btn" onclick="vsUpgrade()">⬆ Scale Up (Add Resources)</button>
+    <button class="btn r" onclick="vsReset()">Reset</button>
+    <div class="log" id="vs-log"></div>
+    <div style="margin-top:10px;" class="related">
+      <span style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;align-self:center;">Related:</span>
+      <button class="rel-btn" onclick="go('scale-h')">→ Horizontal Scaling (when V-scale hits ceiling)</button>
+      <button class="rel-btn" onclick="go('perf-rt')">→ Response Time improves</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ HORIZONTAL SCALE -->
+<section id="scale-h" class="sec">
+  <div class="sh">
+    <div class="st">Scalability · 02</div>
+    <h1 class="stitle"><span class="g-y">Horizontal</span><br>Scalability</h1>
+    <p class="sdesc">Add MORE machines. Each new server adds throughput capacity AND adds a redundant node — improving both performance AND availability at the same time.</p>
+  </div>
+
+  <div class="chain-card">
+    <div class="chain-title">🔗 HORIZONTAL SCALING IMPROVES TWO THINGS AT ONCE</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:9px;color:var(--c3);font-family:'Space Mono',monospace;margin-bottom:6px;">PATH A: PERFORMANCE</div>
+        <div class="chain-flow" style="flex-direction:column;gap:4px;align-items:flex-start;">
+          <div class="chain-node" style="border-color:var(--c3);color:var(--c3);font-size:10px;">1 server overloaded</div>
+          <div style="color:var(--c3);">↓</div>
+          <div class="chain-node" style="border-color:var(--c1);color:var(--c1);font-size:10px;">Add 3 more servers</div>
+          <div style="color:var(--c1);">↓</div>
+          <div class="chain-good" style="font-size:10px;">Load shared → Response Time ↓</div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:9px;color:var(--c5);font-family:'Space Mono',monospace;margin-bottom:6px;">PATH B: AVAILABILITY</div>
+        <div class="chain-flow" style="flex-direction:column;gap:4px;align-items:flex-start;">
+          <div class="chain-node" style="border-color:var(--c5);color:var(--c5);font-size:10px;">4 servers running</div>
+          <div style="color:var(--c5);">↓</div>
+          <div class="chain-node" style="border-color:var(--c1);color:var(--c1);font-size:10px;">1 server crashes</div>
+          <div style="color:var(--c1);">↓</div>
+          <div class="chain-good" style="font-size:10px;">3 remaining serve traffic → No downtime</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ct">CLUSTER STATUS</div>
+      <div class="g2" style="gap:8px;">
+        <div class="stat"><div class="sv" id="hs-count">1</div><div class="sl">Servers</div></div>
+        <div class="stat"><div class="sv" id="hs-cap">100</div><div class="sl">Total RPS Cap</div></div>
+      </div>
+      <div class="impact-meter" style="margin-top:10px;"><span class="im-label">LOAD PER SERVER</span><div class="im-bar"><div class="im-fill" id="hs-load-bar" style="width:90%;background:var(--c4);"></div></div><span class="im-val" id="hs-load-pct" style="color:var(--c4);">90%</span></div>
+      <div class="impact-meter"><span class="im-label">RESPONSE TIME</span><div class="im-bar"><div class="im-fill" id="hs-rt-bar" style="width:80%;background:var(--c4);"></div></div><span class="im-val" id="hs-rt-val" style="color:var(--c4);">slow</span></div>
+      <div class="impact-meter"><span class="im-label">FAULT TOLERANCE</span><div class="im-bar"><div class="im-fill" id="hs-ft-bar" style="width:5%;background:var(--c4);"></div></div><span class="im-val" id="hs-ft-val" style="color:var(--c4);">none</span></div>
+    </div>
+    <div class="card">
+      <div class="ct">INCOMING TRAFFIC</div>
+      <div class="stat" style="margin-bottom:8px;"><div class="sv" id="hs-traffic">90</div><div class="sl">RPS Incoming</div></div>
+      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:4px;"><div id="hs-traffic-bar" style="height:100%;background:var(--c3);border-radius:4px;width:30%;transition:width .5s;"></div></div>
+      <div style="font-size:10px;font-family:'Space Mono',monospace;" id="hs-traffic-lbl"><span style="color:var(--c3);">⚠ OVERLOADED</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — ADD SERVERS → ALL QUALITY METRICS IMPROVE</div>
+    <div class="sim" style="min-height:240px;">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-size:32px;">⚖️</div>
+          <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;">LOAD<br>BALANCER</div>
+        </div>
+        <div style="color:var(--c1);font-size:14px;font-family:'Space Mono',monospace;" id="hs-arrows">→</div>
+        <div id="hs-servers" style="display:flex;flex-wrap:wrap;gap:8px;flex:1;"></div>
+      </div>
+      <div style="margin-top:14px;font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);" id="hs-insight"></div>
+    </div>
+    <button class="btn" onclick="hsAdd()">➕ Add Server</button>
+    <button class="btn r" onclick="hsRemove()">➖ Remove</button>
+    <button class="btn y" onclick="hsSpike()">🔥 Traffic Spike</button>
+    <button class="btn b" onclick="hsKillOne()">💥 Kill Random Server</button>
+    <div class="log" id="hs-log"></div>
+    <div style="margin-top:10px;" class="related">
+      <span style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;align-self:center;">Related:</span>
+      <button class="rel-btn" onclick="go('av-ft')">→ Fault Tolerance improves too</button>
+      <button class="rel-btn" onclick="go('av-ha')">→ Enables High Availability</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ ORG SCALE -->
+<section id="scale-o" class="sec">
+  <div class="sh">
+    <div class="st">Scalability · 03</div>
+    <h1 class="stitle"><span class="g-y">Organizational</span><br>Scalability</h1>
+    <p class="sdesc">How teams, ownership, and system architecture scale together. Poor org structure creates bottlenecks that slow deployments — indirectly increasing risk of downtime.</p>
+  </div>
+
+  <div class="chain-card">
+    <div class="chain-title">🔗 HOW ORG STRUCTURE AFFECTS SYSTEM QUALITY</div>
+    <div class="chain-flow">
+      <div class="chain-node" style="border-color:var(--c4);color:var(--c4);">Monolith<br>200 devs<br>1 codebase</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c3);color:var(--c3);">Slow deploys<br>Merge conflicts<br>Fear of change</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c4);color:var(--c4);">Big-bang<br>releases = more<br>failures</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-result">Downtime ↑<br>MTTR ↑<br>Availability ↓</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-good">Fix: Microservices<br>+ team ownership<br>= independent deploys</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ct">TEAM METRICS</div>
+      <div class="g2" style="gap:8px;">
+        <div class="stat"><div class="sv" id="os-teams">1</div><div class="sl">Teams</div></div>
+        <div class="stat"><div class="sv" id="os-svcs">1</div><div class="sl">Services</div></div>
+        <div class="stat"><div class="sv" id="os-devs">5</div><div class="sl">Developers</div></div>
+        <div class="stat"><div class="sv" id="os-deploy" style="font-size:16px;">Weekly</div><div class="sl">Deploy Freq</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">QUALITY IMPACT</div>
+      <div class="impact-meter"><span class="im-label">DEPLOY SPEED</span><div class="im-bar"><div class="im-fill" id="os-deploy-bar" style="width:10%;background:var(--c4);"></div></div><span class="im-val" id="os-deploy-val" style="color:var(--c4);">slow</span></div>
+      <div class="impact-meter"><span class="im-label">FAILURE RISK</span><div class="im-bar"><div class="im-fill" id="os-risk-bar" style="width:80%;background:var(--c4);"></div></div><span class="im-val" id="os-risk-val" style="color:var(--c4);">high</span></div>
+      <div class="impact-meter"><span class="im-label">TEAM AUTONOMY</span><div class="im-bar"><div class="im-fill" id="os-auto-bar" style="width:5%;background:var(--c4);"></div></div><span class="im-val" id="os-auto-val" style="color:var(--c4);">none</span></div>
+      <div class="impact-meter"><span class="im-label">AVAILABILITY RISK</span><div class="im-bar"><div class="im-fill" id="os-avail-bar" style="width:80%;background:var(--c4);"></div></div><span class="im-val" id="os-avail-val" style="color:var(--c4);">high</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — EVOLVE ARCHITECTURE & WATCH QUALITY IMPROVE</div>
+    <div class="sim" id="os-sim" style="min-height:280px;"></div>
+    <button class="btn" onclick="osSet(1)">Stage 1: Monolith</button>
+    <button class="btn y" onclick="osSet(2)">Stage 2: Layers</button>
+    <button class="btn b" onclick="osSet(3)">Stage 3: Microservices</button>
+    <button class="btn p" onclick="osSet(4)">Stage 4: Platform Teams</button>
+    <div class="log" id="os-log"></div>
+  </div>
+</section>
+
+<!-- ============================================================ UPTIME -->
+<section id="av-up" class="sec">
+  <div class="sh">
+    <div class="st">Availability · 01</div>
+    <h1 class="stitle"><span class="g-b">Uptime &</span><br>Downtime</h1>
+    <p class="sdesc">Availability = Uptime / (Uptime + Downtime). Every minute of downtime burns through your SLO error budget and risks breaching the SLA.</p>
+  </div>
+
+  <div class="chain-card">
+    <div class="chain-title">🔗 DOWNTIME CASCADES THROUGH THE WHOLE CHAIN</div>
+    <div class="chain-flow">
+      <div class="chain-node" style="border-color:var(--c4);color:var(--c4);">System Down<br>(failure)</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c4);color:var(--c4);">Requests fail<br>Users blocked</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c3);color:var(--c3);">SLI drops below<br>SLO target</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c4);color:var(--c4);">Error budget<br>burns fast</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-result">SLA breached<br>→ Penalties</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">THE "NINES" — WHAT THEY ACTUALLY MEAN IN PRACTICE</div>
+    <div style="overflow-x:auto;">
+      <table class="av-table">
+        <thead><tr><th>LEVEL</th><th>UPTIME %</th><th>DOWN/YEAR</th><th>DOWN/MONTH</th><th>SLA RISK</th></tr></thead>
+        <tbody id="nines-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — SET AVAILABILITY & SEE ERROR BUDGET IMPACT</div>
+    <div class="sim" style="min-height:200px;">
+      <div class="rw"><label>AVAILABILITY LEVEL: <span id="av-pct-label" style="color:var(--c1);">99.9%</span></label>
+        <input type="range" min="0" max="4" step="1" value="2" id="av-slider" oninput="avUpdate()">
+      </div>
+      <div class="g2" style="gap:10px;margin-top:12px;">
+        <div class="stat"><div class="sv" id="av-down-year" style="font-size:20px;">8h 45m</div><div class="sl">Downtime / Year</div></div>
+        <div class="stat"><div class="sv" id="av-down-month" style="font-size:20px;">43m 49s</div><div class="sl">Downtime / Month</div></div>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:6px;">YEAR TIMELINE — Red strip = total downtime this year</div>
+        <div id="av-year-tl" class="tl-bar"></div>
+      </div>
+      <div class="impact-meter" style="margin-top:10px;">
+        <span class="im-label">SLA RISK LEVEL</span>
+        <div class="im-bar"><div class="im-fill" id="av-sla-bar" style="width:60%;background:var(--c3);"></div></div>
+        <span class="im-val" id="av-sla-val" style="color:var(--c3);">medium</span>
+      </div>
+    </div>
+    <div style="margin-top:10px;" class="related">
+      <button class="rel-btn" onclick="go('av-mttr')">→ MTTR determines downtime length</button>
+      <button class="rel-btn" onclick="go('av-ha')">→ High Availability minimizes downtime</button>
+      <button class="rel-btn" onclick="go('sla')">→ SLI tracks this for SLA compliance</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ MTTR -->
+<section id="av-mttr" class="sec">
+  <div class="sh">
+    <div class="st">Availability · 02</div>
+    <h1 class="stitle"><span class="g-b">MTTR</span></h1>
+    <p class="sdesc">Mean Time To Recovery. The longer MTTR, the more downtime per incident — directly pulling your availability % down and burning SLO error budget.</p>
+  </div>
+
+  <div class="chain-card">
+    <div class="chain-title">🔗 MTTR DIRECTLY SETS YOUR AVAILABILITY NUMBER</div>
+    <div class="chain-flow">
+      <div class="chain-node" style="border-color:var(--c4);color:var(--c4);">Failure<br>Occurs</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c3);color:var(--c3);">MTTR Clock<br>starts ticking</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c3);color:var(--c3);">Detect → Alert<br>→ Fix → Verify</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c4);color:var(--c4);">Total downtime<br>= MTTR × incidents</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-result">Availability =<br>MTBF/(MTBF+MTTR)</div>
+    </div>
+    <div style="margin-top:8px;padding:10px;background:#0d0d14;border-radius:8px;font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;">
+      Example: MTBF=100hrs, MTTR=1hr → Availability = 100/(100+1) = 99.0% &nbsp;|&nbsp; Reduce MTTR to 6min → 99.9%
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ct">INCIDENT STATS</div>
+      <div class="g2" style="gap:8px;">
+        <div class="stat"><div class="sv" id="mttr-v">—</div><div class="sl">MTTR (min)</div></div>
+        <div class="stat"><div class="sv" id="mtbf-v" style="color:var(--c3);">—</div><div class="sl">MTBF (hrs)</div></div>
+        <div class="stat"><div class="sv" id="inc-n">0</div><div class="sl">Incidents</div></div>
+        <div class="stat"><div class="sv" id="avail-v" style="color:var(--c1);">—</div><div class="sl">Availability</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">QUALITY IMPACT</div>
+      <div class="impact-meter"><span class="im-label">DOWNTIME RISK</span><div class="im-bar"><div class="im-fill" id="mt-dt-bar" style="width:5%;background:var(--c1);"></div></div><span class="im-val" id="mt-dt-val" style="color:var(--c1);">low</span></div>
+      <div class="impact-meter"><span class="im-label">SLO COMPLIANCE</span><div class="im-bar"><div class="im-fill" id="mt-slo-bar" style="width:95%;background:var(--c1);"></div></div><span class="im-val" id="mt-slo-val" style="color:var(--c1);">met</span></div>
+      <div class="impact-meter"><span class="im-label">ERROR BUDGET BURN</span><div class="im-bar"><div class="im-fill" id="mt-burn-bar" style="width:5%;background:var(--c1);"></div></div><span class="im-val" id="mt-burn-val" style="color:var(--c1);">5%</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — INCIDENT LIFECYCLE & QUALITY IMPACT</div>
+    <div class="sim" style="min-height:200px;">
+      <div id="mttr-phases" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="ph" id="ph-d">🔍 DETECT</span>
+        <span class="ph" id="ph-a">🚨 ALERT</span>
+        <span class="ph" id="ph-r">👨‍💻 RESPOND</span>
+        <span class="ph" id="ph-f">🔧 FIX</span>
+        <span class="ph" id="ph-v">✅ VERIFY</span>
+      </div>
+      <div style="height:28px;background:#0d0d14;border-radius:6px;overflow:hidden;position:relative;margin-bottom:8px;">
+        <div id="mttr-bar"></div>
+        <div id="mttr-bar-lbl" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;font-family:'Space Mono',monospace;color:var(--text);"></div>
+      </div>
+      <div id="mttr-status" style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);">System running normally. Click "Trigger Incident" to simulate failure + recovery.</div>
+    </div>
+    <button class="btn r" onclick="mttrTrigger()">🔴 Trigger Incident (slow MTTR)</button>
+    <button class="btn" onclick="mttrTriggerFast()">⚡ Trigger Incident (fast MTTR)</button>
+    <div class="log" id="mttr-log"></div>
+    <div style="margin-top:10px;" class="related">
+      <button class="rel-btn" onclick="go('av-up')">→ Affects Uptime %</button>
+      <button class="rel-btn" onclick="go('sla')">→ Burns SLI error budget</button>
+      <button class="rel-btn" onclick="go('av-ha')">→ HA reduces MTTR with auto-failover</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ FAULT TOLERANCE -->
+<section id="av-ft" class="sec">
+  <div class="sh">
+    <div class="st">Availability · 03</div>
+    <h1 class="stitle"><span class="g-b">Fault</span><br>Tolerance</h1>
+    <p class="sdesc">The system continues operating when components fail. Without fault tolerance, any node failure causes full downtime — destroying availability and SLA compliance.</p>
+  </div>
+
+  <div class="chain-card">
+    <div class="chain-title">🔗 FAULT TOLERANCE PREVENTS DOWNTIME CASCADES</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:9px;color:var(--c4);font-family:'Space Mono',monospace;margin-bottom:6px;">WITHOUT FAULT TOLERANCE</div>
+        <div class="chain-result" style="font-size:10.5px;line-height:1.8;">1 node fails → ALL requests fail<br>→ System DOWN → Availability 0%<br>→ SLA breached immediately</div>
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:9px;color:var(--c1);font-family:'Space Mono',monospace;margin-bottom:6px;">WITH FAULT TOLERANCE</div>
+        <div class="chain-good" style="font-size:10.5px;line-height:1.8;">1 node fails → Other nodes absorb<br>→ System STAYS UP → Availability 99.9%<br>→ SLA maintained ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ct">CLUSTER HEALTH</div>
+      <div class="g2" style="gap:8px;">
+        <div class="stat"><div class="sv" id="ft-up" style="color:var(--c1);">8</div><div class="sl">Nodes Up</div></div>
+        <div class="stat"><div class="sv" id="ft-down" style="color:var(--c4);">0</div><div class="sl">Nodes Down</div></div>
+      </div>
+      <div class="impact-meter" style="margin-top:8px;"><span class="im-label">CLUSTER HEALTH</span><div class="im-bar"><div class="im-fill" id="ft-health-bar" style="width:100%;background:var(--c1);"></div></div><span class="im-val" id="ft-health-val" style="color:var(--c1);">100%</span></div>
+      <div class="impact-meter"><span class="im-label">EFFECTIVE AVAIL.</span><div class="im-bar"><div class="im-fill" id="ft-avail-bar" style="width:100%;background:var(--c1);"></div></div><span class="im-val" id="ft-avail-val" style="color:var(--c1);">100%</span></div>
+      <div class="impact-meter"><span class="im-label">SLA RISK</span><div class="im-bar"><div class="im-fill" id="ft-sla-bar" style="width:2%;background:var(--c1);"></div></div><span class="im-val" id="ft-sla-val" style="color:var(--c1);">low</span></div>
+    </div>
+    <div class="card">
+      <div class="ct">CIRCUIT BREAKER STATUS</div>
+      <div style="padding:12px;background:#0d0d14;border-radius:8px;">
+        <div style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);margin-bottom:6px;">CIRCUIT BREAKER STATE</div>
+        <div id="ft-cb" style="font-size:13px;font-family:'Space Mono',monospace;color:var(--c1);">🟢 CLOSED — normal flow</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.7;">CLOSED = requests flow normally<br>HALF-OPEN = test mode, partial flow<br>OPEN = blocking all — system down</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — CLICK NODES TO FAIL THEM — WATCH IMPACT ON AVAILABILITY</div>
+    <div class="sim" style="min-height:260px;">
+      <div class="sim-label">CLICK A NODE TO KILL IT</div>
+      <div class="node-grid" id="ft-nodes"></div>
+      <div style="margin-top:14px;padding:10px;background:#0d0d14;border-radius:8px;font-size:11px;font-family:'Space Mono',monospace;" id="ft-insight"></div>
+    </div>
+    <button class="btn r" onclick="ftKillRandom()">💥 Kill Random Node</button>
+    <button class="btn" onclick="ftRecoverAll()">💚 Recover All</button>
+    <div class="log" id="ft-log"></div>
+    <div style="margin-top:10px;" class="related">
+      <button class="rel-btn" onclick="go('scale-h')">→ Enabled by Horizontal Scaling</button>
+      <button class="rel-btn" onclick="go('av-ha')">→ Foundation of High Availability</button>
+      <button class="rel-btn" onclick="go('sla')">→ Protects SLA compliance</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ HIGH AVAILABILITY -->
+<section id="av-ha" class="sec">
+  <div class="sh">
+    <div class="st">Availability · 04</div>
+    <h1 class="stitle"><span class="g-b">High</span><br>Availability</h1>
+    <p class="sdesc">HA systems achieve 99.99%+ through automatic failover. It combines horizontal scaling + fault tolerance + fast recovery (low MTTR) into one architecture.</p>
+  </div>
+
+  <div class="chain-card">
+    <div class="chain-title">🔗 HA IS THE CONVERGENCE OF ALL AVAILABILITY CONCEPTS</div>
+    <div class="chain-flow">
+      <div class="chain-good" style="font-size:10.5px;">Horizontal Scale<br>(redundant nodes)</div>
+      <div class="chain-arrow">+</div>
+      <div class="chain-good" style="font-size:10.5px;">Fault Tolerance<br>(auto-reroute)</div>
+      <div class="chain-arrow">+</div>
+      <div class="chain-good" style="font-size:10.5px;">Low MTTR<br>(auto-failover)</div>
+      <div class="chain-arrow">=</div>
+      <div class="chain-node" style="border-color:var(--c1);color:var(--c1);font-size:12px;font-weight:700;">HIGH AVAILABILITY<br>99.99%+ uptime</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <div class="ct">HA CLUSTER STATUS</div>
+      <div class="stat" style="margin-bottom:8px;"><div class="sv" id="ha-avail" style="font-size:32px;">99.99%</div><div class="sl">Measured Availability</div></div>
+      <div class="impact-meter"><span class="im-label">UPTIME</span><div class="im-bar"><div class="im-fill" id="ha-up-bar" style="width:99.99%;background:var(--c1);"></div></div><span class="im-val" id="ha-up-val" style="color:var(--c1);">99.99%</span></div>
+      <div class="impact-meter"><span class="im-label">SLA COMPLIANCE</span><div class="im-bar"><div class="im-fill" id="ha-sla-bar" style="width:100%;background:var(--c1);"></div></div><span class="im-val" id="ha-sla-val" style="color:var(--c1);">✓ met</span></div>
+    </div>
+    <div class="card">
+      <div class="ct">NODE STATUS</div>
+      <div class="g3" style="gap:8px;">
+        <div class="stat"><div class="sv" id="ha-p-status" style="font-size:20px;">🟢</div><div class="sl">Primary</div></div>
+        <div class="stat"><div class="sv" id="ha-s-status" style="font-size:20px;">🟡</div><div class="sl">Secondary</div></div>
+        <div class="stat"><div class="sv" id="ha-lb-status" style="font-size:20px;">🟢</div><div class="sl">LB</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;font-family:'Space Mono',monospace;color:var(--muted);" id="ha-repl">🔄 Real-time replication active</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — ACTIVE/PASSIVE FAILOVER — WATCH AVAILABILITY STAY HIGH</div>
+    <div class="sim" style="min-height:260px;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+        <div style="text-align:center;"><div style="font-size:28px;">⚖️</div><div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;">LOAD BALANCER</div></div>
+        <div id="ha-arrow" style="color:var(--c1);font-family:'Space Mono',monospace;font-size:12px;">↓ routing to PRIMARY</div>
+        <div style="display:flex;gap:32px;flex-wrap:wrap;justify-content:center;">
+          <div class="ha-box active-node" id="ha-primary-box">
+            <div style="font-size:36px;" id="ha-p-icon">🖥️</div>
+            <div style="font-family:'Space Mono',monospace;font-size:10px;margin-top:4px;color:var(--c1);">PRIMARY</div>
+            <div style="font-size:10px;font-family:'Space Mono',monospace;" id="ha-p-lbl"><span style="color:var(--c1);">ACTIVE ✓</span></div>
+          </div>
+          <div class="ha-box standby" id="ha-secondary-box">
+            <div style="font-size:36px;" id="ha-s-icon">🖥️</div>
+            <div style="font-family:'Space Mono',monospace;font-size:10px;margin-top:4px;color:var(--muted);">SECONDARY</div>
+            <div style="font-size:10px;font-family:'Space Mono',monospace;" id="ha-s-lbl"><span style="color:var(--muted);">STANDBY ⏸</span></div>
+          </div>
+        </div>
+        <div id="ha-insight" style="font-size:11px;font-family:'Space Mono',monospace;color:var(--muted);text-align:center;max-width:400px;line-height:1.6;">Primary serving all traffic. Secondary in hot standby with real-time replication.</div>
+      </div>
+    </div>
+    <button class="btn r" onclick="haFail()">💥 Fail Primary</button>
+    <button class="btn" onclick="haRestore()">💚 Restore Primary</button>
+    <div class="log" id="ha-log"></div>
+    <div style="margin-top:10px;" class="related">
+      <button class="rel-btn" onclick="go('sla')">→ HA keeps SLI above SLO</button>
+      <button class="rel-btn" onclick="go('av-mttr')">→ Auto-failover = MTTR near zero</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ SLA / SLO / SLI -->
+<section id="sla" class="sec">
+  <div class="sh">
+    <div class="st">Service Levels · 01</div>
+    <h1 class="stitle"><span class="g-c">SLA · SLO · SLI</span></h1>
+    <p class="sdesc">SLI measures reality. SLO is the internal target. SLA is the customer-facing contract. When SLI drops below SLO, you risk breaching the SLA.</p>
+  </div>
+
+  <div class="chain-card">
+    <div class="chain-title">🔗 HOW ALL METRICS FLOW INTO SLA COMPLIANCE</div>
+    <div class="chain-flow">
+      <div class="chain-node" style="border-color:var(--c1);color:var(--c1);">High Availability<br>+ Low MTTR<br>+ Fault Tolerance</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c5);color:var(--c5);">SLI (measured)<br>stays high<br>e.g. 99.97%</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-node" style="border-color:var(--c3);color:var(--c3);">SLI &gt; SLO<br>target of 99.95%<br>✓ Buffer maintained</div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-good">SLO &gt; SLA of 99.9%<br>✓ Contract met<br>No penalties</div>
+    </div>
+    <div style="margin-top:8px;padding:10px;background:#0d0d14;border-radius:8px;font-size:11px;color:var(--c4);font-family:'Space Mono',monospace;">
+      ⚠ Any degradation in the chain above (slow response time, downtime, low throughput) → SLI drops → error budget burns → SLA breach risk
+    </div>
+  </div>
+
+  <div style="margin-bottom:16px;">
+    <div class="cbox sla"><strong style="color:#a78bfa;">📜 SLA</strong> — Legal contract with customer. "99.9% uptime or you get service credits." <span style="color:var(--muted);font-size:12px;">External. Enforceable.</span></div>
+    <div class="cbox slo"><strong style="color:var(--c3);">🎯 SLO</strong> — Internal target. Must be stricter than SLA to have a buffer. "We target 99.95% internally." <span style="color:var(--muted);font-size:12px;">Team accountability.</span></div>
+    <div class="cbox sli"><strong style="color:var(--c5);">📊 SLI</strong> — What's actually measured. "This month we achieved 99.97%." <span style="color:var(--muted);font-size:12px;">Real data from monitoring.</span></div>
+  </div>
+
+  <div class="card">
+    <div class="ct">SIMULATION — LIVE SLI vs SLO vs SLA DASHBOARD</div>
+    <div class="sim" style="min-height:220px;">
+      <div id="sli-rows"></div>
+      <div style="margin-top:14px;">
+        <div style="font-size:9px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:5px;">ERROR BUDGET BURN (% of monthly budget consumed)</div>
+        <div class="burn-bg"><div class="burn-fill" id="sli-burn" style="width:15%;"></div></div>
+        <div style="font-size:10px;font-family:'Space Mono',monospace;margin-top:3px;" id="sli-burn-lbl"><span style="color:var(--c1);">15% used — Healthy ✓</span></div>
+      </div>
+      <div class="impact-meter" style="margin-top:10px;"><span class="im-label">SLA COMPLIANCE</span><div class="im-bar"><div class="im-fill" id="sli-sla-bar" style="width:95%;background:var(--c1);"></div></div><span class="im-val" id="sli-sla-val" style="color:var(--c1);">✓ safe</span></div>
+    </div>
+    <button class="btn" onclick="sliSimulate()">🎲 Simulate Normal Period</button>
+    <button class="btn r" onclick="sliOutage()">💥 Simulate Outage</button>
+    <button class="btn y" onclick="sliReset()">Reset</button>
+    <div class="log" id="sli-log"></div>
+    <div style="margin-top:10px;" class="related">
+      <button class="rel-btn" onclick="go('chains')">→ See the full connection chain</button>
+    </div>
+  </div>
+</section>
+
+<script>
+// =========================================================
+// NAV
+// =========================================================
+function go(id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nb').forEach(b=>{ if(b.getAttribute('onclick')?.includes("'"+id+"'")) b.classList.add('active'); });
+  window.scrollTo(0,0);
+  init(id);
+}
+function init(id){
+  if(id==='perf-rt') initRT();
+  if(id==='perf-tp') initTP();
+  if(id==='scale-v') initVS();
+  if(id==='scale-h') initHS();
+  if(id==='scale-o') osSet(1);
+  if(id==='av-up') initAV();
+  if(id==='av-mttr') initMTTR();
+  if(id==='av-ft') initFT();
+  if(id==='av-ha') initHA();
+  if(id==='sla') initSLI();
+  if(id==='chains') initChain1();
+}
+
+function log(id,msg){ const e=document.getElementById(id); if(e){ e.innerHTML=msg+'\n'+e.innerHTML; }}
+function setBar(id,pct,color){ const e=document.getElementById(id); if(e){ e.style.width=Math.min(Math.max(pct,1),100)+'%'; if(color) e.style.background=color; }}
+function setText(id,txt,color){ const e=document.getElementById(id); if(e){ e.textContent=txt; if(color) e.style.color=color; }}
+function pColor(pct){ return pct>80?'var(--c4)':pct>50?'var(--c3)':'var(--c1)'; }
+
+// =========================================================
+// CHAIN 1 SIM (on chains page)
+// =========================================================
+let c1Processing=[], c1Queue=[], c1Cap=4, c1Dropped=0, c1TotalRt=0, c1Count=0;
+function initChain1(){
+  c1Processing=[]; c1Queue=[]; c1Cap=4; c1Dropped=0; c1TotalRt=0; c1Count=0;
+  renderC1();
+}
+function c1AddReq(){
+  if(c1Processing.length < c1Cap){ c1Processing.push({id:c1Count++,ms:120+Math.random()*80}); }
+  else if(c1Queue.length < 8){ c1Queue.push({id:c1Count++}); }
+  else { c1Dropped++; log('c1-log','> ❌ Request DROPPED — queue full. Response Time → ∞'); }
+  renderC1();
+  const wait = c1Queue.length * 50;
+  const rt = 120 + wait;
+  setText('c1-rt', rt+'ms', rt>300?'var(--c4)':rt>150?'var(--c3)':'var(--c1)');
+  setText('c1-qlen', c1Queue.length, c1Queue.length>0?'var(--c3)':'var(--c1)');
+  if(c1Queue.length>0) log('c1-log',`> Queue depth: ${c1Queue.length} — Added ${c1Queue.length*50}ms wait to response time. Total: ${rt}ms`);
+}
+function c1Burst(){ for(let i=0;i<10;i++) setTimeout(c1AddReq, i*80); }
+function c1Reset(){ initChain1(); setText('c1-rt','0ms','var(--c1)'); setText('c1-qlen','0','var(--c1)'); document.getElementById('c1-log').innerHTML=''; }
+function c1ScaleUp(){ c1Cap*=2; setText('c1-cap',c1Cap); log('c1-log',`> ✓ Capacity doubled to ${c1Cap} slots. Queue shrinks. Response time drops.`); renderC1(); }
+function renderC1(){
+  const p=document.getElementById('c1-processing'), q=document.getElementById('c1-queue');
+  if(!p||!q) return;
+  p.innerHTML=''; q.innerHTML='';
+  c1Processing.forEach(r=>{ const b=document.createElement('div'); b.className='req-ball processing'; b.textContent='R'+r.id; p.appendChild(b); });
+  c1Queue.forEach(r=>{ const b=document.createElement('div'); b.className='req-ball queued'; b.textContent='R'+r.id; q.appendChild(b); });
+}
+
+// =========================================================
+// RESPONSE TIME
+// =========================================================
+let rtProcessing=[], rtQueue=[], rtDropped=0, rtCap=4, rtLoadLevel=0;
+function initRT(){
+  rtProcessing=[]; rtQueue=[]; rtDropped=0; rtCap=4; rtLoadLevel=0;
+  ['rt-processing','rt-queue','rt-dropped','rt-log'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=''; });
+  setText('rt-queue-depth','0'); setText('rt-wait-time','0ms'); setText('rt-total-dropped','0');
+  document.getElementById('rt-impact').style.display='none';
+  updateRTMeters(0);
+}
+function rtAddReq(){
+  const id = rtProcessing.length + rtQueue.length + rtDropped;
+  if(rtProcessing.length < rtCap){ rtProcessing.push(id); }
+  else if(rtQueue.length < 8){ rtQueue.push(id); }
+  else { rtDropped++; }
+  renderRT(); updateRTQueueEffect();
+}
+function rtBurst(){ for(let i=0;i<10;i++) setTimeout(rtAddReq,i*60); }
+function rtComplete(){
+  if(rtProcessing.length===0) return;
+  rtProcessing.shift();
+  if(rtQueue.length>0){ rtProcessing.push(rtQueue.shift()); }
+  renderRT(); updateRTQueueEffect();
+}
+function rtReset(){ initRT(); }
+function rtScaleUp(){
+  rtCap*=2;
+  // move queued into processing
+  while(rtQueue.length>0 && rtProcessing.length<rtCap){ rtProcessing.push(rtQueue.shift()); }
+  setText('rt-cap-label', rtCap);
+  renderRT(); updateRTQueueEffect();
+  log('rt-log',`> ✓ Capacity doubled to ${rtCap}. Queue flushed. Response time drops.`);
+}
+function renderRT(){
+  const pEl=document.getElementById('rt-processing'), qEl=document.getElementById('rt-queue'), dEl=document.getElementById('rt-dropped');
+  if(!pEl) return;
+  pEl.innerHTML=''; qEl.innerHTML=''; dEl.innerHTML='';
+  rtProcessing.forEach(id=>{ const b=document.createElement('div'); b.className='req-ball processing'; b.textContent='R'+id; pEl.appendChild(b); });
+  rtQueue.forEach(id=>{ const b=document.createElement('div'); b.className='req-ball queued'; b.textContent='R'+id; qEl.appendChild(b); });
+  setText('rt-queue-depth', rtQueue.length, rtQueue.length>0?'var(--c3)':'var(--c1)');
+  const wait=rtQueue.length*50;
+  setText('rt-wait-time', wait+'ms', wait>200?'var(--c4)':wait>0?'var(--c3)':'var(--c1)');
+  setText('rt-total-dropped', rtDropped, rtDropped>0?'var(--c4)':'var(--c1)');
+  for(let i=0;i<rtDropped;i++){ const b=document.createElement('div'); b.className='req-ball dropped'; b.textContent='✗'; dEl.appendChild(b); }
+}
+function updateRTQueueEffect(){
+  const q=rtQueue.length, total=rtCap+q, loadPct=Math.min((total/rtCap)*100,100);
+  const wait=q*50, rt=120+wait;
+  const uxPct=Math.max(0,100-Math.min(rt/10,100));
+  updateRTMeters(loadPct);
+  const el=document.getElementById('rt-avg'); if(el) el.textContent=(rt)+'ms';
+  const el2=document.getElementById('rt-p95'); if(el2) el2.textContent=(rt+80)+'ms';
+  const el3=document.getElementById('rt-max'); if(el3) el3.textContent=(rt+150)+'ms';
+  if(q>3||rtDropped>0){
+    const imp=document.getElementById('rt-impact');
+    if(imp){ imp.style.display='block'; const txt=document.getElementById('rt-impact-text'); if(txt) txt.innerHTML=`Queue depth: ${q} → +${wait}ms wait added to every request\nResponse time: ${rt}ms → ${rt>500?'CRITICAL: Users abandoning requests':'WARNING: Performance degraded'}\nDropped requests: ${rtDropped} → Error rate increasing → SLI will drop`; }
+    log('rt-log',`> ⚠ Queue at ${q}. Response time: ${rt}ms. Performance DEGRADED. ${rtDropped>0?'Requests DROPPING — SLI impacted!':''}`);
+  }
+}
+function updateRTMeters(loadPct){
+  const rtPct=Math.min(loadPct*0.9,100), uxPct=Math.max(0,100-loadPct*0.85);
+  setBar('rt-load-bar',loadPct,pColor(loadPct)); setText('rt-load-val',loadPct.toFixed(0)+'%',pColor(loadPct));
+  setBar('rt-resp-bar',rtPct,pColor(rtPct)); setText('rt-resp-val',rtPct>70?'slow':rtPct>40?'ok':'fast',pColor(rtPct));
+  setBar('rt-ux-bar',uxPct,uxPct<30?'var(--c4)':uxPct<60?'var(--c3)':'var(--c1)'); setText('rt-ux-val',uxPct<30?'😡':uxPct<60?'😐':'😊',uxPct<30?'var(--c4)':uxPct<60?'var(--c3)':'var(--c1)');
+}
+
+// =========================================================
+// THROUGHPUT
+// =========================================================
+let tpInterval=null, tpRPS=0;
+function initTP(){ stopTP(); tpRPS=0; ['tp-rps'].forEach(id=>setText(id,'0')); setBar('tp-pipe-bar',0,'var(--c1)'); setBar('tp-rt-bar',0,'var(--c1)'); }
+function tpSet(rps){
+  stopTP();
+  tpRPS=rps;
+  const caps=[10,100,1000];
+  const pcts=[Math.min((rps/10)*100,100), Math.min((rps/100)*100,100), Math.min((rps/1000)*100,100)];
+  pcts.forEach((p,i)=>{
+    const bar=document.getElementById('tp-p'+(i+1)+'-fill'); if(bar){ bar.style.width=p+'%'; bar.style.background=p>=100?'var(--c4)':p>70?'var(--c3)':'var(--c1)'; }
+    // RT effect: flat below 80%, then exponential above
+    const rt = p<80 ? Math.round(50+p*0.5) : Math.round(50+p*0.5 + Math.pow((p-80),2)*2);
+    const rtEl=document.getElementById('tp-p'+(i+1)+'-rt'); if(rtEl){ rtEl.textContent=rt+'ms'; rtEl.style.color=rt>500?'var(--c4)':rt>200?'var(--c3)':'var(--c1)'; }
+  });
+  const mainPct=Math.min((rps/1000)*100,100);
+  setBar('tp-pipe-bar',mainPct,pColor(mainPct)); setText('tp-pipe-pct',mainPct.toFixed(0)+'%',pColor(mainPct));
+  const rtEffect=mainPct>80?Math.min((mainPct-80)*3,100):mainPct*0.5;
+  setBar('tp-rt-bar',rtEffect,pColor(rtEffect)); setText('tp-rt-val',rtEffect>70?'critical':rtEffect>40?'rising':'low',pColor(rtEffect));
+  setText('tp-rps',rps);
+  log('tp-log',`> ${rps} RPS set. Pipe fullness: ${mainPct.toFixed(0)}%. ${rps>100?'Small pipe overloaded — response time exploding!':rps>10?'Medium pipe feeling pressure':'All pipes comfortable.'}`);
+  // animate packets
+  tpInterval=setInterval(()=>{ addTpPacket(rps); }, Math.max(1000/Math.min(rps,50),20)); 
+}
+function addTpPacket(rps){
+  const pipes=['tp-p1','tp-p2','tp-p3'];
+  const pipe=document.getElementById(pipes[Math.floor(Math.random()*3)]); if(!pipe) return;
+  const p=document.createElement('div'); p.className='packet';
+  p.style.animationDuration=(800/Math.max(rps/10,1))+'ms';
+  pipe.appendChild(p); setTimeout(()=>p.remove(),2000);
+}
+function stopTP(){ if(tpInterval){ clearInterval(tpInterval); tpInterval=null; } }
+
+// =========================================================
+// VERTICAL SCALE
+// =========================================================
+const vsLevels=[
+  {tier:'STARTER',cpu:'2 cores',ram:'4 GB',rps:'~100',cpuL:90,ramL:85,resp:'800ms',icon:'🖥️',sz:'72px',tpB:15,rtB:80,perfB:15,status:'⚠ OVERLOADED — Queue: 45 requests waiting'},
+  {tier:'SMALL',cpu:'4 cores',ram:'8 GB',rps:'~300',cpuL:65,ramL:55,resp:'320ms',icon:'🖥️',sz:'82px',tpB:40,rtB:50,perfB:45,status:'⚡ Moderate load — some queue building'},
+  {tier:'MEDIUM',cpu:'8 cores',ram:'32 GB',rps:'~1,000',cpuL:40,ramL:35,resp:'150ms',icon:'🗄️',sz:'92px',tpB:70,rtB:25,perfB:75,status:'✓ Healthy — queue cleared'},
+  {tier:'LARGE',cpu:'16 cores',ram:'64 GB',rps:'~5,000',cpuL:25,ramL:20,resp:'90ms',icon:'🗄️',sz:'105px',tpB:88,rtB:12,perfB:90,status:'✓ Excellent — no queue'},
+  {tier:'MEGA (CEILING)',cpu:'64 cores',ram:'512 GB',rps:'~25,000',cpuL:15,ramL:12,resp:'55ms',icon:'🏭',sz:'118px',tpB:100,rtB:5,perfB:100,status:'🏆 MAX TIER — Vertical scaling limit reached'}
+];
+let vsIdx=0;
+function initVS(){ vsIdx=0; renderVS(); document.getElementById('vs-log').innerHTML=''; log('vs-log','> Starter server. CPU at 90%. Response time: 800ms. Click Scale Up.'); }
+function vsUpgrade(){
+  if(vsIdx>=vsLevels.length-1){ log('vs-log','> ⚠ VERTICAL SCALING CEILING! Must switch to Horizontal Scaling now.'); return; }
+  vsIdx++;
+  renderVS();
+  const l=vsLevels[vsIdx];
+  log('vs-log',`> ✓ Upgraded to ${l.tier}: ${l.cpu}, ${l.ram}. → Throughput ↑ → Queue cleared → Response time: ${l.resp} → Performance ↑`);
+  if(vsIdx===vsLevels.length-1) log('vs-log','> 🚫 Hit vertical limit! For more scale, add servers (Horizontal Scaling).');
+}
+function vsReset(){ initVS(); }
+function renderVS(){
+  const l=vsLevels[vsIdx];
+  setText('vs-cpu',l.cpu); setText('vs-ram',l.ram); setText('vs-rps',l.rps);
+  setText('vs-resp-time',l.resp,l.cpuL>70?'var(--c4)':l.cpuL>50?'var(--c3)':'var(--c1)');
+  setText('vs-tier-label',l.tier+' SERVER');
+  setText('vs-status-label',''); document.getElementById('vs-status-label').innerHTML=`<span style="color:${l.cpuL>70?'var(--c4)':l.cpuL>50?'var(--c3)':'var(--c1)'}">${l.status}</span>`;
+  setText('vs-cpu-pct',l.cpuL+'%'); setText('vs-ram-pct',l.ramL+'%');
+  setText('vs-icon',l.icon); document.getElementById('vs-icon').style.fontSize=l.sz;
+  setBar('vs-cpu-bar2',l.cpuL,pColor(l.cpuL)); setBar('vs-ram-bar2',l.ramL,pColor(l.ramL));
+  setBar('vs-cpu-bar',l.cpuL,pColor(l.cpuL)); setText('vs-cpu-val',l.cpuL+'%',pColor(l.cpuL));
+  setBar('vs-tp-bar',l.tpB,pColor(100-l.tpB)); setText('vs-tp-val',l.tpB>70?'high':l.tpB>40?'med':'low',pColor(100-l.tpB));
+  setBar('vs-rt-bar',l.rtB,pColor(l.rtB)); setText('vs-rt-val',l.rtB>60?'slow':l.rtB>30?'ok':'fast',pColor(l.rtB));
+  setBar('vs-perf-bar',l.perfB,pColor(100-l.perfB)); setText('vs-perf-val',l.perfB>70?'good':l.perfB>40?'fair':'poor',pColor(100-l.perfB));
+}
+
+// =========================================================
+// HORIZONTAL SCALE
+// =========================================================
+let hsCount=1, hsTraffic=90;
+function initHS(){ hsCount=1; hsTraffic=90; document.getElementById('hs-log').innerHTML=''; renderHS(); log('hs-log','> 1 server. 90 RPS traffic. OVERLOADED. Add servers to distribute load.'); }
+function hsAdd(){
+  if(hsCount>=10){ log('hs-log','> Max 10 servers in demo.'); return; }
+  hsCount++;
+  renderHS();
+  const perSrv=(hsTraffic/hsCount).toFixed(0);
+  log('hs-log',`> ✓ Added SRV-${hsCount}. Load split: ~${perSrv} RPS/server. Response time ↓. Also gained redundancy → Fault tolerance ↑.`);
+}
+function hsRemove(){
+  if(hsCount<=1){ log('hs-log','> ⚠ Cannot remove last server!'); return; }
+  hsCount--;
+  renderHS();
+  log('hs-log',`> Server removed. ${hsCount} servers left. Load per server: ${(hsTraffic/hsCount).toFixed(0)} RPS.`);
+}
+function hsSpike(){ hsTraffic=260+Math.floor(Math.random()*100); renderHS(); log('hs-log',`> 🔥 Traffic spike: ${hsTraffic} RPS! Add servers to handle the surge!`); }
+function hsKillOne(){
+  if(hsCount<=1){ log('hs-log','> Only 1 server — killing it would cause FULL OUTAGE (no fault tolerance)!'); return; }
+  const survived=hsCount-1;
+  log('hs-log',`> 💥 Server killed! ${survived} servers absorb traffic. Load per server: ${(hsTraffic/survived).toFixed(0)} RPS. SYSTEM STAYED UP ✓ — Fault Tolerance demonstrated!`);
+}
+function renderHS(){
+  const cap=hsCount*100, loadPct=Math.min((hsTraffic/cap)*100,100);
+  const ftPct=Math.min(((hsCount-1)/hsCount)*100,100);
+  setText('hs-count',hsCount); setText('hs-cap',cap);
+  setText('hs-traffic',hsTraffic);
+  setBar('hs-traffic-bar',Math.min((hsTraffic/300)*100,100),'var(--c3)');
+  setText('hs-traffic-lbl',''); 
+  document.getElementById('hs-traffic-lbl').innerHTML=`<span style="color:${pColor(loadPct)}">${loadPct>80?'⚠ OVERLOADED':loadPct>50?'⚡ HIGH LOAD':'✓ HEALTHY'} — ${loadPct.toFixed(0)}% capacity used</span>`;
+  setBar('hs-load-bar',loadPct,pColor(loadPct)); setText('hs-load-pct',loadPct.toFixed(0)+'%',pColor(loadPct));
+  const rtPct=Math.min(loadPct*0.9,100);
+  setBar('hs-rt-bar',rtPct,pColor(rtPct)); setText('hs-rt-val',rtPct>70?'slow':rtPct>40?'ok':'fast',pColor(rtPct));
+  setBar('hs-ft-bar',ftPct,ftPct<30?'var(--c4)':ftPct<60?'var(--c3)':'var(--c1)');
+  setText('hs-ft-val',hsCount<=1?'none':hsCount<=2?'low':'good',hsCount<=1?'var(--c4)':hsCount<=2?'var(--c3)':'var(--c1)');
+  const container=document.getElementById('hs-servers'); if(!container) return;
+  container.innerHTML='';
+  for(let i=0;i<hsCount;i++){
+    const d=document.createElement('div'); d.className='srv up'; d.style.width='75px';
+    const perSrv=(hsTraffic/hsCount), pct=Math.min((perSrv/100)*100,100);
+    const c=pColor(pct);
+    d.innerHTML=`<div class="srv-icon">🖥️</div><div class="srv-lbl">SRV-${i+1}</div><div class="srv-lbl">${perSrv.toFixed(0)} RPS</div><div class="capbar"><div class="capfill" style="width:${pct}%;background:${c};"></div></div>`;
+    container.appendChild(d);
+  }
+  const ins=document.getElementById('hs-insight');
+  if(ins) ins.innerHTML=`${hsCount} servers × 100 RPS = ${cap} RPS capacity | ${hsCount>1?`${hsCount-1} server(s) can fail and system stays up`:'⚠ No redundancy — 1 failure = full outage'}`;
+}
+
+// =========================================================
+// ORG SCALE
+// =========================================================
+const osData={
+  1:{teams:1,svcs:1,devs:5,deploy:'Weekly',dB:10,rB:80,aB:5,avB:75,
+    html:`<div style="text-align:center;padding:10px;"><div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:12px;">ALL CODE IN ONE REPO — 5 DEVS STEPPING ON EACH OTHER</div><div style="display:inline-block;background:#1a1a2e;border:2px solid var(--c2);border-radius:12px;padding:20px 36px;font-family:'Space Mono',monospace;text-align:center;"><div style="font-size:28px;">📦</div><div style="color:#a78bfa;font-size:13px;font-weight:700;">MONOLITH</div><div style="font-size:10px;color:var(--muted);margin-top:6px;">Auth+Products+Orders+Payments+Notifications</div><div style="color:var(--c4);font-size:10px;margin-top:6px;">Deploy takes 2hrs. 1 bug blocks everyone.</div></div><div style="margin-top:10px;padding:8px;background:rgba(239,68,68,.08);border-radius:6px;font-size:11px;color:var(--c4);font-family:'Space Mono',monospace;">Impact: Weekly deploys = bugs batch up = risky releases = downtime ↑ = Availability ↓</div></div>`,
+    logMsg:'Stage 1: Monolith. Weekly deploys. High failure risk on each release. Downtime risk HIGH.'
+  },
+  2:{teams:3,svcs:3,devs:25,deploy:'Daily',dB:40,rB:55,aB:35,avB:45,
+    html:`<div style="padding:10px;"><div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:12px;">3-LAYER ARCHITECTURE — BETTER BUT STILL COORDINATED DEPLOYS</div><div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><div style="background:#1a1a2e;border:2px solid var(--c1);border-radius:8px;padding:10px 40px;font-family:'Space Mono',monospace;font-size:11px;color:var(--c1);">🌐 Frontend Team</div><div style="color:var(--muted);font-size:18px;">↕</div><div style="background:#1a1a2e;border:2px solid var(--c3);border-radius:8px;padding:10px 40px;font-family:'Space Mono',monospace;font-size:11px;color:var(--c3);">⚙️ Backend Team</div><div style="color:var(--muted);font-size:18px;">↕</div><div style="background:#1a1a2e;border:2px solid var(--c5);border-radius:8px;padding:10px 40px;font-family:'Space Mono',monospace;font-size:11px;color:var(--c5);">🗄️ Database Team</div></div><div style="margin-top:10px;padding:8px;background:rgba(245,158,11,.08);border-radius:6px;font-size:11px;color:var(--c3);font-family:'Space Mono',monospace;">Still coupled: DB schema change needs all 3 teams to coordinate. Risk per deploy: medium.</div></div>`,
+    logMsg:'Stage 2: Layers. Daily deploys possible. Better but still coupled. Moderate risk.'
+  },
+  3:{teams:8,svcs:12,devs:120,deploy:'Multiple/day',dB:78,rB:25,aB:80,avB:20,
+    html:`<div style="padding:10px;"><div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:12px;">MICROSERVICES — EACH TEAM DEPLOYS INDEPENDENTLY</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">${['Auth\n👤','Product\n📦','Order\n🛒','Payment\n💳','Notify\n📧','Search\n🔍','User\n👥','Ship\n🚚','Cart\n🛍️','Review\n⭐','Report\n📊','ML\n🤖'].map(s=>{const[n,i]=s.split('\n');return`<div style="background:#1a1a2e;border:1px solid var(--c1);border-radius:6px;padding:6px;text-align:center;font-family:'Space Mono',monospace;font-size:9px;color:var(--c1);">${i}<br>${n}</div>`;}).join('')}</div><div style="margin-top:10px;padding:8px;background:rgba(0,245,196,.07);border-radius:6px;font-size:11px;color:var(--c1);font-family:'Space Mono',monospace;">✓ Auth team deploys without touching Payment. Failure in Search doesn't affect Orders. Availability ↑↑</div></div>`,
+    logMsg:'Stage 3: Microservices. Teams deploy independently. Blast radius contained. Availability improves dramatically.'
+  },
+  4:{teams:20,svcs:50,devs:500,deploy:'On-demand',dB:100,rB:8,aB:100,avB:5,
+    html:`<div style="padding:10px;"><div style="font-size:10px;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:10px;">PLATFORM TEAMS — PRODUCT TEAMS SELF-SERVE</div><div style="border:1px solid var(--c2);border-radius:8px;padding:10px;background:rgba(124,58,237,.07);margin-bottom:8px;"><div style="font-family:'Space Mono',monospace;font-size:10px;color:#a78bfa;margin-bottom:6px;">🏗️ PLATFORM TEAM</div><div style="display:flex;flex-wrap:wrap;gap:4px;">${['K8s','CI/CD','Observability','Service Mesh','API GW','Data Plat'].map(s=>`<span style="background:#0d0d14;border:1px solid var(--c2);color:#a78bfa;font-family:'Space Mono',monospace;font-size:9px;padding:2px 6px;border-radius:4px;">${s}</span>`).join('')}</div></div><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">${['Checkout\n8 svcs','Payments\n6 svcs','Ads\n12 svcs','Search\n5 svcs','Media\n10 svcs','Growth\n9 svcs'].map(t=>{const[n,s]=t.split('\n');return`<div style="background:#1a1a2e;border:1px solid var(--c3);border-radius:6px;padding:7px;text-align:center;font-family:'Space Mono',monospace;font-size:9px;color:var(--c3);">${n}<br><span style="color:var(--muted);">${s}</span></div>`;}).join('')}</div><div style="margin-top:8px;padding:8px;background:rgba(0,245,196,.07);border-radius:6px;font-size:11px;color:var(--c1);font-family:'Space Mono',monospace;">✓ 500 engineers deploy whenever. Automated testing + rollbacks. Incidents resolved in minutes → MTTR near zero → 99.99%+ availability</div></div>`,
+    logMsg:'Stage 4: Platform teams. 500 devs. On-demand deploys. Automated rollbacks. MTTR near zero. SLA easily met.'
+  }
+};
+function osSet(n){
+  const d=osData[n];
+  setText('os-teams',d.teams); setText('os-svcs',d.svcs); setText('os-devs',d.devs); setText('os-deploy',d.deploy);
+  setBar('os-deploy-bar',d.dB,pColor(100-d.dB)); setText('os-deploy-val',d.dB>70?'fast':d.dB>40?'moderate':'slow',pColor(100-d.dB));
+  setBar('os-risk-bar',d.rB,pColor(d.rB)); setText('os-risk-val',d.rB>60?'high':d.rB>30?'medium':'low',pColor(d.rB));
+  setBar('os-auto-bar',d.aB,pColor(100-d.aB)); setText('os-auto-val',d.aB>70?'full':d.aB>40?'partial':'none',pColor(100-d.aB));
+  setBar('os-avail-bar',d.avB,pColor(d.avB)); setText('os-avail-val',d.avB>60?'high':d.avB>30?'medium':'low',pColor(d.avB));
+  const sim=document.getElementById('os-sim'); if(sim) sim.innerHTML=d.html;
+  log('os-log','> '+d.logMsg);
+}
+
+// =========================================================
+// AVAILABILITY / NINES
+// =========================================================
+const avLevels=[
+  {pct:'99%',year:'3d 15h',month:'7h 18m',ds:315360,slaRisk:80},
+  {pct:'99.9%',year:'8h 45m',month:'43m 49s',ds:31536,slaRisk:55},
+  {pct:'99.99%',year:'52m 35s',month:'4m 21s',ds:3154,slaRisk:25},
+  {pct:'99.999%',year:'5m 15s',month:'26s',ds:315,slaRisk:8},
+  {pct:'99.9999%',year:'31.5s',month:'2.6s',ds:31,slaRisk:2}
+];
+const ninesRows=[
+  {l:'Two Nines',p:'99%',y:'3 days 15 hrs',m:'7 hrs 18 min',r:'🔴 HIGH'},
+  {l:'Three Nines',p:'99.9%',y:'8 hrs 45 min',m:'43 min 49 sec',r:'🟡 MEDIUM'},
+  {l:'Four Nines',p:'99.99%',y:'52 min 35 sec',m:'4 min 21 sec',r:'🟢 LOW'},
+  {l:'Five Nines',p:'99.999%',y:'5 min 15 sec',m:'26 sec',r:'🟢 VERY LOW'},
+];
+function initAV(){
+  const tb=document.getElementById('nines-tbody'); if(!tb) return;
+  tb.innerHTML='';
+  ninesRows.forEach(r=>{ const tr=document.createElement('tr'); tr.style.borderBottom='1px solid rgba(30,30,46,.5)';
+    tr.innerHTML=`<td style="padding:8px;">${r.l}</td><td style="padding:8px;color:var(--c1);">${r.p}</td><td style="padding:8px;color:var(--c3);">${r.y}</td><td style="padding:8px;color:var(--c5);">${r.m}</td><td style="padding:8px;">${r.r}</td>`;
+    tb.appendChild(tr); });
+  avUpdate();
+}
+function avUpdate(){
+  const v=parseInt(document.getElementById('av-slider').value);
+  const l=avLevels[v];
+  setText('av-pct-label',l.pct,'var(--c1)');
+  setText('av-down-year',l.year); setText('av-down-month',l.month);
+  const yearSecs=365*24*3600, pct=(l.ds/yearSecs)*100;
+  const tl=document.getElementById('av-year-tl');
+  if(tl) tl.innerHTML=`<div style="flex:${100-pct};background:rgba(0,245,196,.4);height:100%;"></div><div style="flex:${Math.max(pct,0.15)};background:rgba(239,68,68,.7);height:100%;"></div>`;
+  setBar('av-sla-bar',l.slaRisk,pColor(l.slaRisk)); setText('av-sla-val',l.slaRisk>60?'high risk':l.slaRisk>30?'medium':'low',pColor(l.slaRisk));
+}
+
+// =========================================================
+// MTTR
+// =========================================================
+let mttrRunning=false, mttrIncidents=[];
+function initMTTR(){ mttrIncidents=[]; mttrRunning=false; document.getElementById('mttr-log').innerHTML=''; setText('mttr-status','System running normally. Click "Trigger Incident" to simulate.','var(--muted)'); const b=document.getElementById('mttr-bar'); if(b) b.style.width='0%'; updateMTTRStats(); }
+function mttrTrigger(){ runMTTR([1200,800,2500,3000,1000],'SLOW (manual response)'); }
+function mttrTriggerFast(){ runMTTR([400,200,600,800,300],'FAST (automated recovery)'); }
+function runMTTR(times,label){
+  if(mttrRunning) return;
+  mttrRunning=true;
+  const phases=['d','a','r','f','v'], labels=['🔍 DETECTING','🚨 ALERTING','👨‍💻 RESPONDING','🔧 FIXING','✅ VERIFYING'];
+  document.getElementById('mttr-status').innerHTML='<span style="color:var(--c4)">🔴 INCIDENT IN PROGRESS — '+label+'</span>';
+  log('mttr-log',`> INCIDENT triggered [${label}]`);
+  phases.forEach(p=>{ const e=document.getElementById('ph-'+p); if(e){ e.className='ph'; } });
+  phases.forEach((ph,i)=>{
+    setTimeout(()=>{
+      phases.forEach((p,j)=>{ const e=document.getElementById('ph-'+p); if(!e) return; if(j<i) e.className='ph done'; else if(j===i) e.className='ph on'; else e.className='ph'; });
+      const soFar=times.slice(0,i+1).reduce((a,b)=>a+b,0), total=times.reduce((a,b)=>a+b,0);
+      const pct=(soFar/total)*100; const b=document.getElementById('mttr-bar'); if(b) b.style.width=pct+'%';
+      const lbl=document.getElementById('mttr-bar-lbl'); if(lbl) lbl.textContent=labels[i];
+      log('mttr-log',`  > ${labels[i]}`);
+    }, times.slice(0,i).reduce((a,b)=>a+b,0));
+  });
+  const total=times.reduce((a,b)=>a+b,0);
+  setTimeout(()=>{
+    const mins=(total/60000).toFixed(1);
+    document.getElementById('mttr-status').innerHTML=`<span style="color:var(--c1)">✅ RESOLVED in ${mins} min [${label}]</span>`;
+    phases.forEach(p=>{ const e=document.getElementById('ph-'+p); if(e) e.className='ph done'; });
+    mttrIncidents.push({downtime:total/60000,uptime:120});
+    updateMTTRStats();
+    log('mttr-log',`> ✅ Recovered in ${mins} min. Availability impact: ${((total/3600000)*100).toFixed(4)}% downtime this hour.`);
+    // update quality meters
+    const burnPct=Math.min(mttrIncidents.length*15,100);
+    setBar('mt-dt-bar',Math.min(burnPct,100),pColor(burnPct)); setText('mt-dt-val',burnPct>60?'high':burnPct>30?'medium':'low',pColor(burnPct));
+    setBar('mt-slo-bar',Math.max(100-burnPct,0),pColor(burnPct)); setText('mt-slo-val',burnPct>70?'at risk':'met',pColor(burnPct));
+    setBar('mt-burn-bar',burnPct,pColor(burnPct)); setText('mt-burn-val',burnPct+'%',pColor(burnPct));
+    mttrRunning=false;
+  }, total+100);
+}
+function updateMTTRStats(){
+  if(!mttrIncidents.length){ ['mttr-v','mtbf-v','avail-v'].forEach(id=>setText(id,'—')); setText('inc-n','0'); return; }
+  const avgM=mttrIncidents.reduce((a,b)=>a+b.downtime,0)/mttrIncidents.length;
+  const avgB=mttrIncidents.reduce((a,b)=>a+b.uptime,0)/mttrIncidents.length/60;
+  const av=(avgB/(avgB+avgM/60)*100).toFixed(3);
+  setText('mttr-v',avgM.toFixed(1),'var(--c3)'); setText('mtbf-v',avgB.toFixed(1),'var(--c1)');
+  setText('inc-n',mttrIncidents.length,'var(--c4)'); setText('avail-v',av+'%','var(--c1)');
+}
+
+// =========================================================
+// FAULT TOLERANCE
+// =========================================================
+let ftNodes=[];
+function initFT(){ ftNodes=Array(8).fill(null).map((_,i)=>({id:i,state:'up'})); renderFT(); document.getElementById('ft-log').innerHTML=''; log('ft-log','> 8 nodes online. Click any node to simulate failure. Watch availability impact.'); }
+function renderFT(){
+  const c=document.getElementById('ft-nodes'); if(!c) return; c.innerHTML='';
+  ftNodes.forEach(n=>{ const el=document.createElement('div'); el.className=`node ${n.state}`; el.innerHTML=n.state==='up'?'🖥️':n.state==='down'?'💀':'🔄'; el.onclick=()=>ftToggle(n.id); c.appendChild(el); });
+  const up=ftNodes.filter(n=>n.state==='up').length, down=ftNodes.filter(n=>n.state==='down').length;
+  const hp=Math.round(up/ftNodes.length*100);
+  setText('ft-up',up,'var(--c1)'); setText('ft-down',down,'var(--c4)');
+  setBar('ft-health-bar',hp,pColor(100-hp)); setText('ft-health-val',hp+'%',pColor(100-hp));
+  setBar('ft-avail-bar',hp,pColor(100-hp)); setText('ft-avail-val',hp+'%',pColor(100-hp));
+  const slaRisk=Math.max(0,100-hp); setBar('ft-sla-bar',slaRisk,pColor(slaRisk)); setText('ft-sla-val',slaRisk>50?'breach risk':slaRisk>20?'medium':'low',pColor(slaRisk));
+  const cbEl=document.getElementById('ft-cb');
+  if(cbEl){ if(up===0) cbEl.innerHTML='🔴 OPEN — System DOWN. SLA breached.'; else if(up<3) cbEl.innerHTML='🟡 HALF-OPEN — Testing recovery. Availability degraded.'; else cbEl.innerHTML='🟢 CLOSED — Normal flow. All good.'; }
+  const ins=document.getElementById('ft-insight');
+  if(ins){ ins.innerHTML=up===0?'<span style="color:var(--c4)">💀 ALL NODES DOWN — 100% downtime → SLA breached → Error budget destroyed</span>':up<3?`<span style="color:var(--c3)">⚠ ${up} nodes left — High load per node → Response time ↑ → Availability at risk</span>`:`<span style="color:var(--c1)">✓ ${up} active nodes — Load distributed → Response time low → Availability maintained</span>`; }
+}
+function ftToggle(id){
+  const n=ftNodes[id];
+  if(n.state==='up'){ n.state='down'; renderFT(); log('ft-log',`> 💥 Node ${id+1} FAILED. Traffic rerouted to ${ftNodes.filter(x=>x.state==='up').length} remaining nodes.`); }
+  else { n.state='recovering'; renderFT(); log('ft-log',`> 🔄 Node ${id+1} recovering...`); setTimeout(()=>{ n.state='up'; renderFT(); log('ft-log',`> ✅ Node ${id+1} restored.`); },2000); }
+}
+function ftKillRandom(){ const up=ftNodes.filter(n=>n.state==='up'); if(!up.length){log('ft-log','> No nodes to kill!');return;} const n=up[Math.floor(Math.random()*up.length)]; n.state='down'; renderFT(); log('ft-log',`> 💥 Random: Node ${n.id+1} killed.`); }
+function ftRecoverAll(){ ftNodes.forEach(n=>n.state='up'); renderFT(); log('ft-log','> 💚 All nodes restored.'); }
+
+// =========================================================
+// HIGH AVAILABILITY
+// =========================================================
+let haPrimary=true;
+function initHA(){ haPrimary=true; document.getElementById('ha-log').innerHTML=''; renderHA(); log('ha-log','> Active/Passive cluster ready. Primary serving. Secondary in hot standby.'); }
+function haFail(){
+  if(!haPrimary){log('ha-log','> Primary already down.');return;}
+  haPrimary=false;
+  log('ha-log','> 🔴 PRIMARY FAILURE detected!');
+  setTimeout(()=>{ renderHA(); log('ha-log','> ⚡ FAILOVER in ~30s. Secondary PROMOTED. Users unaffected. HA maintained ✓'); log('ha-log','> → MTTR effectively ~30s → Availability stays at 99.99% → SLA protected'); }, 1200);
+}
+function haRestore(){
+  if(haPrimary){log('ha-log','> Primary already up.');return;}
+  log('ha-log','> 🔧 Restoring primary...');
+  setTimeout(()=>{ haPrimary=true; renderHA(); log('ha-log','> ✅ Primary restored. Topology normalized.'); },1800);
+}
+function renderHA(){
+  const pB=document.getElementById('ha-primary-box'), sB=document.getElementById('ha-secondary-box');
+  if(!pB||!sB) return;
+  if(haPrimary){
+    pB.className='ha-box active-node'; sB.className='ha-box standby';
+    document.getElementById('ha-p-lbl').innerHTML='<span style="color:var(--c1);">ACTIVE ✓</span>';
+    document.getElementById('ha-s-lbl').innerHTML='<span style="color:var(--muted);">STANDBY ⏸</span>';
+    document.getElementById('ha-arrow').innerHTML='↓ routing to PRIMARY'; document.getElementById('ha-arrow').style.color='var(--c1)';
+    setText('ha-p-status','🟢'); setText('ha-s-status','🟡'); setText('ha-avail','99.99%','var(--c1)');
+    setBar('ha-up-bar',99.99,'var(--c1)'); setText('ha-up-val','99.99%','var(--c1)');
+    setBar('ha-sla-bar',100,'var(--c1)'); setText('ha-sla-val','✓ met','var(--c1)');
+    setText('ha-repl','🔄 Real-time replication active','var(--c1)');
+    setText('ha-insight','Primary serving all traffic. Secondary synced and ready for instant failover.','var(--muted)');
+  } else {
+    pB.className='ha-box failed'; sB.className='ha-box active-node';
+    document.getElementById('ha-p-lbl').innerHTML='<span style="color:var(--c4);">FAILED ✗</span>';
+    document.getElementById('ha-s-lbl').innerHTML='<span style="color:var(--c1);">PROMOTED ✓</span>';
+    document.getElementById('ha-arrow').innerHTML='↓ FAILOVER → SECONDARY'; document.getElementById('ha-arrow').style.color='var(--c3)';
+    setText('ha-p-status','🔴'); setText('ha-s-status','🟢'); setText('ha-avail','99.97%','var(--c3)');
+    setBar('ha-up-bar',99.97,'var(--c3)'); setText('ha-up-val','99.97%','var(--c3)');
+    setBar('ha-sla-bar',85,'var(--c1)'); setText('ha-sla-val','✓ still met','var(--c1)');
+    setText('ha-repl','⚠ Primary down — no replication','var(--c3)');
+    setText('ha-insight','Failover complete in ~30s. Secondary now primary. System continued serving requests. MTTR effectively = failover time.','var(--c3)');
+  }
+}
+function initHA(){ haPrimary=true; renderHA(); const l=document.getElementById('ha-log'); if(l) l.innerHTML=''; log('ha-log','> Active/Passive cluster initialized. Primary serving all traffic.'); }
+
+// =========================================================
+// SLA / SLO / SLI
+// =========================================================
+const sliCfg=[
+  {n:'Availability',sla:99.9,slo:99.95,sli:99.97,u:'%',inv:false,c:'var(--c1)'},
+  {n:'Response Time',sla:500,slo:300,sli:245,u:'ms',inv:true,c:'var(--c3)'},
+  {n:'Error Rate',sla:1.0,slo:0.5,sli:0.12,u:'%',inv:true,c:'var(--c5)'},
+  {n:'Throughput',sla:500,slo:800,sli:920,u:'rps',inv:false,c:'var(--c2)'},
+];
+function initSLI(){ renderSLI(); setBurn(15); document.getElementById('sli-log').innerHTML=''; log('sli-log','> All SLIs healthy. Error budget at 15%. SLA compliance: ✓'); }
+function renderSLI(){
+  const c=document.getElementById('sli-rows'); if(!c) return; c.innerHTML='';
+  sliCfg.forEach(s=>{
+    const good=s.inv?s.sli<=s.slo:s.sli>=s.slo;
+    const col=good?'var(--c1)':'var(--c4)';
+    const pct=s.inv?Math.max(0,100-(s.sli/s.sla)*100):Math.min((s.sli/s.sla)*100,100);
+    const row=document.createElement('div'); row.className='sli-row';
+    row.innerHTML=`<div class="sli-name" style="color:${s.c}">${s.n}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+        <div style="display:flex;justify-content:space-between;font-size:8.5px;font-family:'Space Mono',monospace;color:var(--muted);"><span>SLA:${s.sla}${s.u}</span><span>SLO:${s.slo}${s.u}</span></div>
+        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;"><div style="height:100%;border-radius:3px;background:${col};width:${Math.max(Math.min(pct,100),3)}%;transition:width .8s;"></div></div>
+      </div>
+      <div style="font-size:11px;font-family:'Space Mono',monospace;color:${col};width:65px;text-align:right;">${s.sli}${s.u} ${good?'✓':'⚠'}</div>`;
+    c.appendChild(row);
+  });
+}
+function setBurn(pct){
+  const f=document.getElementById('sli-burn'); if(f) f.style.width=pct+'%';
+  const lbl=document.getElementById('sli-burn-lbl'); if(lbl) lbl.innerHTML=`<span style="color:${pColor(pct)}">${pct}% used — ${pct>80?'🚨 CRITICAL: SLA at risk':pct>50?'⚠ WARNING: Monitor closely':'✓ Healthy'}</span>`;
+  setBar('sli-sla-bar',Math.max(0,100-pct),pColor(pct)); setText('sli-sla-val',pct>80?'⚠ at risk':pct>50?'watch':'✓ safe',pColor(pct));
+}
+function sliSimulate(){
+  sliCfg[0].sli=+(99.90+Math.random()*.09).toFixed(3);
+  sliCfg[1].sli=Math.floor(200+Math.random()*200);
+  sliCfg[2].sli=+(Math.random()*.7).toFixed(3);
+  sliCfg[3].sli=Math.floor(700+Math.random()*400);
+  renderSLI(); setBurn(Math.floor(10+Math.random()*50));
+  log('sli-log',`> Period simulated. Availability SLI: ${sliCfg[0].sli}%. Response: ${sliCfg[1].sli}ms. Error rate: ${sliCfg[2].sli}%`);
+}
+function sliOutage(){
+  sliCfg[0].sli=+(97+Math.random()*2).toFixed(2);
+  sliCfg[1].sli=Math.floor(800+Math.random()*700);
+  sliCfg[2].sli=+(2+Math.random()*5).toFixed(2);
+  renderSLI(); setBurn(95);
+  log('sli-log','> 💥 OUTAGE! Availability SLI: '+sliCfg[0].sli+'% — BELOW SLA threshold of 99.9%!');
+  log('sli-log','> 🚨 Error budget exhausted → SLO BREACH → SLA breach → Customer credits owed');
+  log('sli-log','> → Root cause: Low throughput → Queue built → Response time spiked → Error rate rose → Availability collapsed');
+}
+function sliReset(){ sliCfg[0].sli=99.97;sliCfg[1].sli=245;sliCfg[2].sli=0.12;sliCfg[3].sli=920; renderSLI(); setBurn(15); log('sli-log','> Reset to healthy baseline.'); }
+
+// Init on load
+window.onload = ()=>{ /* home page, nothing needed */ };
+</script>
+</body>
+</html>

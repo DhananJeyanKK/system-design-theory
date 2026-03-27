@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Requirements — Feature Gathering</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Fraunces:ital,wght@0,300;0,700;0,900;1,300&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f0e8;--ink:#1a1208;--paper:#fefcf7;--border:#d4c9a8;
+  --teal:#0d7377;--amber:#c8860a;--red:#c0392b;--blue:#1a5276;--green:#1e8449;--purple:#6c3483;
+  --teal-l:rgba(13,115,119,0.1);--amber-l:rgba(200,134,10,0.1);--red-l:rgba(192,57,43,0.1);
+  --blue-l:rgba(26,82,118,0.1);--green-l:rgba(30,132,73,0.1);--purple-l:rgba(108,52,131,0.1);
+  --shadow:0 2px 12px rgba(26,18,8,0.08);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:'Fraunces',serif;overflow-x:hidden;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8860a' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none;z-index:0;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:300;background:rgba(245,240,232,0.97);backdrop-filter:blur(10px);border-bottom:2px solid var(--border);display:flex;align-items:center;gap:2px;padding:0 10px;height:48px;overflow-x:auto;scrollbar-width:none;}
+nav::-webkit-scrollbar{display:none;}
+.nb{background:none;border:1px solid transparent;color:#7a6a4a;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:4px 8px;border-radius:3px;cursor:pointer;white-space:nowrap;transition:all .2s;letter-spacing:.5px;text-transform:uppercase;}
+.nb:hover{color:var(--ink);border-color:var(--border);}
+.nb.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+.nb.special{border-color:var(--amber);color:var(--amber);}
+.nb.special.active{background:var(--amber);color:#fff;}
+
+/* SECTIONS */
+.sec{display:none;min-height:100vh;padding:60px 20px 60px;max-width:1100px;margin:0 auto;position:relative;z-index:1;}
+.sec.active{display:block;}
+
+/* TYPOGRAPHY */
+.tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;color:#7a6a4a;text-transform:uppercase;margin-bottom:8px;}
+h1.big{font-size:clamp(32px,6vw,64px);font-weight:900;line-height:1.0;margin-bottom:12px;color:var(--ink);}
+.lead{font-size:16px;color:#5a4a2a;line-height:1.7;max-width:640px;font-weight:300;margin-bottom:28px;}
+h2.sec-h{font-size:22px;font-weight:700;margin-bottom:14px;color:var(--ink);}
+h3.card-h{font-size:14px;font-weight:700;margin-bottom:10px;color:var(--ink);font-family:'IBM Plex Mono',monospace;letter-spacing:.5px;text-transform:uppercase;}
+
+/* CARDS */
+.card{background:var(--paper);border:1px solid var(--border);border-radius:4px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow);}
+.card.teal{border-left:4px solid var(--teal);}
+.card.amber{border-left:4px solid var(--amber);}
+.card.red{border-left:4px solid var(--red);}
+.card.blue{border-left:4px solid var(--blue);}
+.card.green{border-left:4px solid var(--green);}
+.card.purple{border-left:4px solid var(--purple);}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+@media(max-width:700px){.g2,.g3,.g4{grid-template-columns:1fr 1fr;}}
+@media(max-width:440px){.g2,.g3,.g4{grid-template-columns:1fr;}}
+
+/* BUTTONS */
+.btn{background:var(--teal);color:#fff;border:none;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:8px 16px;border-radius:3px;cursor:pointer;transition:all .2s;letter-spacing:.5px;margin-right:6px;margin-top:8px;}
+.btn:hover{opacity:.85;transform:translateY(-1px);}
+.btn.outline{background:none;border:1px solid var(--teal);color:var(--teal);}
+.btn.amber{background:var(--amber);}
+.btn.red{background:var(--red);}
+.btn.blue{background:var(--blue);}
+.btn.outline-amber{background:none;border:1px solid var(--amber);color:var(--amber);}
+
+/* LOG */
+.log{background:#1a1208;color:#f0e8d0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:12px 14px;border-radius:4px;min-height:60px;max-height:120px;overflow-y:auto;line-height:1.9;margin-top:10px;}
+
+/* SIM AREA */
+.sim{background:var(--paper);border:2px dashed var(--border);border-radius:6px;padding:18px;min-height:180px;position:relative;overflow:hidden;}
+
+/* ACTOR BADGE */
+.actor{display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:1.5px solid;border-radius:20px;padding:5px 12px;font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:600;margin:3px;cursor:default;}
+
+/* STEP PILL */
+.step-pill{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--paper);border:1px solid var(--border);border-radius:4px;margin-bottom:8px;transition:all .3s;font-size:13px;}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;flex-shrink:0;}
+.step-pill.active{border-color:var(--teal);background:var(--teal-l);box-shadow:0 0 0 3px rgba(13,115,119,0.15);}
+.step-pill.done{border-color:#aaa;background:#f8f6f0;}
+
+/* FLOW ARROW */
+.flow-arrow{text-align:center;color:var(--amber);font-size:20px;line-height:1;margin:2px 0;}
+
+/* USE CASE BOX */
+.uc-box{background:var(--paper);border:1.5px solid var(--border);border-radius:6px;padding:14px;cursor:pointer;transition:all .25s;position:relative;}
+.uc-box:hover{border-color:var(--teal);transform:translateY(-2px);box-shadow:0 4px 16px rgba(13,115,119,0.15);}
+.uc-box.selected{border-color:var(--teal);border-width:2.5px;background:var(--teal-l);}
+.uc-title{font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:700;margin-bottom:4px;}
+.uc-actors{font-size:10px;color:#7a6a4a;font-family:'IBM Plex Mono',monospace;}
+
+/* SEQUENCE DIAGRAM */
+.seq-wrap{overflow-x:auto;padding-bottom:8px;}
+.seq-canvas{position:relative;width:100%;min-height:400px;}
+
+/* SWIMLANE */
+.swimlane-wrap{overflow-x:auto;}
+.swimlane{display:flex;gap:0;border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.swim-col{flex:1;min-width:140px;}
+.swim-header{padding:10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid;}
+.swim-body{padding:8px;min-height:180px;}
+.swim-item{padding:7px 10px;border-radius:4px;font-size:11px;margin-bottom:6px;border:1px solid transparent;cursor:pointer;transition:all .2s;line-height:1.5;}
+
+/* ANIMATED CONNECTION */
+@keyframes drawLine{from{stroke-dashoffset:1000;}to{stroke-dashoffset:0;}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideRight{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+@keyframes flow{from{stroke-dashoffset:20;}to{stroke-dashoffset:0;}}
+@keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+.anim-in{animation:fadeIn .4s ease forwards;}
+.anim-slide{animation:slideRight .4s ease forwards;}
+
+/* HERO GRID */
+.hero-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px;}
+@media(max-width:600px){.hero-steps{grid-template-columns:repeat(2,1fr);}}
+.hs-item{background:var(--paper);border:1px solid var(--border);border-radius:4px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);}
+.hs-item:hover{border-color:var(--teal);transform:translateY(-3px);}
+.hs-icon{font-size:28px;margin-bottom:8px;}
+.hs-label{font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.5px;}
+.hs-desc{font-size:11px;color:#7a6a4a;margin-top:4px;line-height:1.5;}
+
+/* DATA FIELD */
+.data-field{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--bg);border-radius:4px;border:1px solid var(--border);margin:4px 0;font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.data-type{color:var(--teal);font-weight:700;min-width:80px;}
+.data-name{color:var(--blue);font-weight:600;}
+.data-desc{color:#7a6a4a;margin-left:4px;}
+
+/* PROCESS STEP ANIMATED */
+.proc-step{display:flex;gap:14px;padding:16px;background:var(--paper);border:1px solid var(--border);border-radius:4px;margin-bottom:10px;opacity:0;transform:translateX(-20px);transition:all .5s;}
+.proc-step.visible{opacity:1;transform:translateX(0);}
+.proc-num{font-size:32px;font-weight:900;color:var(--teal);font-family:'Fraunces',serif;line-height:1;flex-shrink:0;min-width:40px;}
+.proc-content h4{font-size:14px;font-weight:700;margin-bottom:4px;}
+.proc-content p{font-size:13px;color:#5a4a2a;line-height:1.6;}
+
+/* METHODS GRID */
+.method-card{background:var(--paper);border:1px solid var(--border);border-radius:6px;padding:16px;cursor:pointer;transition:all .25s;text-align:center;}
+.method-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(26,18,8,0.12);}
+.method-card.active-m{border-color:var(--amber);background:var(--amber-l);}
+.method-icon{font-size:36px;margin-bottom:10px;}
+.method-name{font-size:12px;font-family:'IBM Plex Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.method-desc{font-size:11px;color:#5a4a2a;line-height:1.5;}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:30px;}
+.timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border);}
+.tl-item{position:relative;margin-bottom:16px;padding:12px 14px;background:var(--paper);border:1px solid var(--border);border-radius:4px;animation:fadeIn .4s ease forwards;}
+.tl-item::before{content:'';position:absolute;left:-24px;top:14px;width:12px;height:12px;border-radius:50%;background:var(--teal);border:2px solid var(--paper);}
+.tl-item h4{font-size:13px;font-weight:700;margin-bottom:4px;font-family:'IBM Plex Mono',monospace;}
+.tl-item p{font-size:12px;color:#5a4a2a;line-height:1.5;}
+
+/* BADGE */
+.badge{display:inline-block;font-size:9px;font-family:'IBM Plex Mono',monospace;font-weight:700;padding:2px 7px;border-radius:3px;margin:2px;letter-spacing:.5px;text-transform:uppercase;}
+.badge.teal{background:var(--teal-l);color:var(--teal);border:1px solid var(--teal);}
+.badge.amber{background:var(--amber-l);color:var(--amber);border:1px solid var(--amber);}
+.badge.red{background:var(--red-l);color:var(--red);border:1px solid var(--red);}
+.badge.blue{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue);}
+.badge.green{background:var(--green-l);color:var(--green);border:1px solid var(--green);}
+
+/* SIMULATION PLAYER */
+.sim-player{background:#1a1208;border-radius:6px;padding:16px;color:#f0e8d0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;}
+.sim-stage{min-height:60px;line-height:1.9;padding:10px;background:rgba(255,255,255,0.05);border-radius:4px;margin-bottom:10px;border-left:3px solid var(--amber);}
+.sim-controls{display:flex;gap:8px;flex-wrap:wrap;}
+.sim-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#f0e8d0;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:6px 12px;border-radius:3px;cursor:pointer;transition:all .2s;}
+.sim-btn:hover{background:rgba(255,255,255,0.2);}
+.sim-btn.active{background:var(--amber);border-color:var(--amber);color:#fff;}
+
+/* DIAGRAM TABS */
+.dtab{display:inline-block;padding:7px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;cursor:pointer;border:1px solid var(--border);border-bottom:none;border-radius:4px 4px 0 0;background:var(--bg);color:#7a6a4a;margin-right:2px;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;}
+.dtab.active{background:var(--paper);color:var(--teal);border-color:var(--teal);font-weight:700;}
+.dtab-content{display:none;background:var(--paper);border:1px solid var(--teal);border-radius:0 4px 4px 4px;padding:18px;}
+.dtab-content.active{display:block;animation:fadeIn .3s ease;}
+
+/* INTERACTIVE FLOW */
+.flow-node{position:absolute;background:var(--paper);border:2px solid var(--border);border-radius:6px;padding:8px 12px;font-size:11px;font-family:'IBM Plex Mono',monospace;cursor:pointer;transition:all .3s;text-align:center;white-space:nowrap;}
+.flow-node:hover{transform:scale(1.05);}
+.flow-node.active-node{border-color:var(--teal);background:var(--teal-l);box-shadow:0 0 0 4px rgba(13,115,119,0.2);}
+.flow-node.done-node{border-color:#aaa;background:#f0ece0;color:#999;}
+.flow-node.decision{border-radius:0;transform:rotate(45deg);width:60px;height:60px;display:flex;align-items:center;justify-content:center;}
+.flow-node.decision span{transform:rotate(-45deg);font-size:9px;}
+
+/* STAT BOX */
+.stat-b{background:var(--paper);border:1px solid var(--border);border-radius:4px;padding:14px;text-align:center;box-shadow:var(--shadow);}
+.stat-v{font-size:28px;font-weight:900;color:var(--teal);font-family:'Fraunces',serif;}
+.stat-l{font-size:10px;color:#7a6a4a;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
+
+/* SVG DIAGRAM STYLES */
+.seq-actor-box{fill:var(--paper);stroke:var(--teal);stroke-width:2;}
+.seq-lifeline{stroke:var(--border);stroke-width:1.5;stroke-dasharray:6,4;}
+.seq-msg{stroke:var(--teal);stroke-width:1.5;marker-end:url(#arrow-teal);}
+.seq-ret{stroke:var(--amber);stroke-width:1.5;stroke-dasharray:6,3;marker-end:url(#arrow-amber);}
+.seq-activation{fill:var(--teal-l);stroke:var(--teal);stroke-width:1;}
+
+/* HIGHLIGHT ANIMATION */
+@keyframes highlight{0%{background:rgba(13,115,119,0.3);}100%{background:transparent;}}
+.flash{animation:highlight 1.5s ease forwards;}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <button class="nb active" onclick="go('home')">🏠 Home</button>
+  <button class="nb" onclick="go('methods')">📋 Gathering Methods</button>
+  <button class="nb" onclick="go('process')">🔄 Step-by-Step Process</button>
+  <button class="nb" onclick="go('usecases')">📦 Use Cases (E-Commerce)</button>
+  <button class="nb special" onclick="go('deepdive')">🔬 Deep Dive: Place Order</button>
+  <button class="nb" onclick="go('diagrams')">📊 Diagram Options</button>
+  <button class="nb" onclick="go('sequence')">🎬 Sequence Diagram</button>
+  <button class="nb" onclick="go('userflow')">🌊 User Flow</button>
+  <button class="nb" onclick="go('swimlane')">🏊 Swimlane</button>
+  <button class="nb special" onclick="go('simulation')">▶ Full Simulation</button>
+</nav>
+
+<!-- ===================================================== HOME -->
+<section id="home" class="sec active">
+  <div style="padding-top:20px;">
+    <div class="tag">System Design · Feature Requirements</div>
+    <h1 class="big">Gathering<br><em>System</em><br>Requirements</h1>
+    <p class="lead">A complete animated guide — from raw ideas to structured use cases, actors, flows, data models, and diagrams. We'll use an <strong>E-Commerce Platform</strong> as our working system.</p>
+    
+    <div class="card amber" style="max-width:680px;">
+      <h3 class="card-h">🗺️ The Big Picture Process</h3>
+      <div style="display:flex;gap:0;flex-wrap:wrap;align-items:center;margin-top:4px;">
+        <div style="text-align:center;padding:10px;">
+          <div style="font-size:24px;">💬</div>
+          <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:700;margin-top:4px;">GATHER</div>
+          <div style="font-size:10px;color:#7a6a4a;">Interviews, workshops</div>
+        </div>
+        <div style="font-size:20px;color:var(--amber);padding:0 4px;">→</div>
+        <div style="text-align:center;padding:10px;">
+          <div style="font-size:24px;">📝</div>
+          <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:700;margin-top:4px;">USE CASES</div>
+          <div style="font-size:10px;color:#7a6a4a;">What the system does</div>
+        </div>
+        <div style="font-size:20px;color:var(--amber);padding:0 4px;">→</div>
+        <div style="text-align:center;padding:10px;">
+          <div style="font-size:24px;">👥</div>
+          <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:700;margin-top:4px;">ACTORS</div>
+          <div style="font-size:10px;color:#7a6a4a;">Who interacts</div>
+        </div>
+        <div style="font-size:20px;color:var(--amber);padding:0 4px;">→</div>
+        <div style="text-align:center;padding:10px;">
+          <div style="font-size:24px;">🔁</div>
+          <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:700;margin-top:4px;">FLOWS</div>
+          <div style="font-size:10px;color:#7a6a4a;">Actions + data</div>
+        </div>
+        <div style="font-size:20px;color:var(--amber);padding:0 4px;">→</div>
+        <div style="text-align:center;padding:10px;">
+          <div style="font-size:24px;">📊</div>
+          <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:700;margin-top:4px;">DIAGRAMS</div>
+          <div style="font-size:10px;color:#7a6a4a;">Visualize & verify</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-steps">
+      <div class="hs-item" onclick="go('methods')"><div class="hs-icon">📋</div><div class="hs-label">Methods</div><div class="hs-desc">How to gather requirements</div></div>
+      <div class="hs-item" onclick="go('process')"><div class="hs-icon">🔄</div><div class="hs-label">Process</div><div class="hs-desc">Step-by-step guide</div></div>
+      <div class="hs-item" onclick="go('usecases')"><div class="hs-icon">📦</div><div class="hs-label">Use Cases</div><div class="hs-desc">All E-Commerce use cases</div></div>
+      <div class="hs-item" onclick="go('deepdive')" style="border-color:var(--amber);"><div class="hs-icon">🔬</div><div class="hs-label">Deep Dive</div><div class="hs-desc">Place Order — fully expanded</div></div>
+      <div class="hs-item" onclick="go('diagrams')"><div class="hs-icon">📊</div><div class="hs-label">Diagrams</div><div class="hs-desc">All diagram options</div></div>
+      <div class="hs-item" onclick="go('sequence')"><div class="hs-icon">🎬</div><div class="hs-label">Sequence</div><div class="hs-desc">Animated sequence diagram</div></div>
+      <div class="hs-item" onclick="go('userflow')"><div class="hs-icon">🌊</div><div class="hs-label">User Flow</div><div class="hs-desc">Interactive flow diagram</div></div>
+      <div class="hs-item" onclick="go('simulation')" style="border-color:var(--teal);background:var(--teal-l);"><div class="hs-icon">▶</div><div class="hs-label">Full Simulation</div><div class="hs-desc">Live walkthrough of Place Order</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== METHODS -->
+<section id="methods" class="sec">
+  <div class="tag">Requirement Gathering · Methods</div>
+  <h1 class="big">How to <em>Gather</em><br>Requirements</h1>
+  <p class="lead">There are many techniques — each suited for different situations. Click each method to see when to use it and what it produces.</p>
+
+  <div class="g3" style="margin-bottom:20px;" id="methods-grid">
+    <div class="method-card" onclick="showMethod('interviews')"><div class="method-icon">🎤</div><div class="method-name">Interviews</div><div class="method-desc">1:1 stakeholder conversations</div></div>
+    <div class="method-card" onclick="showMethod('workshops')"><div class="method-icon">🏛️</div><div class="method-name">Workshops</div><div class="method-desc">Group discovery sessions</div></div>
+    <div class="method-card" onclick="showMethod('usecases')"><div class="method-icon">📋</div><div class="method-name">Use Cases</div><div class="method-desc">Actor-goal narratives</div></div>
+    <div class="method-card" onclick="showMethod('userflows')"><div class="method-icon">🌊</div><div class="method-name">User Flows</div><div class="method-desc">Step-by-step user journeys</div></div>
+    <div class="method-card" onclick="showMethod('prototypes')"><div class="method-icon">🖼️</div><div class="method-name">Prototypes</div><div class="method-desc">Clickable wireframes</div></div>
+    <div class="method-card" onclick="showMethod('surveys')"><div class="method-icon">📊</div><div class="method-name">Surveys</div><div class="method-desc">Quantitative data collection</div></div>
+    <div class="method-card" onclick="showMethod('observation')"><div class="method-icon">👁️</div><div class="method-name">Observation</div><div class="method-desc">Watch users work</div></div>
+    <div class="method-card" onclick="showMethod('stories')"><div class="method-icon">📖</div><div class="method-name">User Stories</div><div class="method-desc">As a [role] I want [goal]</div></div>
+    <div class="method-card" onclick="showMethod('eventstore')"><div class="method-icon">⚡</div><div class="method-name">Event Storming</div><div class="method-desc">Domain event discovery</div></div>
+  </div>
+
+  <div class="card" id="method-detail" style="display:none;border-color:var(--amber);border-width:2px;">
+    <div id="method-content"></div>
+  </div>
+
+  <div class="card teal" style="margin-top:20px;">
+    <h3 class="card-h">🔄 Which Method to Use When?</h3>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;font-family:'IBM Plex Mono',monospace;">
+        <thead><tr style="border-bottom:2px solid var(--border);">
+          <th style="text-align:left;padding:8px;color:#7a6a4a;font-size:10px;letter-spacing:1px;">METHOD</th>
+          <th style="text-align:left;padding:8px;color:#7a6a4a;font-size:10px;letter-spacing:1px;">BEST FOR</th>
+          <th style="text-align:left;padding:8px;color:#7a6a4a;font-size:10px;letter-spacing:1px;">OUTPUT</th>
+          <th style="text-align:left;padding:8px;color:#7a6a4a;font-size:10px;letter-spacing:1px;">WHEN</th>
+        </tr></thead>
+        <tbody id="methods-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== PROCESS -->
+<section id="process" class="sec">
+  <div class="tag">Requirement Gathering · Step-by-Step Process</div>
+  <h1 class="big">The <em>Process</em></h1>
+  <p class="lead">A structured 6-step process to go from zero to complete, verified requirements.</p>
+
+  <div class="g2">
+    <div>
+      <div id="process-steps"></div>
+    </div>
+    <div>
+      <div class="card" id="process-detail">
+        <h3 class="card-h">👆 Click a step to see details</h3>
+        <p style="font-size:13px;color:#7a6a4a;">Each step builds on the previous one. Follow the process to ensure no requirements are missed.</p>
+      </div>
+      <div class="card amber" style="margin-top:12px;">
+        <h3 class="card-h">⚠️ Common Mistakes</h3>
+        <div id="mistakes-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <h3 class="card-h">▶ Animated Process Walkthrough</h3>
+    <div class="sim-player">
+      <div class="sim-stage" id="proc-stage">Press "Start" to walk through the requirement gathering process step by step...</div>
+      <div class="sim-controls">
+        <button class="sim-btn active" onclick="procStart()">▶ Start</button>
+        <button class="sim-btn" onclick="procNext()" id="proc-next-btn" style="display:none;">→ Next Step</button>
+        <button class="sim-btn" onclick="procReset()">↺ Reset</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== USE CASES -->
+<section id="usecases" class="sec">
+  <div class="tag">E-Commerce Platform · All Use Cases</div>
+  <h1 class="big"><em>E-Commerce</em><br>Use Cases</h1>
+  <p class="lead">Step 1: Identify ALL use cases for the system. A use case describes what a specific actor can DO with the system. Click any use case to inspect it.</p>
+
+  <div class="g4" style="margin-bottom:8px;">
+    <div class="stat-b"><div class="stat-v" id="uc-total">0</div><div class="stat-l">Use Cases</div></div>
+    <div class="stat-b"><div class="stat-v" id="uc-actors-count" style="color:var(--amber);">0</div><div class="stat-l">Actors</div></div>
+    <div class="stat-b"><div class="stat-v" id="uc-primary" style="color:var(--blue);">0</div><div class="stat-l">Primary</div></div>
+    <div class="stat-b"><div class="stat-v" id="uc-secondary" style="color:var(--purple);">0</div><div class="stat-l">Secondary</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3 class="card-h">👥 Identified Actors</h3>
+    <div id="actors-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <h3 class="card-h">📋 All Use Cases — Click to Inspect</h3>
+    <div id="uc-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:10px;"></div>
+  </div>
+
+  <div class="card" id="uc-inspector" style="display:none;border-color:var(--teal);border-width:2px;margin-top:14px;">
+    <div id="uc-inspector-content"></div>
+  </div>
+</section>
+
+<!-- ===================================================== DEEP DIVE -->
+<section id="deepdive" class="sec">
+  <div class="tag">Deep Dive · Use Case Expansion</div>
+  <h1 class="big"><em>Place Order</em><br>— Fully Expanded</h1>
+  <p class="lead">Taking one use case and expanding it completely: all actors, every action, all data, preconditions, postconditions, alternate flows, and exception handling.</p>
+
+  <!-- UC HEADER CARD -->
+  <div class="card amber">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;">
+      <div style="flex:2;min-width:200px;">
+        <div class="tag">Use Case ID: UC-003</div>
+        <h2 class="sec-h" style="font-size:26px;">Place Order</h2>
+        <p style="font-size:13px;color:#5a4a2a;line-height:1.7;">A registered customer selects items from their cart, chooses shipping, provides payment, and completes a purchase. The system validates stock, processes payment, creates the order, and notifies all relevant parties.</p>
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:2;">
+          <div><span style="color:#7a6a4a;">Level:</span> <span style="color:var(--teal);">User Goal</span></div>
+          <div><span style="color:#7a6a4a;">Priority:</span> <span style="color:var(--red);">Critical</span></div>
+          <div><span style="color:#7a6a4a;">Frequency:</span> Very High</div>
+          <div><span style="color:#7a6a4a;">Trigger:</span> Customer clicks Checkout</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <!-- ACTORS -->
+    <div class="card teal">
+      <h3 class="card-h">👥 Actors Involved</h3>
+      <div id="dd-actors"></div>
+    </div>
+    <!-- PRE/POST CONDITIONS -->
+    <div class="card blue">
+      <h3 class="card-h">📌 Pre & Post Conditions</h3>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--blue);font-weight:700;margin-bottom:6px;">PRECONDITIONS (must be true BEFORE)</div>
+        <div id="dd-pre"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);font-weight:700;margin-bottom:6px;">POSTCONDITIONS (guaranteed AFTER success)</div>
+        <div id="dd-post"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN FLOW OF EVENTS -->
+  <div class="card">
+    <h3 class="card-h">🔁 Main Flow of Events — Actions & Data</h3>
+    <p style="font-size:12px;color:#7a6a4a;margin-bottom:14px;font-family:'IBM Plex Mono',monospace;">Click "Animate Flow" to step through each event. Each step shows: who acts, what action, what data is involved.</p>
+    <div id="dd-flow" style="display:flex;flex-direction:column;gap:6px;"></div>
+    <button class="btn" onclick="animateFlow()">▶ Animate Flow</button>
+    <button class="btn outline" onclick="resetFlow()">↺ Reset</button>
+  </div>
+
+  <!-- DATA MODEL -->
+  <div class="card green">
+    <h3 class="card-h">🗄️ Data Involved</h3>
+    <div class="g2">
+      <div>
+        <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--green);margin-bottom:8px;">INPUT DATA (from user)</div>
+        <div id="dd-input-data"></div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--blue);margin-bottom:8px;">SYSTEM DATA (created/updated)</div>
+        <div id="dd-system-data"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALTERNATE & EXCEPTION FLOWS -->
+  <div class="g2">
+    <div class="card" style="border-color:var(--amber);">
+      <h3 class="card-h" style="color:var(--amber);">↪ Alternate Flows</h3>
+      <div id="dd-alt-flows"></div>
+    </div>
+    <div class="card" style="border-color:var(--red);">
+      <h3 class="card-h" style="color:var(--red);">⚠️ Exception Flows</h3>
+      <div id="dd-exc-flows"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== DIAGRAMS -->
+<section id="diagrams" class="sec">
+  <div class="tag">Visualization Options</div>
+  <h1 class="big">Diagram <em>Options</em></h1>
+  <p class="lead">Sequence diagrams are common, but there are 7+ other ways to represent requirements. Each serves a different audience and purpose.</p>
+
+  <div class="g3" id="diagram-options-grid"></div>
+
+  <div class="card" style="margin-top:16px;" id="diag-detail-card">
+    <h3 class="card-h" id="diag-detail-title">👆 Click a diagram type above</h3>
+    <div id="diag-detail-body" style="font-size:13px;color:#5a4a2a;line-height:1.7;">Select a diagram type to see when to use it, what it shows, and an example preview.</div>
+  </div>
+
+  <div class="card amber" style="margin-top:16px;">
+    <h3 class="card-h">📊 Comparison: Which Diagram For What?</h3>
+    <div style="overflow-x:auto;margin-top:8px;">
+      <table style="width:100%;border-collapse:collapse;font-size:11px;font-family:'IBM Plex Mono',monospace;">
+        <thead><tr style="background:rgba(200,134,10,0.1);"><th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);">DIAGRAM</th><th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);">AUDIENCE</th><th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);">SHOWS</th><th style="padding:8px;text-align:left;border-bottom:1px solid var(--border);">LEVEL</th></tr></thead>
+        <tbody id="diag-compare-table"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================== SEQUENCE DIAGRAM -->
+<section id="sequence" class="sec">
+  <div class="tag">Diagram · Sequence</div>
+  <h1 class="big"><em>Sequence</em><br>Diagram</h1>
+  <p class="lead">Shows HOW actors and system components interact OVER TIME for the "Place Order" use case. Time flows top-to-bottom. Each arrow is a message/action.</p>
+
+  <div class="card">
+    <h3 class="card-h">🔑 How to Read a Sequence Diagram</h3>
+    <div class="g3" style="gap:10px;">
+      <div style="padding:10px;background:var(--bg);border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;">
+        <div style="font-weight:700;color:var(--teal);margin-bottom:4px;">─────► SOLID ARROW</div>
+        <div style="color:#5a4a2a;">Synchronous call / request<br>Caller waits for response</div>
+      </div>
+      <div style="padding:10px;background:var(--bg);border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;">
+        <div style="font-weight:700;color:var(--amber);margin-bottom:4px;">- - - -► DASHED ARROW</div>
+        <div style="color:#5a4a2a;">Return value / response<br>Data flows back</div>
+      </div>
+      <div style="padding:10px;background:var(--bg);border-radius:4px;font-size:11px;font-family:'IBM Plex Mono',monospace;">
+        <div style="font-weight:700;color:var(--blue);margin-bottom:4px;">│ LIFELINE │</div>
+        <div style="color:#5a4a2a;">Vertical line = actor exists<br>Thick box = active/processing</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:14px;">
+    <h3 class="card-h">🎬 Animated Sequence Diagram — Place Order</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <button class="btn" onclick="seqPlay()">▶ Play Sequence</button>
+      <button class="btn outline" onclick="seqReset()">↺ Reset</button>
+      <button class="btn amber" onclick="seqStep()" id="seq-step-btn" style="display:none;">→ Step</button>
+    </div>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <svg id="seq-svg" width="900" height="680" viewBox="0 0 900 680" style="min-width:700px;font-family:'IBM Plex Mono',monospace;background:var(--paper);border:1px solid var(--border);border-radius:4px;"></svg>
+    </div>
+    <div class="log" id="seq-log" style="margin-top:10px;"></div>
+  </div>
+</section>
+
+<!-- ===================================================== USER FLOW -->
+<section id="userflow" class="sec">
+  <div class="tag">Diagram · User Flow</div>
+  <h1 class="big"><em>User Flow</em><br>Diagram</h1>
+  <p class="lead">Shows the DECISIONS and PATHS a user takes. Rectangles = actions, Diamonds = decisions, Rounded = start/end. Click steps to walk through the flow.</p>
+
+  <div class="card" style="margin-bottom:14px;">
+    <h3 class="card-h">🔑 User Flow vs Use Case vs Sequence</h3>
+    <div class="g3" style="gap:10px;">
+      <div style="padding:10px;background:var(--teal-l);border-radius:4px;border:1px solid var(--teal);">
+        <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--teal);margin-bottom:4px;">USE CASE</div>
+        <div style="font-size:11px;color:#5a4a2a;">WHAT the system does. Goals & actors. High level narrative.</div>
+      </div>
+      <div style="padding:10px;background:var(--amber-l);border-radius:4px;border:1px solid var(--amber);">
+        <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--amber);margin-bottom:4px;">USER FLOW</div>
+        <div style="font-size:11px;color:#5a4a2a;">WHERE the user goes. UI screens & decisions. Designer-friendly.</div>
+      </div>
+      <div style="padding:10px;background:var(--blue-l);border-radius:4px;border:1px solid var(--blue);">
+        <div style="font-size:11px;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--blue);margin-bottom:4px;">SEQUENCE DIAGRAM</div>
+        <div style="font-size:11px;color:#5a4a2a;">HOW components talk. Messages & timing. Developer-friendly.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="card-h">🌊 Interactive User Flow — Place Order</h3>
+    <p style="font-size:12px;color:#7a6a4a;font-family:'IBM Plex Mono',monospace;margin-bottom:12px;">Click "Walk Through" or click individual nodes to simulate the user journey</p>
+    <div style="overflow-x:auto;">
+      <svg id="flow-svg" width="860" height="520" viewBox="0 0 860 520" style="min-width:700px;font-family:'IBM Plex Mono',monospace;background:var(--paper);border:1px solid var(--border);border-radius:4px;"></svg>
+    </div>
+    <button class="btn" style="margin-top:10px;" onclick="flowWalkthrough()">▶ Walk Through Flow</button>
+    <button class="btn outline" onclick="flowReset()">↺ Reset</button>
+    <div class="log" id="flow-log" style="margin-top:10px;"></div>
+  </div>
+</section>
+
+<!-- ===================================================== SWIMLANE -->
+<section id="swimlane" class="sec">
+  <div class="tag">Diagram · Swimlane / Activity</div>
+  <h1 class="big"><em>Swimlane</em><br>Diagram</h1>
+  <p class="lead">Shows WHO does WHAT. Each lane belongs to one actor. Actions flow across lanes. Perfect for showing handoffs between teams/systems.</p>
+
+  <div class="card" style="margin-bottom:14px;">
+    <h3 class="card-h">🏊 Why Swimlane Diagrams?</h3>
+    <p style="font-size:13px;color:#5a4a2a;line-height:1.7;">When a process spans multiple actors (Customer, Frontend, Backend, Payment Service, Inventory), swimlanes make responsibility crystal clear. Every box has an owner. Every handoff is visible.</p>
+  </div>
+
+  <div class="card">
+    <h3 class="card-h">🎬 Animated Swimlane — Place Order</h3>
+    <button class="btn" onclick="swimPlay()">▶ Animate Swimlane</button>
+    <button class="btn outline" onclick="swimReset()">↺ Reset</button>
+    <div style="margin-top:14px;overflow-x:auto;">
+      <div id="swim-diagram"></div>
+    </div>
+    <div class="log" id="swim-log" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card teal" style="margin-top:14px;">
+    <h3 class="card-h">🔄 Other Diagram Options You Can Use</h3>
+    <div class="g3" style="gap:10px;margin-top:8px;" id="other-diag-grid"></div>
+  </div>
+</section>
+
+<!-- ===================================================== SIMULATION -->
+<section id="simulation" class="sec">
+  <div class="tag">Full Simulation · Place Order Use Case</div>
+  <h1 class="big"><em>Live</em><br>Simulation</h1>
+  <p class="lead">Walk through the entire "Place Order" use case as it would execute in the real system — showing actors, actions, data exchanges, and system responses at each step.</p>
+
+  <div class="g2" style="margin-bottom:14px;">
+    <div class="stat-b"><div class="stat-v" id="sim-step-num">0</div><div class="stat-l">Current Step</div></div>
+    <div class="stat-b"><div class="stat-v" id="sim-total-steps" style="color:var(--amber);">12</div><div class="stat-l">Total Steps</div></div>
+  </div>
+
+  <div class="card" id="sim-main-card">
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <!-- LEFT: Step tracker -->
+      <div style="flex:1;min-width:200px;">
+        <h3 class="card-h">📋 Flow Steps</h3>
+        <div id="sim-step-list" style="max-height:400px;overflow-y:auto;"></div>
+      </div>
+      <!-- RIGHT: Active step detail -->
+      <div style="flex:2;min-width:280px;">
+        <h3 class="card-h">🔬 Active Step Detail</h3>
+        <div id="sim-detail" style="background:var(--bg);border-radius:4px;padding:14px;min-height:180px;border:1px solid var(--border);">
+          <div style="font-size:13px;color:#7a6a4a;font-family:'IBM Plex Mono',monospace;">Press "Start Simulation" to begin...</div>
+        </div>
+        <!-- Data exchange visualizer -->
+        <div style="margin-top:10px;">
+          <h3 class="card-h">📦 Data Exchange</h3>
+          <div id="sim-data-box" style="background:#1a1208;border-radius:4px;padding:12px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#f0e8d0;min-height:80px;"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Actor status row -->
+    <div style="margin-top:14px;">
+      <h3 class="card-h">👥 Actor Status</h3>
+      <div id="sim-actors-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+    <button class="btn" onclick="simStart()">▶ Start Simulation</button>
+    <button class="btn outline" onclick="simNext()" id="sim-next-btn" style="display:none;">→ Next Step</button>
+    <button class="btn amber" onclick="simAuto()" id="sim-auto-btn" style="display:none;">⚡ Auto Play</button>
+    <button class="btn outline" onclick="simReset()">↺ Reset</button>
+  </div>
+
+  <div class="log" id="sim-log" style="margin-top:10px;min-height:100px;"></div>
+</section>
+
+<script>
+// =====================================================
+// NAVIGATION
+// =====================================================
+function go(id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  const sec=document.getElementById(id); if(sec) sec.classList.add('active');
+  document.querySelectorAll('.nb').forEach(b=>{ if(b.getAttribute('onclick')?.includes("'"+id+"'")) b.classList.add('active'); });
+  window.scrollTo(0,0);
+  onEnter(id);
+}
+
+function onEnter(id){
+  if(id==='methods') initMethods();
+  if(id==='process') initProcess();
+  if(id==='usecases') initUseCases();
+  if(id==='deepdive') initDeepDive();
+  if(id==='diagrams') initDiagrams();
+  if(id==='sequence') initSequence();
+  if(id==='userflow') initUserFlow();
+  if(id==='swimlane') initSwimlane();
+  if(id==='simulation') initSimulation();
+}
+
+function lg(id,msg){ const e=document.getElementById(id); if(e){ e.innerHTML=`<span style="color:#f0c040;">[${new Date().toLocaleTimeString()}]</span> ${msg}\n`+e.innerHTML; }}
+
+// =====================================================
+// DATA
+// =====================================================
+const METHODS_DATA = {
+  interviews: { name:'Stakeholder Interviews', icon:'🎤', when:'Early discovery phase', produces:'Functional requirements, pain points, priorities', best:'Complex domain, key stakeholders, sensitive info', sim:'Schedule 1:1 with Customer Rep → Ask: "What does checkout look like for you?" → Note: "Needs guest checkout" → Document as requirement FR-001' },
+  workshops: { name:'Requirements Workshops', icon:'🏛️', when:'Cross-team alignment needed', produces:'Agreed requirements, resolved conflicts, shared understanding', best:'Large systems, multiple stakeholders, conflicting needs', sim:'Workshop with 5 stakeholders → Whiteboard: "What does Order mean to each of you?" → Designer: "Order history page" → Finance: "Invoice record" → Dev: "Database entry" → Align on definition' },
+  usecases: { name:'Use Case Analysis', icon:'📋', when:'After basic scope is known', produces:'Use cases, actors, flows, preconditions, exceptions', best:'Functional requirements, behavior specification', sim:'Identify Actor: Customer → Goal: Purchase item → Use Case: Place Order → Expand with main flow, alternate flows, exceptions' },
+  userflows: { name:'User Flow Mapping', icon:'🌊', when:'UI/UX design phase', produces:'Screen flows, decision trees, wireframes', best:'Web/mobile apps, UX-heavy systems', sim:'Start: Cart page → Decision: Logged in? → Yes → Checkout → Select shipping → Payment → Confirm → End: Order Confirmation page' },
+  prototypes: { name:'Prototyping', icon:'🖼️', when:'Requirements are unclear', produces:'Visual mockups, clickable demos, user feedback', best:'Novel systems, unclear UX, need validation', sim:'Build Figma mockup of checkout → Show to users → User: "Where do I add a coupon?" → Add coupon field → Update requirement' },
+  surveys: { name:'Surveys & Questionnaires', icon:'📊', when:'Large user base, quantitative needs', produces:'Statistics, priorities, rankings', best:'Prioritizing features, understanding user segments', sim:'Survey 500 users: "Which payment methods do you use?" → Results: 78% credit card, 45% PayPal, 30% Apple Pay → Prioritize payment integrations' },
+  observation: { name:'Contextual Observation', icon:'👁️', when:'Understanding current workflow', produces:'Process documentation, pain points, workarounds', best:'Replacing existing systems, operational systems', sim:'Observe warehouse worker → Types order ID manually from paper → Pain point discovered → Requirement: "Barcode scanner integration for order picking"' },
+  stories: { name:'User Stories', icon:'📖', when:'Agile development', produces:'Story cards, acceptance criteria, sprint tasks', best:'Agile teams, iterative delivery', sim:'As a [Customer], I want to [save my cart], so that [I can continue shopping later]. Acceptance criteria: Cart persists 30 days, shows item count in nav badge.' },
+  eventstore: { name:'Event Storming', icon:'⚡', when:'Complex domain modeling', produces:'Domain events, commands, aggregates, bounded contexts', best:'Microservices, DDD, complex business rules', sim:'Orange stickies: OrderPlaced, PaymentProcessed, InventoryReserved, ShipmentDispatched → Blue stickies: PlaceOrder, ProcessPayment → Define system boundaries' }
+};
+
+const METHODS_TABLE = [
+  {m:'Interviews',b:'Deep domain knowledge',o:'Requirements list',w:'Project kickoff'},
+  {m:'Workshops',b:'Cross-team alignment',o:'Agreed requirements',w:'Early planning'},
+  {m:'Use Cases',b:'Behavioral requirements',o:'Use case documents',w:'Analysis phase'},
+  {m:'User Flows',b:'UI/UX specification',o:'Flow diagrams',w:'Design phase'},
+  {m:'Prototypes',b:'Validating ideas',o:'Mockups + feedback',w:'Unclear requirements'},
+  {m:'User Stories',b:'Agile development',o:'Story cards + ACs',w:'Sprint planning'},
+  {m:'Observation',b:'Current-state analysis',o:'Process docs',w:'Legacy replacement'},
+  {m:'Event Storming',b:'Domain discovery',o:'Domain model',w:'Microservices design'},
+];
+
+const PROCESS_STEPS = [
+  { n:1, title:'Identify the System Scope', icon:'🎯', desc:'Define what the system will and won\'t do. Create a context diagram showing the system boundary and all external actors.', detail:'Start with a one-paragraph system description. Then list every external entity that interacts with it. Draw a box labeled "System" and arrows for each external entity — this is your context diagram.', output:'System context diagram, scope statement, out-of-scope list' },
+  { n:2, title:'Collect All Use Cases', icon:'📋', desc:'Brainstorm every goal an actor can achieve using the system. Use the format: "[Actor] [verb] [something] to achieve [goal]."', detail:'For each actor, ask "What can they do?" and "Why do they do it?" Every distinct user goal becomes a use case. Don\'t go into detail yet — just list them all.', output:'Use case list with IDs, names, actors, and brief description' },
+  { n:3, title:'Identify All Actors', icon:'👥', desc:'Find every human and system that interacts with your system. Include primary actors (initiate use cases) and secondary actors (support use cases).', detail:'Primary actors have goals the system serves. Secondary actors provide services the system needs. Don\'t forget external systems — payment gateways, notification services, etc.', output:'Actor catalog with type, description, and motivation' },
+  { n:4, title:'Expand Each Use Case', icon:'🔁', desc:'For each use case, write the full flow of events: preconditions, main flow, alternate flows, exception flows, postconditions.', detail:'Main flow = the happy path. Alternate flows = valid variations ("user pays with PayPal instead"). Exception flows = what goes wrong ("payment declined"). Each step must show: who does what, with what data.', output:'Fully expanded use case documents with all flows' },
+  { n:5, title:'Model Data & Relationships', icon:'🗄️', desc:'Identify all data entities, their attributes, and relationships. Validate against the use case flows to ensure all data needs are covered.', detail:'Extract nouns from use case flows — these become entities. Extract what info is captured at each step — these become attributes. Use ERD or class diagram to model relationships.', output:'Entity Relationship Diagram, data dictionary' },
+  { n:6, title:'Create Diagrams & Validate', icon:'📊', desc:'Create appropriate diagrams (sequence, activity, state, flow). Walk through with stakeholders to validate completeness and accuracy.', detail:'Walk each stakeholder through the diagrams. Ask "Is this how it really works?" Capture any corrections. Re-validate after changes. Sign off means the requirements are agreed and baselined.', output:'Validated diagrams, signed requirements document' },
+];
+
+const PROCESS_MISTAKES = [
+  'Skipping alternate & exception flows — they become bugs later',
+  'Missing secondary actors (payment gateways, email services)',
+  'Writing requirements as solutions instead of goals',
+  'Not validating with actual users — only with product owners',
+  'Forgetting non-functional requirements (performance, security)',
+];
+
+const USE_CASES = [
+  { id:'UC-001', title:'Register Account', actors:['Customer'], primary:'Customer', category:'Account', icon:'👤', priority:'High' },
+  { id:'UC-002', title:'Login', actors:['Customer','Admin'], primary:'Customer', category:'Account', icon:'🔐', priority:'High' },
+  { id:'UC-003', title:'Place Order', actors:['Customer','Payment Service','Inventory','Notification Service'], primary:'Customer', category:'Order', icon:'🛒', priority:'Critical', selected:true },
+  { id:'UC-004', title:'Track Order', actors:['Customer','Shipping Service'], primary:'Customer', category:'Order', icon:'📦', priority:'High' },
+  { id:'UC-005', title:'Cancel Order', actors:['Customer','Payment Service'], primary:'Customer', category:'Order', icon:'❌', priority:'Medium' },
+  { id:'UC-006', title:'Return Item', actors:['Customer','Admin','Payment Service'], primary:'Customer', category:'Order', icon:'↩️', priority:'Medium' },
+  { id:'UC-007', title:'Browse Products', actors:['Customer','Guest'], primary:'Customer', category:'Catalog', icon:'🔍', priority:'Critical' },
+  { id:'UC-008', title:'Search Products', actors:['Customer','Guest','Search Engine'], primary:'Customer', category:'Catalog', icon:'🔎', priority:'High' },
+  { id:'UC-009', title:'Write Review', actors:['Customer'], primary:'Customer', category:'Catalog', icon:'⭐', priority:'Low' },
+  { id:'UC-010', title:'Manage Inventory', actors:['Admin','Inventory System'], primary:'Admin', category:'Admin', icon:'📊', priority:'High' },
+  { id:'UC-011', title:'Process Refund', actors:['Admin','Payment Service'], primary:'Admin', category:'Admin', icon:'💰', priority:'High' },
+  { id:'UC-012', title:'Manage Products', actors:['Admin'], primary:'Admin', category:'Admin', icon:'📝', priority:'High' },
+  { id:'UC-013', title:'Send Notifications', actors:['Notification Service','Customer','Admin'], primary:'Notification Service', category:'System', icon:'📧', priority:'Medium' },
+  { id:'UC-014', title:'Process Payment', actors:['Payment Service','Customer'], primary:'Payment Service', category:'System', icon:'💳', priority:'Critical' },
+  { id:'UC-015', title:'Reserve Inventory', actors:['Inventory System'], primary:'Inventory System', category:'System', icon:'🏭', priority:'High' },
+  { id:'UC-016', title:'Generate Report', actors:['Admin'], primary:'Admin', category:'Admin', icon:'📈', priority:'Low' },
+];
+
+const ACTORS = [
+  { name:'Customer', icon:'👤', type:'Primary', color:'var(--teal)', desc:'Registered user who browses and purchases products' },
+  { name:'Guest', icon:'👁️', type:'Primary', color:'var(--blue)', desc:'Unauthenticated visitor who can browse but not purchase' },
+  { name:'Admin', icon:'⚙️', type:'Primary', color:'var(--purple)', desc:'Internal staff who manage products, orders, and users' },
+  { name:'Payment Service', icon:'💳', type:'Secondary', color:'var(--amber)', desc:'External service (Stripe/PayPal) handling payment processing' },
+  { name:'Inventory System', icon:'🏭', type:'Secondary', color:'var(--green)', desc:'System managing stock levels and reservations' },
+  { name:'Notification Service', icon:'📧', type:'Secondary', color:'var(--red)', desc:'Sends emails/SMS to customers and admins' },
+  { name:'Shipping Service', icon:'🚚', type:'Secondary', color:'#666', desc:'External logistics API for tracking and shipping rates' },
+  { name:'Search Engine', icon:'🔍', type:'Secondary', color:'#444', desc:'Elasticsearch or similar for product search' },
+];
+
+const DD_ACTORS = [
+  { name:'Customer', icon:'👤', role:'Primary Actor — initiates the use case', color:'var(--teal)' },
+  { name:'Payment Service', icon:'💳', role:'Secondary Actor — processes payment (Stripe/PayPal)', color:'var(--amber)' },
+  { name:'Inventory System', icon:'🏭', role:'Secondary Actor — reserves & validates stock', color:'var(--green)' },
+  { name:'Notification Service', icon:'📧', role:'Secondary Actor — sends order confirmation', color:'var(--red)' },
+  { name:'E-Commerce System', icon:'🖥️', role:'The system itself — orchestrates the flow', color:'var(--blue)' },
+];
+
+const DD_PRE = [
+  'Customer is logged in (authenticated)',
+  'Cart has at least 1 item',
+  'All items are currently in stock',
+  'Customer has a valid shipping address saved',
+];
+const DD_POST = [
+  'Order record created with unique Order ID',
+  'Payment processed and transaction ID stored',
+  'Inventory reserved / decremented for ordered items',
+  'Confirmation email sent to customer',
+  'Admin dashboard shows new order',
+  'Customer order history updated',
+];
+
+const MAIN_FLOW = [
+  { step:1, actor:'Customer', action:'Views cart and clicks "Checkout"', data:'Cart items: [{productId, name, qty, price}], Cart total', type:'user' },
+  { step:2, actor:'System', action:'Validates cart items are still in stock', data:'Request: [productId, qty] → Response: {inStock: bool, availableQty: int}', type:'system' },
+  { step:3, actor:'Customer', action:'Selects shipping address and method', data:'Address: {street, city, country, zip}, ShippingMethod: {carrier, cost, estimatedDays}', type:'user' },
+  { step:4, actor:'System', action:'Calculates order total (items + tax + shipping)', data:'Subtotal, Tax rate, Shipping cost → Order total: {subtotal, tax, shipping, total}', type:'system' },
+  { step:5, actor:'Customer', action:'Enters payment information', data:'Payment: {cardNumber[masked], expiry, cvv[never stored], billingAddress}', type:'user' },
+  { step:6, actor:'System', action:'Sends payment request to Payment Service', data:'Request: {amount, currency, cardToken, orderId} → Response: {transactionId, status, timestamp}', type:'system' },
+  { step:7, actor:'Payment Service', action:'Validates card and processes charge', data:'Charge: {amount, currency} → Result: {authorized: true, transactionId: "txn_123"}', type:'external' },
+  { step:8, actor:'System', action:'Creates Order record in database', data:'Order: {orderId, customerId, items[], total, paymentId, status:"confirmed", timestamp}', type:'system' },
+  { step:9, actor:'Inventory System', action:'Reserves inventory for each ordered item', data:'Reserve: [{productId, qty}] → Result: {reservationId, confirmedItems[]}', type:'external' },
+  { step:10, actor:'Notification Service', action:'Sends order confirmation email', data:'Email: {to: customer@email, orderId, itemsSummary, total, estimatedDelivery}', type:'external' },
+  { step:11, actor:'System', action:'Returns order confirmation to customer', data:'Response: {orderId, status, estimatedDelivery, trackingUrl}', type:'system' },
+  { step:12, actor:'Customer', action:'Views order confirmation screen', data:'Display: {orderId, itemList, total, deliveryInfo, continueShoppingLink}', type:'user' },
+];
+
+const ALT_FLOWS = [
+  { id:'A1', trigger:'Customer wants to edit cart at step 3', flow:'System returns to cart page. Customer modifies cart. Restarts at step 1.' },
+  { id:'A2', trigger:'Customer chooses PayPal at step 5', flow:'System redirects to PayPal. Customer approves. PayPal returns token. Continues at step 6.' },
+  { id:'A3', trigger:'Customer applies coupon code at step 4', flow:'System validates coupon. If valid, applies discount to total. Updates display. Continues at step 5.' },
+];
+const EXC_FLOWS = [
+  { id:'E1', trigger:'Item out of stock (step 2)', flow:'System shows out-of-stock items. Offers: remove item, save for later, or notify when available. Use case ends.' },
+  { id:'E2', trigger:'Payment declined (step 7)', flow:'System shows "Payment failed" with reason. Offers retry or different payment. Up to 3 attempts. If all fail, order cancelled.' },
+  { id:'E3', trigger:'Inventory reserve fails (step 9)', flow:'System reverses payment charge. Notifies customer of failure. Sends apology email. Cancels order.' },
+  { id:'E4', trigger:'Session timeout during checkout', flow:'System saves cart. Prompts login. Restores cart. Continues from step 1.' },
+];
+
+const DIAGRAM_OPTIONS = [
+  { name:'Sequence Diagram', icon:'🎬', best:'API calls, component interactions, time-based flow', audience:'Developers, architects', shows:'Message flow between actors over time', color:'var(--teal)', tab:'sequence' },
+  { name:'User Flow Diagram', icon:'🌊', best:'UI navigation, screen-to-screen decisions', audience:'Designers, product managers', shows:'Screens, decisions, paths user takes', color:'var(--blue)', tab:'userflow' },
+  { name:'Swimlane Diagram', icon:'🏊', best:'Cross-team processes, handoffs, responsibility', audience:'Business analysts, PMs', shows:'Who does what, in which order', color:'var(--amber)', tab:'swimlane' },
+  { name:'Activity Diagram', icon:'⚙️', best:'Business process, workflow, parallel actions', audience:'Business analysts, devs', shows:'Flow of activities, branches, forks', color:'var(--purple)' },
+  { name:'State Machine', icon:'🔄', best:'Object lifecycle, status transitions', audience:'Developers', shows:'States an object can be in, transitions', color:'var(--red)' },
+  { name:'ERD / Class Diagram', icon:'🗄️', best:'Data modeling, database design', audience:'Database designers, devs', shows:'Entities, attributes, relationships', color:'var(--green)' },
+  { name:'Use Case Diagram', icon:'📋', best:'System scope, actor-feature matrix', audience:'Stakeholders, PMs', shows:'Actors and what they can do', color:'var(--teal)' },
+  { name:'Context Diagram', icon:'🌐', best:'System boundary definition', audience:'All stakeholders', shows:'System as black box + external entities', color:'var(--blue)' },
+  { name:'Event Flow Diagram', icon:'⚡', best:'Event-driven systems, async flows', audience:'Developers, architects', shows:'Events, commands, aggregates', color:'var(--amber)' },
+];
+
+const DIAG_COMPARE = [
+  {d:'Sequence',a:'Developers',s:'Message order & timing',l:'Technical'},
+  {d:'User Flow',a:'Designers / PMs',s:'Screen navigation',l:'UX'},
+  {d:'Swimlane',a:'BAs / Business',s:'Responsibility & handoffs',l:'Process'},
+  {d:'Activity',a:'BAs / Developers',s:'Workflow & branches',l:'Process'},
+  {d:'State Machine',a:'Developers',s:'Object state lifecycle',l:'Technical'},
+  {d:'ERD',a:'DB Designers',s:'Data relationships',l:'Data'},
+  {d:'Use Case Diagram',a:'Stakeholders',s:'Scope & capabilities',l:'Business'},
+  {d:'Context Diagram',a:'All',s:'System boundary',l:'High-level'},
+];
+
+// =====================================================
+// METHODS
+// =====================================================
+function initMethods(){
+  // table
+  const tb=document.getElementById('methods-table-body'); if(!tb) return;
+  tb.innerHTML='';
+  METHODS_TABLE.forEach(r=>{
+    const tr=document.createElement('tr'); tr.style.borderBottom='1px solid var(--border)';
+    tr.innerHTML=`<td style="padding:8px;font-weight:700;">${r.m}</td><td style="padding:8px;color:#5a4a2a;">${r.b}</td><td style="padding:8px;color:#5a4a2a;">${r.o}</td><td style="padding:8px;color:var(--teal);">${r.w}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function showMethod(key){
+  const d=METHODS_DATA[key]; if(!d) return;
+  document.querySelectorAll('.method-card').forEach(c=>c.classList.remove('active-m'));
+  const cards=document.querySelectorAll('.method-card');
+  const keys=Object.keys(METHODS_DATA);
+  const idx=keys.indexOf(key);
+  if(cards[idx]) cards[idx].classList.add('active-m');
+  const det=document.getElementById('method-detail'); if(det) det.style.display='block';
+  const con=document.getElementById('method-content'); if(!con) return;
+  con.innerHTML=`
+    <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="font-size:48px;">${d.icon}</div>
+      <div style="flex:1;min-width:200px;">
+        <h2 style="font-size:20px;font-weight:900;margin-bottom:6px;">${d.name}</h2>
+        <div class="g3" style="gap:10px;margin-bottom:12px;">
+          <div style="background:var(--teal-l);border-radius:4px;padding:8px;font-size:11px;"><div style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--teal);margin-bottom:3px;">WHEN TO USE</div>${d.when}</div>
+          <div style="background:var(--amber-l);border-radius:4px;padding:8px;font-size:11px;"><div style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--amber);margin-bottom:3px;">BEST FOR</div>${d.best}</div>
+          <div style="background:var(--blue-l);border-radius:4px;padding:8px;font-size:11px;"><div style="font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--blue);margin-bottom:3px;">PRODUCES</div>${d.produces}</div>
+        </div>
+        <div style="background:#1a1208;border-radius:4px;padding:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#f0e8d0;line-height:1.9;">
+          <div style="color:var(--amber);font-weight:700;margin-bottom:6px;">▶ SIMULATION EXAMPLE:</div>
+          ${d.sim}
+        </div>
+      </div>
+    </div>`;
+  det.style.animation='none'; setTimeout(()=>{ det.style.animation='fadeIn .3s ease'; },10);
+}
+
+// =====================================================
+// PROCESS
+// =====================================================
+let procStep=0;
+const procStages=[
+  '> Requirement Gathering Process Starting...\n> Loading E-Commerce Platform as example system...',
+  '> STEP 1: Identifying System Scope\n> Drawing context boundary...\n> External actors found: Customer, Admin, Payment Service, Shipping API, Email Service\n> Scope defined: Online shopping + order management + inventory',
+  '> STEP 2: Collecting Use Cases\n> Actor: Customer → Goals: browse, search, buy, track, return, review\n> Actor: Admin → Goals: manage products, process refunds, generate reports\n> Actor: System → Goals: send notifications, process payments\n> Total: 16 use cases identified',
+  '> STEP 3: Identifying Actors\n> Primary Actors: Customer (buyer), Guest (visitor), Admin (staff)\n> Secondary Actors: Payment Service (Stripe), Inventory System, Notification Service, Shipping API\n> Actor catalog created with descriptions and motivations',
+  '> STEP 4: Expanding Use Cases\n> Expanding UC-003: Place Order\n> Main flow: 12 steps identified\n> Alternate flows: 3 variations found (PayPal, coupon, edit cart)\n> Exception flows: 4 error cases (out of stock, declined payment, timeout, inventory failure)\n> Data for each step documented',
+  '> STEP 5: Modeling Data\n> Entities found: Order, Customer, Product, Cart, Payment, Inventory, Address\n> Relationships: Order has many OrderItems, Customer places many Orders\n> ERD created with 8 entities and 14 relationships\n> Data dictionary: 47 fields documented',
+  '> STEP 6: Creating & Validating Diagrams\n> Sequence diagram: Place Order (12 actors, 18 messages)\n> Swimlane: 5 lanes (Customer, Frontend, Backend, Payment, Inventory)\n> User Flow: 9 screens, 4 decision points\n> Validation session with stakeholders: 3 issues found and fixed\n> ✅ Requirements BASELINED — ready for development!'
+];
+
+function initProcess(){
+  procStep=0;
+  const stepsEl=document.getElementById('process-steps'); if(!stepsEl) return;
+  stepsEl.innerHTML='';
+  PROCESS_STEPS.forEach(s=>{
+    const d=document.createElement('div'); d.className='step-pill'; d.id='proc-step-'+s.n;
+    d.innerHTML=`<div class="step-num" style="background:var(--border);color:#7a6a4a;">${s.n}</div><div><strong style="font-size:13px;">${s.icon} ${s.title}</strong><div style="font-size:11px;color:#7a6a4a;margin-top:2px;">${s.desc}</div></div>`;
+    d.onclick=()=>showProcDetail(s.n);
+    stepsEl.appendChild(d);
+  });
+  const ml=document.getElementById('mistakes-list'); if(!ml) return;
+  ml.innerHTML='';
+  PROCESS_MISTAKES.forEach(m=>{ const d=document.createElement('div'); d.style.cssText='font-size:11px;color:#5a4a2a;padding:5px 0;border-bottom:1px solid var(--border);font-family:IBM Plex Mono,monospace;'; d.textContent='⚠ '+m; ml.appendChild(d); });
+}
+
+function showProcDetail(n){
+  const s=PROCESS_STEPS.find(x=>x.n===n); if(!s) return;
+  const det=document.getElementById('process-detail'); if(!det) return;
+  det.innerHTML=`<h3 class="card-h">${s.icon} Step ${s.n}: ${s.title}</h3>
+    <p style="font-size:13px;color:#5a4a2a;line-height:1.7;margin-bottom:12px;">${s.detail}</p>
+    <div style="background:var(--teal-l);border:1px solid var(--teal);border-radius:4px;padding:10px;font-size:11px;font-family:'IBM Plex Mono',monospace;">
+      <span style="color:var(--teal);font-weight:700;">OUTPUT: </span>${s.output}
+    </div>`;
+  document.querySelectorAll('.step-pill').forEach(el=>el.classList.remove('active'));
+  const sp=document.getElementById('proc-step-'+n); if(sp) sp.classList.add('active');
+}
+
+function procStart(){ procStep=0; document.getElementById('proc-stage').innerHTML=procStages[0]; document.getElementById('proc-next-btn').style.display='inline-block'; }
+function procNext(){
+  if(procStep>=procStages.length-1) return;
+  procStep++;
+  document.getElementById('proc-stage').innerHTML=procStages[procStep].replace(/\n/g,'<br>');
+  const steps=PROCESS_STEPS; if(procStep<=steps.length){ const sp=document.getElementById('proc-step-'+procStep); if(sp){ sp.classList.add('active'); showProcDetail(procStep); } }
+}
+function procReset(){ procStep=0; document.getElementById('proc-stage').innerHTML=procStages[0]; document.getElementById('proc-next-btn').style.display='none'; document.querySelectorAll('.step-pill').forEach(el=>el.classList.remove('active','done')); }
+
+// =====================================================
+// USE CASES
+// =====================================================
+function initUseCases(){
+  const primary=USE_CASES.filter(u=>['Customer','Guest'].includes(u.primary)).length;
+  const secondary=USE_CASES.filter(u=>!['Customer','Guest'].includes(u.primary)).length;
+  document.getElementById('uc-total').textContent=USE_CASES.length;
+  document.getElementById('uc-actors-count').textContent=ACTORS.length;
+  document.getElementById('uc-primary').textContent=primary;
+  document.getElementById('uc-secondary').textContent=secondary;
+  const al=document.getElementById('actors-list'); if(al){
+    al.innerHTML='';
+    ACTORS.forEach(a=>{
+      const b=document.createElement('span'); b.className='actor'; b.style.borderColor=a.color; b.style.color=a.color;
+      b.innerHTML=`${a.icon} ${a.name} <span style="color:#aaa;font-weight:400;">(${a.type})</span>`;
+      b.title=a.desc;
+      al.appendChild(b);
+    });
+  }
+  const grid=document.getElementById('uc-grid'); if(!grid) return;
+  grid.innerHTML='';
+  USE_CASES.forEach(uc=>{
+    const d=document.createElement('div'); d.className='uc-box'; if(uc.selected) d.classList.add('selected');
+    const pColor={'Critical':'var(--red)','High':'var(--teal)','Medium':'var(--amber)','Low':'#999'}[uc.priority]||'#999';
+    d.innerHTML=`<div style="font-size:22px;margin-bottom:6px;">${uc.icon}</div>
+      <div class="uc-title">${uc.id}</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:4px;">${uc.title}</div>
+      <div class="uc-actors">${uc.actors.join(', ')}</div>
+      <div style="margin-top:6px;"><span style="font-size:9px;padding:2px 6px;border-radius:3px;background:${pColor}22;color:${pColor};font-family:'IBM Plex Mono',monospace;border:1px solid ${pColor};">${uc.priority}</span> <span style="font-size:9px;color:#7a6a4a;font-family:'IBM Plex Mono',monospace;">${uc.category}</span></div>`;
+    d.onclick=()=>inspectUC(uc.id);
+    grid.appendChild(d);
+  });
+}
+
+function inspectUC(id){
+  const uc=USE_CASES.find(u=>u.id===id); if(!uc) return;
+  document.querySelectorAll('.uc-box').forEach(b=>b.classList.remove('selected'));
+  const boxes=document.querySelectorAll('.uc-box');
+  const idx=USE_CASES.findIndex(u=>u.id===id);
+  if(boxes[idx]) boxes[idx].classList.add('selected');
+  const insp=document.getElementById('uc-inspector'); if(!insp) return;
+  insp.style.display='block';
+  const con=document.getElementById('uc-inspector-content'); if(!con) return;
+  const actorDetails=uc.actors.map(a=>{ const actor=ACTORS.find(x=>x.name===a); return actor?`<span class="actor" style="border-color:${actor.color};color:${actor.color};">${actor.icon} ${a}</span>`:`<span class="actor">${a}</span>`; }).join('');
+  con.innerHTML=`<div style="display:flex;gap:16px;flex-wrap:wrap;">
+    <div style="flex:2;min-width:200px;">
+      <div style="font-size:32px;margin-bottom:8px;">${uc.icon}</div>
+      <h2 style="font-size:22px;font-weight:900;">${uc.id}: ${uc.title}</h2>
+      <div style="margin:10px 0;display:flex;flex-wrap:wrap;gap:4px;">${actorDetails}</div>
+      ${uc.id==='UC-003'?'<div style="margin-top:12px;padding:10px;background:var(--teal-l);border:1px solid var(--teal);border-radius:4px;font-size:12px;font-family:IBM Plex Mono,monospace;color:var(--teal);cursor:pointer;" onclick="go(\'deepdive\')">🔬 This use case is fully expanded → Click to see Deep Dive</div>':''}
+    </div>
+    <div style="flex:1;min-width:160px;font-family:IBM Plex Mono,monospace;font-size:11px;line-height:2.2;">
+      <div><span style="color:#7a6a4a;">Category: </span>${uc.category}</div>
+      <div><span style="color:#7a6a4a;">Priority: </span>${uc.priority}</div>
+      <div><span style="color:#7a6a4a;">Primary Actor: </span>${uc.primary}</div>
+      <div><span style="color:#7a6a4a;">Total Actors: </span>${uc.actors.length}</div>
+    </div>
+  </div>`;
+  insp.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// =====================================================
+// DEEP DIVE
+// =====================================================
+let flowAnimTimer=null, flowStep=0;
+function initDeepDive(){
+  // actors
+  const al=document.getElementById('dd-actors'); if(al){ al.innerHTML=''; DD_ACTORS.forEach(a=>{ const d=document.createElement('div'); d.style.cssText='display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;'; d.innerHTML=`<span style="font-size:24px;">${a.icon}</span><div><div style="font-size:12px;font-family:IBM Plex Mono,monospace;font-weight:700;color:${a.color};">${a.name}</div><div style="font-size:11px;color:#5a4a2a;">${a.role}</div></div>`; al.appendChild(d); }); }
+  const pre=document.getElementById('dd-pre'); if(pre){ pre.innerHTML=DD_PRE.map(p=>`<div style="font-size:11px;padding:5px 8px;border-radius:3px;background:var(--blue-l);border:1px solid var(--blue);margin-bottom:4px;font-family:IBM Plex Mono,monospace;">✓ ${p}</div>`).join(''); }
+  const post=document.getElementById('dd-post'); if(post){ post.innerHTML=DD_POST.map(p=>`<div style="font-size:11px;padding:5px 8px;border-radius:3px;background:var(--green-l);border:1px solid var(--green);margin-bottom:4px;font-family:IBM Plex Mono,monospace;">✓ ${p}</div>`).join(''); }
+  renderFlow();
+  // data
+  const inp=document.getElementById('dd-input-data'); if(inp){ inp.innerHTML=[{t:'String',n:'shippingAddress',d:'Customer-provided address'},{t:'Enum',n:'shippingMethod',d:'Standard/Express/Overnight'},{t:'String',n:'paymentToken',d:'Tokenized card (never raw)'},{t:'String',n:'couponCode',d:'Optional discount code'}].map(f=>`<div class="data-field"><span class="data-type">${f.t}</span><span class="data-name">${f.n}</span><span class="data-desc">— ${f.d}</span></div>`).join(''); }
+  const sys=document.getElementById('dd-system-data'); if(sys){ sys.innerHTML=[{t:'UUID',n:'orderId',d:'Auto-generated unique ID'},{t:'Enum',n:'orderStatus',d:'pending/confirmed/shipped'},{t:'Decimal',n:'orderTotal',d:'Calculated: subtotal+tax+ship'},{t:'String',n:'transactionId',d:'From payment service'},{t:'DateTime',n:'createdAt',d:'Auto-set timestamp'},{t:'String',n:'reservationId',d:'From inventory service'}].map(f=>`<div class="data-field"><span class="data-type">${f.t}</span><span class="data-name">${f.n}</span><span class="data-desc">— ${f.d}</span></div>`).join(''); }
+  const alt=document.getElementById('dd-alt-flows'); if(alt){ alt.innerHTML=ALT_FLOWS.map(f=>`<div style="margin-bottom:10px;padding:10px;background:var(--amber-l);border-radius:4px;border:1px solid var(--amber);"><div style="font-size:10px;font-family:IBM Plex Mono,monospace;font-weight:700;color:var(--amber);margin-bottom:4px;">${f.id}</div><div style="font-size:11px;color:#5a4a2a;margin-bottom:4px;font-weight:700;">Trigger: ${f.trigger}</div><div style="font-size:11px;color:#5a4a2a;">${f.flow}</div></div>`).join(''); }
+  const exc=document.getElementById('dd-exc-flows'); if(exc){ exc.innerHTML=EXC_FLOWS.map(f=>`<div style="margin-bottom:10px;padding:10px;background:var(--red-l);border-radius:4px;border:1px solid var(--red);"><div style="font-size:10px;font-family:IBM Plex Mono,monospace;font-weight:700;color:var(--red);margin-bottom:4px;">${f.id}</div><div style="font-size:11px;color:#5a4a2a;margin-bottom:4px;font-weight:700;">Trigger: ${f.trigger}</div><div style="font-size:11px;color:#5a4a2a;">${f.flow}</div></div>`).join(''); }
+}
+
+function renderFlow(){
+  const fl=document.getElementById('dd-flow'); if(!fl) return;
+  fl.innerHTML='';
+  MAIN_FLOW.forEach((f,i)=>{
+    const colors={'user':['var(--teal)','var(--teal-l)'],'system':['var(--blue)','var(--blue-l)'],'external':['var(--amber)','var(--amber-l)']}[f.type]||['#666','#eee'];
+    const d=document.createElement('div'); d.id='flow-step-'+f.step; d.style.cssText=`padding:12px 14px;background:var(--paper);border:1px solid var(--border);border-left:4px solid ${colors[0]};border-radius:4px;opacity:.4;transition:all .4s;`;
+    d.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="width:26px;height:26px;border-radius:50%;background:${colors[0]};color:#fff;display:flex;align-items:center;justify-content:center;font-family:IBM Plex Mono,monospace;font-size:11px;font-weight:700;flex-shrink:0;">${f.step}</div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:11px;font-family:IBM Plex Mono,monospace;font-weight:700;color:${colors[0]};margin-bottom:2px;">${f.actor}</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px;">${f.action}</div>
+        <div style="font-size:10.5px;color:#7a6a4a;font-family:IBM Plex Mono,monospace;background:var(--bg);padding:6px 8px;border-radius:3px;border:1px solid var(--border);">📦 ${f.data}</div>
+      </div>
+    </div>`;
+    fl.appendChild(d);
+  });
+}
+
+function animateFlow(){
+  flowStep=0;
+  MAIN_FLOW.forEach(f=>{ const el=document.getElementById('flow-step-'+f.step); if(el) el.style.opacity='.4'; });
+  let i=0;
+  function next(){
+    if(i>=MAIN_FLOW.length) return;
+    const el=document.getElementById('flow-step-'+(i+1)); if(el){ el.style.opacity='1'; el.style.background='rgba(13,115,119,0.05)'; el.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+    i++; flowAnimTimer=setTimeout(next,700);
+  }
+  next();
+}
+function resetFlow(){ if(flowAnimTimer) clearTimeout(flowAnimTimer); MAIN_FLOW.forEach(f=>{ const el=document.getElementById('flow-step-'+f.step); if(el){ el.style.opacity='.4'; el.style.background=''; } }); }
+
+// =====================================================
+// DIAGRAMS
+// =====================================================
+function initDiagrams(){
+  const grid=document.getElementById('diagram-options-grid'); if(!grid) return;
+  grid.innerHTML='';
+  DIAGRAM_OPTIONS.forEach((d,i)=>{
+    const el=document.createElement('div'); el.className='method-card'; el.style.borderTop=`3px solid ${d.color}`;
+    el.innerHTML=`<div class="method-icon">${d.icon}</div><div class="method-name" style="color:${d.color};">${d.name}</div><div class="method-desc">${d.best}</div>`;
+    el.onclick=()=>showDiagDetail(i);
+    grid.appendChild(el);
+  });
+  const tb=document.getElementById('diag-compare-table'); if(!tb) return;
+  DIAG_COMPARE.forEach(r=>{ const tr=document.createElement('tr'); tr.style.borderBottom='1px solid var(--border)'; tr.innerHTML=`<td style="padding:7px 8px;font-weight:700;">${r.d}</td><td style="padding:7px 8px;color:#5a4a2a;">${r.a}</td><td style="padding:7px 8px;color:#5a4a2a;">${r.s}</td><td style="padding:7px 8px;"><span class="badge teal">${r.l}</span></td>`; tb.appendChild(tr); });
+}
+
+function showDiagDetail(i){
+  const d=DIAGRAM_OPTIONS[i]; if(!d) return;
+  document.querySelectorAll('#diagram-options-grid .method-card').forEach(c=>c.classList.remove('active-m'));
+  document.querySelectorAll('#diagram-options-grid .method-card')[i]?.classList.add('active-m');
+  document.getElementById('diag-detail-title').textContent=d.icon+' '+d.name;
+  document.getElementById('diag-detail-body').innerHTML=`
+    <div class="g3" style="gap:10px;margin-bottom:12px;">
+      <div style="background:var(--bg);padding:10px;border-radius:4px;border:1px solid var(--border);"><div style="font-size:10px;font-family:IBM Plex Mono,monospace;font-weight:700;color:${d.color};margin-bottom:4px;">BEST FOR</div><div style="font-size:12px;">${d.best}</div></div>
+      <div style="background:var(--bg);padding:10px;border-radius:4px;border:1px solid var(--border);"><div style="font-size:10px;font-family:IBM Plex Mono,monospace;font-weight:700;color:${d.color};margin-bottom:4px;">AUDIENCE</div><div style="font-size:12px;">${d.audience}</div></div>
+      <div style="background:var(--bg);padding:10px;border-radius:4px;border:1px solid var(--border);"><div style="font-size:10px;font-family:IBM Plex Mono,monospace;font-weight:700;color:${d.color};margin-bottom:4px;">SHOWS</div><div style="font-size:12px;">${d.shows}</div></div>
+    </div>
+    ${d.tab?`<button class="btn" onclick="go('${d.tab}')" style="background:${d.color};">→ See Animated Example</button>`:'<div style="font-size:12px;color:#7a6a4a;font-family:IBM Plex Mono,monospace;">Interactive demo available in the corresponding section.</div>'}`;
+}
+
+// =====================================================
+// SEQUENCE DIAGRAM (SVG Animated)
+// =====================================================
+const SEQ_ACTORS=['Customer','Frontend','Backend','Payment Svc','Inventory','Notify Svc'];
+const SEQ_COLORS=['#0d7377','#1a5276','#1e8449','#c8860a','#6c3483','#c0392b'];
+const SEQ_MESSAGES=[
+  {from:0,to:1,label:'click Checkout',ret:false,step:1},
+  {from:1,to:2,label:'GET /cart/validate',ret:false,step:2},
+  {from:2,to:4,label:'checkStock(items)',ret:false,step:2},
+  {from:4,to:2,label:'stockStatus: OK',ret:true,step:2},
+  {from:2,to:1,label:'cart valid, items in stock',ret:true,step:2},
+  {from:0,to:1,label:'select shipping + address',ret:false,step:3},
+  {from:1,to:2,label:'POST /checkout/calculate',ret:false,step:4},
+  {from:2,to:1,label:'orderTotal: {subtotal,tax,ship}',ret:true,step:4},
+  {from:0,to:1,label:'enter payment info',ret:false,step:5},
+  {from:1,to:2,label:'POST /orders/create',ret:false,step:6},
+  {from:2,to:3,label:'chargeCard(token,amount)',ret:false,step:7},
+  {from:3,to:2,label:'transactionId: txn_123',ret:true,step:7},
+  {from:2,to:2,label:'INSERT Order record',ret:false,step:8},
+  {from:2,to:4,label:'reserveInventory(items)',ret:false,step:9},
+  {from:4,to:2,label:'reservationId: res_456',ret:true,step:9},
+  {from:2,to:5,label:'sendConfirmEmail(order)',ret:false,step:10},
+  {from:2,to:1,label:'orderId, status, ETA',ret:true,step:11},
+  {from:1,to:0,label:'Show Order Confirmation',ret:true,step:12},
+];
+
+let seqMsgIndex=0, seqTimer=null;
+function initSequence(){
+  seqMsgIndex=0;
+  drawSeqBase();
+  document.getElementById('seq-step-btn').style.display='none';
+}
+
+function drawSeqBase(){
+  const svg=document.getElementById('seq-svg'); if(!svg) return;
+  svg.innerHTML='';
+  const W=900, actorW=130, gap=130, top=40, lifeH=600;
+  // defs
+  svg.innerHTML=`<defs>
+    <marker id="arrow-teal" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#0d7377"/></marker>
+    <marker id="arrow-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#c8860a"/></marker>
+  </defs>`;
+  const xs=SEQ_ACTORS.map((_,i)=>70+i*gap);
+  // lifelines
+  SEQ_ACTORS.forEach((a,i)=>{
+    const x=xs[i];
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',x-50); rect.setAttribute('y',top); rect.setAttribute('width',100); rect.setAttribute('height',36); rect.setAttribute('rx',4); rect.setAttribute('fill','#fefcf7'); rect.setAttribute('stroke',SEQ_COLORS[i]); rect.setAttribute('stroke-width',2);
+    const text=document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x',x); text.setAttribute('y',top+22); text.setAttribute('text-anchor','middle'); text.setAttribute('font-size',11); text.setAttribute('font-family','IBM Plex Mono'); text.setAttribute('fill',SEQ_COLORS[i]); text.setAttribute('font-weight','700'); text.textContent=a;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x); line.setAttribute('y1',top+36); line.setAttribute('x2',x); line.setAttribute('y2',top+36+lifeH); line.setAttribute('stroke','#d4c9a8'); line.setAttribute('stroke-width',1.5); line.setAttribute('stroke-dasharray','6,4');
+    g.appendChild(line); g.appendChild(rect); g.appendChild(text);
+    svg.appendChild(g);
+  });
+}
+
+function seqPlay(){
+  seqMsgIndex=0;
+  drawSeqBase();
+  document.getElementById('seq-log').innerHTML='';
+  document.getElementById('seq-step-btn').style.display='inline-block';
+  if(seqTimer) clearInterval(seqTimer);
+  seqTimer=setInterval(()=>{
+    if(seqMsgIndex>=SEQ_MESSAGES.length){ clearInterval(seqTimer); return; }
+    drawNextSeqMsg();
+  },600);
+}
+
+function seqStep(){
+  if(seqMsgIndex>=SEQ_MESSAGES.length) return;
+  drawNextSeqMsg();
+}
+
+function drawNextSeqMsg(){
+  const msg=SEQ_MESSAGES[seqMsgIndex]; if(!msg) return;
+  const svg=document.getElementById('seq-svg'); if(!svg) return;
+  const gap=130, top=40, msgStartY=96;
+  const xs=SEQ_ACTORS.map((_,i)=>70+i*gap);
+  const y=msgStartY + seqMsgIndex*28;
+  const x1=xs[msg.from], x2=xs[msg.to];
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.style.opacity='0'; g.style.transition='opacity .3s'; setTimeout(()=>g.style.opacity='1',10);
+  if(msg.from===msg.to){
+    // self-message
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',`M${x1},${y} L${x1+40},${y} L${x1+40},${y+20} L${x1},${y+20}`);
+    path.setAttribute('stroke','#1e8449'); path.setAttribute('stroke-width',1.5); path.setAttribute('fill','none'); path.setAttribute('marker-end','url(#arrow-teal)');
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x1+44); t.setAttribute('y',y+12); t.setAttribute('font-size',10); t.setAttribute('font-family','IBM Plex Mono'); t.setAttribute('fill','#1e8449'); t.textContent=msg.label;
+    g.appendChild(path); g.appendChild(t);
+  } else {
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y); line.setAttribute('x2',x2); line.setAttribute('y2',y);
+    line.setAttribute('stroke',msg.ret?'#c8860a':'#0d7377'); line.setAttribute('stroke-width',1.5);
+    if(msg.ret) line.setAttribute('stroke-dasharray','6,3');
+    line.setAttribute('marker-end',msg.ret?'url(#arrow-amber)':'url(#arrow-teal)');
+    const mid=(x1+x2)/2;
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',mid); t.setAttribute('y',y-5); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size',10); t.setAttribute('font-family','IBM Plex Mono'); t.setAttribute('fill',msg.ret?'#c8860a':'#0d7377'); t.textContent=msg.label;
+    // step label
+    const sl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    sl.setAttribute('x',8); sl.setAttribute('y',y+4); sl.setAttribute('font-size',9); sl.setAttribute('font-family','IBM Plex Mono'); sl.setAttribute('fill','#7a6a4a'); sl.textContent=msg.step;
+    // horizontal step line
+    const stl=document.createElementNS('http://www.w3.org/2000/svg','line');
+    stl.setAttribute('x1',20); stl.setAttribute('y1',y); stl.setAttribute('x2',60); stl.setAttribute('y2',y); stl.setAttribute('stroke','#d4c9a8'); stl.setAttribute('stroke-width',0.5);
+    g.appendChild(stl); g.appendChild(sl); g.appendChild(line); g.appendChild(t);
+  }
+  svg.appendChild(g);
+  lg('seq-log',`Step ${msg.step}: ${SEQ_ACTORS[msg.from]} → ${SEQ_ACTORS[msg.to]}: <span style="color:#f0c040;">${msg.label}</span>`);
+  seqMsgIndex++;
+}
+
+function seqReset(){ if(seqTimer) clearInterval(seqTimer); seqMsgIndex=0; drawSeqBase(); document.getElementById('seq-log').innerHTML=''; document.getElementById('seq-step-btn').style.display='none'; }
+
+// =====================================================
+// USER FLOW (SVG Interactive)
+// =====================================================
+const FLOW_NODES=[
+  {id:'start', x:40, y:240, w:80, h:36, shape:'round', label:'Start', color:'#1e8449'},
+  {id:'cart', x:160, y:240, w:90, h:36, shape:'rect', label:'Cart Page', color:'#0d7377'},
+  {id:'logged', x:300, y:240, w:80, h:80, shape:'diamond', label:'Logged\nin?', color:'#c8860a'},
+  {id:'login', x:300, y:370, w:90, h:36, shape:'rect', label:'Login Page', color:'#1a5276'},
+  {id:'checkout', x:440, y:240, w:90, h:36, shape:'rect', label:'Checkout\nForm', color:'#0d7377'},
+  {id:'coupon', x:440, y:340, w:90, h:36, shape:'rect', label:'Apply\nCoupon', color:'#6c3483'},
+  {id:'payment', x:590, y:240, w:90, h:36, shape:'rect', label:'Payment\nPage', color:'#0d7377'},
+  {id:'declined', x:590, y:360, w:90, h:36, shape:'rect', label:'Payment\nDeclined', color:'#c0392b'},
+  {id:'confirm', x:740, y:240, w:90, h:36, shape:'rect', label:'Order\nConfirm', color:'#1e8449'},
+  {id:'end', x:860, y:240, w:60, h:36, shape:'round', label:'End', color:'#1e8449'},
+];
+const FLOW_EDGES=[
+  {from:'start',to:'cart',label:''},
+  {from:'cart',to:'logged',label:'Checkout →'},
+  {from:'logged',to:'checkout',label:'Yes'},
+  {from:'logged',to:'login',label:'No'},
+  {from:'login',to:'checkout',label:'Login OK'},
+  {from:'checkout',to:'coupon',label:'Apply code'},
+  {from:'coupon',to:'checkout',label:'Back'},
+  {from:'checkout',to:'payment',label:'Continue →'},
+  {from:'payment',to:'declined',label:'Card fails'},
+  {from:'declined',to:'payment',label:'Retry'},
+  {from:'payment',to:'confirm',label:'Approved ✓'},
+  {from:'confirm',to:'end',label:''},
+];
+let flowWalkIdx=0, flowWalkTimer=null;
+const FLOW_WALK_PATH=['start','cart','logged','checkout','payment','confirm','end'];
+
+function initUserFlow(){ flowWalkIdx=0; drawFlowDiagram(); }
+
+function drawFlowDiagram(){
+  const svg=document.getElementById('flow-svg'); if(!svg) return;
+  svg.innerHTML=`<defs>
+    <marker id="fa-teal" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#0d7377"/></marker>
+    <marker id="fa-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#c8860a"/></marker>
+    <marker id="fa-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#c0392b"/></marker>
+  </defs>`;
+  // edges first (behind nodes)
+  FLOW_EDGES.forEach(e=>{
+    const fn=FLOW_NODES.find(n=>n.id===e.from), tn=FLOW_NODES.find(n=>n.id===e.to);
+    if(!fn||!tn) return;
+    const x1=fn.x+fn.w/2, y1=fn.y+fn.h/2, x2=tn.x+tn.w/2, y2=tn.y+tn.h/2;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1); line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    line.setAttribute('stroke','#d4c9a8'); line.setAttribute('stroke-width',1.5); line.setAttribute('marker-end','url(#fa-teal)');
+    if(e.label){
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',(x1+x2)/2); t.setAttribute('y',(y1+y2)/2-4); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size',9); t.setAttribute('font-family','IBM Plex Mono'); t.setAttribute('fill','#7a6a4a'); t.textContent=e.label;
+      svg.appendChild(t);
+    }
+    svg.appendChild(line);
+  });
+  // nodes
+  FLOW_NODES.forEach(n=>{
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.id='flow-node-'+n.id; g.style.cursor='pointer';
+    g.onclick=()=>{ highlightFlowNode(n.id); lg('flow-log',`Clicked: <span style="color:#f0c040;">${n.label}</span>`); };
+    if(n.shape==='diamond'){
+      const d=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      const cx=n.x+n.w/2, cy=n.y+n.h/2, hw=n.w/2, hh=n.h/2;
+      d.setAttribute('points',`${cx},${cy-hh} ${cx+hw},${cy} ${cx},${cy+hh} ${cx-hw},${cy}`);
+      d.setAttribute('fill','#fefcf7'); d.setAttribute('stroke',n.color); d.setAttribute('stroke-width',2);
+      g.appendChild(d);
+    } else if(n.shape==='round'){
+      const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      r.setAttribute('x',n.x); r.setAttribute('y',n.y); r.setAttribute('width',n.w); r.setAttribute('height',n.h); r.setAttribute('rx',18); r.setAttribute('fill',n.color); r.setAttribute('stroke',n.color); r.setAttribute('stroke-width',2);
+      g.appendChild(r);
+    } else {
+      const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      r.setAttribute('x',n.x); r.setAttribute('y',n.y); r.setAttribute('width',n.w); r.setAttribute('height',n.h); r.setAttribute('rx',4); r.setAttribute('fill','#fefcf7'); r.setAttribute('stroke',n.color); r.setAttribute('stroke-width',2);
+      g.appendChild(r);
+    }
+    const parts=n.label.split('\n');
+    parts.forEach((p,i)=>{
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',n.x+n.w/2); t.setAttribute('y',n.y+n.h/2+(i-(parts.length-1)/2)*14+5); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size',10); t.setAttribute('font-family','IBM Plex Mono'); t.setAttribute('font-weight','700'); t.setAttribute('fill',n.shape==='round'?'#fff':n.color); t.textContent=p;
+      g.appendChild(t);
+    });
+    svg.appendChild(g);
+  });
+}
+
+function highlightFlowNode(id){
+  FLOW_NODES.forEach(n=>{
+    const g=document.getElementById('flow-node-'+n.id); if(!g) return;
+    const rects=g.querySelectorAll('rect,polygon');
+    rects.forEach(r=>{ r.setAttribute('fill', n.id===id?(n.shape==='round'?n.color:'rgba(13,115,119,0.15)'):(n.shape==='round'?n.color:'#fefcf7')); });
+  });
+}
+
+function flowWalkthrough(){
+  flowWalkIdx=0; flowReset();
+  flowWalkTimer=setInterval(()=>{
+    if(flowWalkIdx>=FLOW_WALK_PATH.length){ clearInterval(flowWalkTimer); return; }
+    const id=FLOW_WALK_PATH[flowWalkIdx];
+    highlightFlowNode(id);
+    const n=FLOW_NODES.find(x=>x.id===id);
+    lg('flow-log',`User arrives at: <span style="color:#f0c040;">${n?.label?.replace('\n',' ')}</span>`);
+    flowWalkIdx++;
+  },800);
+}
+
+function flowReset(){ if(flowWalkTimer) clearInterval(flowWalkTimer); flowWalkIdx=0; drawFlowDiagram(); document.getElementById('flow-log').innerHTML=''; }
+
+// =====================================================
+// SWIMLANE
+// =====================================================
+const SWIM_LANES=[
+  { name:'Customer', color:'#0d7377', items:[
+    {step:1,text:'Click Checkout',msg:'',active:false},
+    {step:3,text:'Select Shipping',msg:'',active:false},
+    {step:5,text:'Enter Payment',msg:'',active:false},
+    {step:12,text:'View Confirmation',msg:'',active:false},
+  ]},
+  { name:'Frontend', color:'#1a5276', items:[
+    {step:2,text:'Validate Cart UI',msg:'',active:false},
+    {step:4,text:'Calculate Total',msg:'',active:false},
+    {step:9,text:'Show Loading...',msg:'',active:false},
+    {step:11,text:'Render Confirm Page',msg:'',active:false},
+  ]},
+  { name:'Backend API', color:'#1e8449', items:[
+    {step:2,text:'GET /validate-cart',msg:'',active:false},
+    {step:6,text:'POST /create-order',msg:'',active:false},
+    {step:8,text:'INSERT Order',msg:'',active:false},
+    {step:11,text:'Return orderId+ETA',msg:'',active:false},
+  ]},
+  { name:'Payment Svc', color:'#c8860a', items:[
+    {step:7,text:'Charge Card',msg:'',active:false},
+    {step:7,text:'Return txn_123',msg:'',active:false},
+  ]},
+  { name:'Inventory', color:'#6c3483', items:[
+    {step:2,text:'Check Stock',msg:'',active:false},
+    {step:9,text:'Reserve Items',msg:'',active:false},
+  ]},
+  { name:'Notify Svc', color:'#c0392b', items:[
+    {step:10,text:'Send Confirm Email',msg:'',active:false},
+  ]},
+];
+
+let swimStep=0, swimTimer=null;
+function initSwimlane(){ swimStep=0; renderSwimlane([]); }
+
+function renderSwimlane(activeSteps){
+  const wrap=document.getElementById('swim-diagram'); if(!wrap) return;
+  const colors=SWIM_LANES.map(l=>l.color);
+  let html='<div style="display:flex;gap:0;border:1.5px solid var(--border);border-radius:6px;overflow:hidden;min-width:700px;">';
+  SWIM_LANES.forEach((lane,i)=>{
+    html+=`<div style="flex:1;min-width:110px;border-right:1px solid var(--border);">`;
+    html+=`<div style="padding:8px;text-align:center;font-family:IBM Plex Mono,monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:${lane.color};color:#fff;border-bottom:2px solid ${lane.color};">${lane.icon||''} ${lane.name}</div>`;
+    html+=`<div style="padding:8px;min-height:240px;">`;
+    lane.items.forEach(item=>{
+      const active=activeSteps.includes(item.step);
+      html+=`<div style="padding:8px 10px;border-radius:4px;font-size:11px;margin-bottom:8px;border:1.5px solid ${active?lane.color:'var(--border)'};background:${active?lane.color+'22':'var(--bg)'};color:${active?lane.color:'#7a6a4a'};transition:all .4s;font-family:IBM Plex Mono,monospace;">
+        <div style="font-weight:700;font-size:9px;margin-bottom:2px;opacity:.7;">STEP ${item.step}</div>
+        ${item.text}
+      </div>`;
+    });
+    html+='</div></div>';
+  });
+  html+='</div>';
+  wrap.innerHTML=html;
+}
+
+const swimAllSteps=[1,2,3,4,5,6,7,8,9,10,11,12];
+let swimActiveSteps=[];
+function swimPlay(){
+  swimActiveSteps=[];
+  renderSwimlane([]);
+  document.getElementById('swim-log').innerHTML='';
+  let i=0;
+  swimTimer=setInterval(()=>{
+    if(i>=swimAllSteps.length){ clearInterval(swimTimer); return; }
+    swimActiveSteps.push(swimAllSteps[i]);
+    renderSwimlane([...swimActiveSteps]);
+    const step=MAIN_FLOW.find(f=>f.step===swimAllSteps[i]);
+    if(step) lg('swim-log',`Step ${step.step} [${step.actor}]: ${step.action}`);
+    i++;
+  },700);
+}
+function swimReset(){ if(swimTimer) clearInterval(swimTimer); swimActiveSteps=[]; renderSwimlane([]); document.getElementById('swim-log').innerHTML=''; }
+
+const OTHER_DIAGRAMS=[
+  {icon:'🔄',name:'State Machine',desc:'Models Order status transitions: pending→confirmed→shipped→delivered→returned'},
+  {icon:'🗄️',name:'ERD',desc:'Shows Order, Customer, Product, Payment entities and relationships'},
+  {icon:'⚡',name:'Event Flow',desc:'OrderPlaced→PaymentProcessed→InventoryReserved→EmailSent events'},
+  {icon:'🌐',name:'Context Diagram',desc:'E-Commerce system boundary with all 8 external actors'},
+  {icon:'📋',name:'Use Case Diagram',desc:'UML oval use cases connected to stick figure actors'},
+  {icon:'⚙️',name:'Activity Diagram',desc:'UML flow with parallel bars for concurrent inventory+notification steps'},
+];
+function initSwimlane(){
+  swimStep=0; renderSwimlane([]);
+  const og=document.getElementById('other-diag-grid'); if(!og) return;
+  og.innerHTML='';
+  OTHER_DIAGRAMS.forEach(d=>{
+    const el=document.createElement('div'); el.style.cssText='background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:12px;';
+    el.innerHTML=`<div style="font-size:24px;margin-bottom:6px;">${d.icon}</div><div style="font-size:11px;font-family:IBM Plex Mono,monospace;font-weight:700;color:var(--ink);margin-bottom:4px;">${d.name}</div><div style="font-size:11px;color:#7a6a4a;line-height:1.5;">${d.desc}</div>`;
+    og.appendChild(el);
+  });
+}
+
+// =====================================================
+// FULL SIMULATION
+// =====================================================
+const SIM_STEPS=[
+  { step:1, actor:'Customer', icon:'👤', action:'Navigates to Cart page', detail:'Customer has 3 items in cart. Clicks the "Checkout" button in the top navigation.', data:{ send:'{cartId: "c_789", items: [{productId:"p1",name:"Laptop",qty:1,price:999.99},{productId:"p2",name:"Mouse",qty:2,price:29.99}]}', receive:'Checkout page loads' }, actorStates:{Customer:'active',Frontend:'idle',Backend:'idle','Payment Svc':'idle',Inventory:'idle','Notify Svc':'idle'} },
+  { step:2, actor:'System', icon:'🖥️', action:'Validates cart items are in stock', detail:'Backend calls Inventory Service for each item. All items confirmed available. Cart total calculated.', data:{ send:'GET /api/cart/c_789/validate\n[{productId:"p1",qty:1},{productId:"p2",qty:2}]', receive:'{valid:true, items:[{inStock:true,available:5},{inStock:true,available:23}]}' }, actorStates:{Customer:'waiting',Frontend:'processing',Backend:'processing','Payment Svc':'idle',Inventory:'active','Notify Svc':'idle'} },
+  { step:3, actor:'Customer', icon:'👤', action:'Selects shipping address and method', detail:'Customer selects saved address "123 Main St" and chooses "Standard Shipping (3-5 days, $9.99)".', data:{ send:'{addressId:"addr_1",shippingMethod:"standard"}', receive:'Checkout form updated with shipping cost' }, actorStates:{Customer:'active',Frontend:'idle',Backend:'idle','Payment Svc':'idle',Inventory:'idle','Notify Svc':'idle'} },
+  { step:4, actor:'System', icon:'🖥️', action:'Calculates final order total', detail:'Backend computes: items subtotal ($1,059.97) + tax (8%, $84.80) + shipping ($9.99) = $1,154.76', data:{ send:'POST /api/checkout/calculate\n{items:[...],shippingMethod:"standard",addressId:"addr_1"}', receive:'{subtotal:1059.97,tax:84.80,shipping:9.99,total:1154.76}' }, actorStates:{Customer:'waiting',Frontend:'idle',Backend:'processing','Payment Svc':'idle',Inventory:'idle','Notify Svc':'idle'} },
+  { step:5, actor:'Customer', icon:'👤', action:'Enters payment information', detail:'Customer enters credit card details. Card number is immediately tokenized — raw card data never touches backend servers.', data:{ send:'Card tokenized by payment SDK → cardToken: "tok_xyz"\nbillingAddress: "123 Main St, NY 10001"', receive:'Payment form ready, token stored in session' }, actorStates:{Customer:'active',Frontend:'processing','Payment Svc':'active',Backend:'idle',Inventory:'idle','Notify Svc':'idle'} },
+  { step:6, actor:'System', icon:'🖥️', action:'Creates order and requests payment', detail:'Backend creates a pending order record, then sends payment request to Payment Service with amount and card token.', data:{ send:'POST /api/payment/charge\n{amount:1154.76,currency:"USD",token:"tok_xyz",orderId:"ord_pending"}', receive:'Payment Service processing...' }, actorStates:{Customer:'waiting',Frontend:'loading',Backend:'processing','Payment Svc':'active',Inventory:'idle','Notify Svc':'idle'} },
+  { step:7, actor:'Payment Svc', icon:'💳', action:'Validates and processes the charge', detail:'Stripe validates the card token, performs fraud checks, and charges $1,154.76 to the customer\'s card.', data:{ send:'{amount:1154.76,currency:"USD",source:"tok_xyz"}', receive:'{id:"txn_abc123",status:"succeeded",amount:1154.76,created:1700000000}' }, actorStates:{Customer:'waiting',Frontend:'loading',Backend:'waiting','Payment Svc':'active',Inventory:'idle','Notify Svc':'idle'} },
+  { step:8, actor:'System', icon:'🖥️', action:'Creates confirmed Order record', detail:'Payment succeeded! Backend updates the order status from "pending" to "confirmed" and generates a permanent Order ID.', data:{ send:'INSERT INTO orders (orderId,customerId,status,total,transactionId,createdAt)\nVALUES ("ord_7829","cust_41","confirmed",1154.76,"txn_abc123",NOW())', receive:'{orderId:"ord_7829",status:"confirmed",createdAt:"2024-01-15T14:23:00Z"}' }, actorStates:{Customer:'waiting',Frontend:'loading',Backend:'active','Payment Svc':'idle',Inventory:'idle','Notify Svc':'idle'} },
+  { step:9, actor:'Inventory', icon:'🏭', action:'Reserves inventory for ordered items', detail:'Inventory Service decrements available stock and creates a reservation to prevent overselling.', data:{ send:'POST /inventory/reserve\n[{productId:"p1",qty:1},{productId:"p2",qty:2}]', receive:'{reservationId:"res_9901",confirmedItems:["p1","p2"],reservedUntil:"2024-01-15T16:23:00Z"}' }, actorStates:{Customer:'waiting',Frontend:'loading',Backend:'active','Payment Svc':'idle',Inventory:'active','Notify Svc':'idle'} },
+  { step:10, actor:'Notify Svc', icon:'📧', action:'Sends order confirmation email', detail:'Notification Service sends a formatted email to customer@example.com with order details, items, total, and tracking link.', data:{ send:'POST /notify/email\n{to:"customer@email.com",template:"order_confirm",orderId:"ord_7829",total:$1154.76}', receive:'{emailId:"em_5541",status:"queued",estimatedDelivery:"within 60s"}' }, actorStates:{Customer:'waiting',Frontend:'loading',Backend:'idle','Payment Svc':'idle',Inventory:'idle','Notify Svc':'active'} },
+  { step:11, actor:'System', icon:'🖥️', action:'Returns confirmation to frontend', detail:'Backend sends the final response to the frontend with order ID, status, and estimated delivery date.', data:{ send:'HTTP 201 Created\n{orderId:"ord_7829",status:"confirmed",estimatedDelivery:"Jan 18-20, 2024",trackingUrl:"https://track.example.com/ord_7829"}', receive:'Frontend receives success response' }, actorStates:{Customer:'waiting',Frontend:'active',Backend:'idle','Payment Svc':'idle',Inventory:'idle','Notify Svc':'idle'} },
+  { step:12, actor:'Customer', icon:'👤', action:'Views Order Confirmation screen', detail:'Success! Customer sees "Order Confirmed" page with order ID ord_7829, item list, total paid, and delivery timeline. A confirmation email was also sent.', data:{ send:'(page render)', receive:'✅ Order ID: ord-7829\n📦 2 items confirmed\n💳 $1,154.76 charged\n🚚 Est. delivery: Jan 18-20\n📧 Confirmation email sent!' }, actorStates:{Customer:'active',Frontend:'active',Backend:'idle','Payment Svc':'idle',Inventory:'idle','Notify Svc':'idle'} },
+];
+
+let simCurStep=0, simAutoTimer=null;
+const SIM_ACTOR_LIST=['Customer','Frontend','Backend','Payment Svc','Inventory','Notify Svc'];
+
+function initSimulation(){
+  simCurStep=0;
+  renderSimActors({Customer:'idle',Frontend:'idle',Backend:'idle','Payment Svc':'idle',Inventory:'idle','Notify Svc':'idle'});
+  renderSimStepList(-1);
+  document.getElementById('sim-detail').innerHTML='<div style="font-size:13px;color:#7a6a4a;font-family:IBM Plex Mono,monospace;">Press "Start Simulation" to begin...</div>';
+  document.getElementById('sim-data-box').textContent='';
+  document.getElementById('sim-next-btn').style.display='none';
+  document.getElementById('sim-auto-btn').style.display='none';
+  document.getElementById('sim-step-num').textContent='0';
+  document.getElementById('sim-log').innerHTML='';
+}
+
+function renderSimActors(states){
+  const row=document.getElementById('sim-actors-row'); if(!row) return;
+  const colors={'active':'var(--teal)','processing':'var(--amber)','waiting':'#999','loading':'var(--blue)','idle':'#ddd'};
+  const icons={'Customer':'👤','Frontend':'🖥️','Backend':'⚙️','Payment Svc':'💳','Inventory':'🏭','Notify Svc':'📧'};
+  row.innerHTML='';
+  SIM_ACTOR_LIST.forEach(a=>{
+    const state=states[a]||'idle';
+    const d=document.createElement('div'); d.style.cssText=`padding:8px 12px;border-radius:20px;font-size:11px;font-family:IBM Plex Mono,monospace;font-weight:700;border:2px solid ${colors[state]||'#ddd'};background:${(colors[state]||'#ddd')}22;color:${state==='idle'?'#999':colors[state]};transition:all .4s;display:flex;align-items:center;gap:6px;`;
+    d.innerHTML=`${icons[a]||'●'} ${a} <span style="font-size:9px;opacity:.7;">[${state.toUpperCase()}]</span>`;
+    row.appendChild(d);
+  });
+}
+
+function renderSimStepList(currentIdx){
+  const list=document.getElementById('sim-step-list'); if(!list) return;
+  list.innerHTML='';
+  SIM_STEPS.forEach((s,i)=>{
+    const d=document.createElement('div'); 
+    const isDone=i<currentIdx, isActive=i===currentIdx;
+    d.style.cssText=`display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:4px;margin-bottom:5px;font-size:11px;font-family:IBM Plex Mono,monospace;border:1px solid ${isActive?'var(--teal)':isDone?'#ccc':'var(--border)'};background:${isActive?'var(--teal-l)':isDone?'#f0ece0':'var(--bg)'};color:${isActive?'var(--teal)':isDone?'#999':'#5a4a2a'};cursor:pointer;transition:all .3s;`;
+    d.innerHTML=`<span style="font-size:14px;">${isDone?'✓':isActive?'▶':s.step}</span> ${s.icon} ${s.action.substring(0,30)}${s.action.length>30?'...':''}`;
+    d.onclick=()=>jumpToSimStep(i);
+    list.appendChild(d);
+  });
+}
+
+function simStart(){
+  simCurStep=0;
+  document.getElementById('sim-next-btn').style.display='inline-block';
+  document.getElementById('sim-auto-btn').style.display='inline-block';
+  showSimStep(0);
+}
+
+function showSimStep(idx){
+  const s=SIM_STEPS[idx]; if(!s) return;
+  simCurStep=idx;
+  document.getElementById('sim-step-num').textContent=s.step;
+  renderSimStepList(idx);
+  renderSimActors(s.actorStates);
+  const detail=document.getElementById('sim-detail');
+  if(detail){
+    detail.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;">
+      <span style="font-size:32px;">${s.icon}</span>
+      <div>
+        <div style="font-family:IBM Plex Mono,monospace;font-size:10px;font-weight:700;color:var(--teal);margin-bottom:3px;">STEP ${s.step} — ${s.actor}</div>
+        <div style="font-size:15px;font-weight:900;margin-bottom:6px;">${s.action}</div>
+        <p style="font-size:12px;color:#5a4a2a;line-height:1.7;">${s.detail}</p>
+      </div>
+    </div>`;
+  }
+  const db=document.getElementById('sim-data-box');
+  if(db){ db.innerHTML=`<div style="color:#f0c040;font-weight:700;margin-bottom:6px;">📤 SENDING:</div><div style="color:#90ee90;white-space:pre-wrap;margin-bottom:10px;">${s.data.send}</div><div style="color:#f0c040;font-weight:700;margin-bottom:6px;">📥 RECEIVING:</div><div style="color:#87ceeb;white-space:pre-wrap;">${s.data.receive}</div>`; }
+  lg('sim-log',`[Step ${s.step}] <span style="color:#f0c040;">${s.actor}</span>: ${s.action}`);
+}
+
+function simNext(){ if(simCurStep<SIM_STEPS.length-1) showSimStep(simCurStep+1); else { lg('sim-log','✅ Simulation complete! Order placed successfully.'); } }
+function jumpToSimStep(idx){ showSimStep(idx); }
+function simAuto(){
+  if(simAutoTimer){ clearInterval(simAutoTimer); simAutoTimer=null; document.getElementById('sim-auto-btn').textContent='⚡ Auto Play'; return; }
+  document.getElementById('sim-auto-btn').textContent='⏸ Pause';
+  simAutoTimer=setInterval(()=>{
+    if(simCurStep>=SIM_STEPS.length-1){ clearInterval(simAutoTimer); simAutoTimer=null; document.getElementById('sim-auto-btn').textContent='⚡ Auto Play'; lg('sim-log','✅ Auto-play complete!'); return; }
+    showSimStep(simCurStep+1);
+  },1800);
+}
+function simReset(){ if(simAutoTimer){clearInterval(simAutoTimer);simAutoTimer=null;} initSimulation(); document.getElementById('sim-auto-btn').textContent='⚡ Auto Play'; }
+
+// INIT on load
+window.onload=()=>{};
+</script>
+</body>
+</html>

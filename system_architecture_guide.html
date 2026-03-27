@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Large Scale System Architecture - Interactive Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-bottom: 3px solid #1e3c72;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #1e3c72;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #1e3c72;
+            font-size: 0.95em;
+        }
+
+        .nav-btn:hover {
+            background: #1e3c72;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
+        }
+
+        .nav-btn.active {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+            font-size: 2.2em;
+            border-bottom: 3px solid #1e3c72;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #2a5298;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.6em;
+        }
+
+        h4 {
+            color: #1e3c72;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-left: 5px solid #1e3c72;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .pros, .cons {
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .pros {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+        }
+
+        .cons {
+            background: #f8d7da;
+            border-left: 5px solid #dc3545;
+        }
+
+        .pros h4, .cons h4 {
+            margin-top: 0;
+        }
+
+        .pros h4 { color: #28a745; }
+        .cons h4 { color: #dc3545; }
+
+        /* Simulation Container */
+        .simulation {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+            min-height: 500px;
+            position: relative;
+            border: 2px solid #e0e0e0;
+        }
+
+        .sim-controls {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .sim-btn {
+            padding: 14px 35px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .sim-btn:hover {
+            background: #2a5298;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(30, 60, 114, 0.3);
+        }
+
+        .sim-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* DNS Simulation Styles */
+        .dns-sim {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 400px;
+            position: relative;
+        }
+
+        .dns-client, .dns-server, .web-server {
+            width: 120px;
+            text-align: center;
+        }
+
+        .dns-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            font-size: 2.5em;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .dns-query, .dns-response {
+            position: absolute;
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            opacity: 0;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+
+        .dns-log {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        /* Load Balancer Simulation */
+        .lb-sim {
+            position: relative;
+            height: 500px;
+        }
+
+        .lb-client {
+            position: absolute;
+            left: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .lb-balancer {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+        }
+
+        .lb-servers {
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .server-box {
+            width: 100px;
+            height: 80px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .server-load {
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+
+        .request-packet {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8em;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        /* GSLB Simulation */
+        .gslb-sim {
+            position: relative;
+            height: 600px;
+        }
+
+        .user-location {
+            position: absolute;
+            width: 100px;
+            text-align: center;
+        }
+
+        .datacenter {
+            position: absolute;
+            width: 120px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .latency-line {
+            position: absolute;
+            height: 2px;
+            background: #333;
+            transform-origin: left center;
+            opacity: 0;
+        }
+
+        .latency-label {
+            position: absolute;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Message Broker Simulation */
+        .mb-sim {
+            position: relative;
+            height: 500px;
+        }
+
+        .producer, .broker, .consumer {
+            position: absolute;
+            width: 120px;
+            text-align: center;
+        }
+
+        .queue-visual {
+            position: absolute;
+            width: 400px;
+            height: 80px;
+            border: 3px dashed #1e3c72;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            gap: 10px;
+            overflow-x: auto;
+            background: white;
+        }
+
+        .message-box {
+            min-width: 60px;
+            height: 50px;
+            background: linear-gradient(135deg, #FA8BFF 0%, #2BD2FF 90%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            animation: slideIn 0.5s;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* API Gateway Simulation */
+        .gateway-sim {
+            position: relative;
+            height: 600px;
+        }
+
+        .api-client {
+            position: absolute;
+            left: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .api-gateway {
+            position: absolute;
+            left: 40%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            padding: 20px;
+            background: linear-gradient(135deg, #FA8BFF 0%, #2BD2FF 90%);
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .gateway-features {
+            font-size: 0.75em;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        .microservices {
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .microservice {
+            width: 140px;
+            padding: 15px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .api-request {
+            position: absolute;
+            background: #ff6b6b;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            opacity: 0;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background: #1e3c72;
+            color: white;
+            font-weight: bold;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .highlight {
+            background: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .pros-cons {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .simulation {
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏗️ Large Scale System Architecture</h1>
+            <p class="subtitle">Interactive Guide with Live Simulations</p>
+        </header>
+
+        <nav>
+            <button class="nav-btn active" onclick="showSection('dns')">DNS</button>
+            <button class="nav-btn" onclick="showSection('loadbalancing')">Load Balancing</button>
+            <button class="nav-btn" onclick="showSection('gslb')">GSLB</button>
+            <button class="nav-btn" onclick="showSection('messagebroker')">Message Brokers</button>
+            <button class="nav-btn" onclick="showSection('apigateway')">API Gateway</button>
+        </nav>
+
+        <div class="content">
+            <!-- DNS Section -->
+            <div id="dns" class="section active">
+                <h2>🌐 DNS (Domain Name System)</h2>
+
+                <div class="card">
+                    <h3>What is DNS?</h3>
+                    <p><strong>DNS</strong> is the phonebook of the internet. It translates human-readable domain names (like <code>www.example.com</code>) into IP addresses (like <code>192.0.2.1</code>) that computers use to identify each other on the network.</p>
+                </div>
+
+                <h3>How DNS Works</h3>
+                <div class="card">
+                    <ol>
+                        <li><strong>User enters URL:</strong> Browser needs to find the IP address</li>
+                        <li><strong>DNS Resolver Query:</strong> Request sent to DNS resolver (usually ISP's DNS server)</li>
+                        <li><strong>Root Server:</strong> Resolver queries root nameserver for TLD info</li>
+                        <li><strong>TLD Server:</strong> Queries Top-Level Domain server (.com, .org, etc.)</li>
+                        <li><strong>Authoritative Server:</strong> Gets actual IP address from domain's nameserver</li>
+                        <li><strong>Response:</strong> IP address returned to browser</li>
+                        <li><strong>Connection:</strong> Browser connects to the web server</li>
+                    </ol>
+                </div>
+
+                <h3>🎬 DNS Resolution Simulation</h3>
+                <div class="simulation">
+                    <div class="sim-controls">
+                        <button class="sim-btn" onclick="startDNSSimulation()">▶ Start DNS Lookup</button>
+                        <button class="sim-btn" onclick="resetDNSSimulation()">🔄 Reset</button>
+                    </div>
+                    
+                    <div class="dns-sim" id="dnsSimulation">
+                        <div class="dns-client">
+                            <div class="dns-icon">💻</div>
+                            <strong>User Browser</strong>
+                            <div style="margin-top: 10px; font-size: 0.85em;">www.example.com</div>
+                        </div>
+                        
+                        <div class="dns-server">
+                            <div class="dns-icon">🌐</div>
+                            <strong>DNS Resolver</strong>
+                        </div>
+                        
+                        <div class="web-server">
+                            <div class="dns-icon">🖥️</div>
+                            <strong>Web Server</strong>
+                            <div style="margin-top: 10px; font-size: 0.85em;">192.0.2.1</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dns-log" id="dnsLog"></div>
+                </div>
+
+                <h3>DNS Record Types</h3>
+                <div class="card">
+                    <ul>
+                        <li><strong>A Record:</strong> Maps domain to IPv4 address (example.com → 192.0.2.1)</li>
+                        <li><strong>AAAA Record:</strong> Maps domain to IPv6 address</li>
+                        <li><strong>CNAME Record:</strong> Alias of one domain to another (www.example.com → example.com)</li>
+                        <li><strong>MX Record:</strong> Mail exchange servers for email</li>
+                        <li><strong>TXT Record:</strong> Text information, often for verification</li>
+                        <li><strong>NS Record:</strong> Nameserver records indicating authoritative DNS servers</li>
+                    </ul>
+                </div>
+
+                <h3>Pros and Cons of DNS</h3>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>✅ Pros</h4>
+                        <ul>
+                            <li><strong>Human-Friendly:</strong> Easy to remember names instead of IP addresses</li>
+                            <li><strong>Flexibility:</strong> Can change server IPs without changing domain</li>
+                            <li><strong>Load Distribution:</strong> One domain can resolve to multiple IPs</li>
+                            <li><strong>Caching:</strong> Reduces lookup time through caching at multiple levels</li>
+                            <li><strong>Decentralized:</strong> Distributed system is resilient</li>
+                            <li><strong>Global Reach:</strong> Works across the entire internet</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>❌ Cons</h4>
+                        <ul>
+                            <li><strong>Propagation Delay:</strong> Changes can take 24-48 hours to propagate globally</li>
+                            <li><strong>Single Point of Failure:</strong> If DNS fails, website is unreachable even if server is up</li>
+                            <li><strong>Security Vulnerabilities:</strong> DNS spoofing, cache poisoning, DDoS attacks</li>
+                            <li><strong>Privacy Concerns:</strong> DNS queries can reveal browsing habits</li>
+                            <li><strong>No Built-in Security:</strong> Original DNS had no encryption (DNSSEC adds this)</li>
+                            <li><strong>Complexity:</strong> Troubleshooting DNS issues can be difficult</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>DNS Caching</h3>
+                <div class="card">
+                    <p>DNS responses are cached at multiple levels to improve performance:</p>
+                    <ul>
+                        <li><strong>Browser Cache:</strong> Temporary storage in your browser</li>
+                        <li><strong>OS Cache:</strong> Operating system level cache</li>
+                        <li><strong>Router Cache:</strong> Local network router cache</li>
+                        <li><strong>ISP Cache:</strong> Internet Service Provider DNS cache</li>
+                    </ul>
+                    <p><strong>TTL (Time To Live):</strong> Each DNS record has a TTL value (in seconds) that specifies how long it should be cached.</p>
+                </div>
+            </div>
+
+            <!-- Load Balancing Section -->
+            <div id="loadbalancing" class="section">
+                <h2>⚖️ Load Balancing</h2>
+
+                <div class="card">
+                    <h3>What is Load Balancing?</h3>
+                    <p><strong>Load Balancing</strong> distributes incoming network traffic across multiple servers to ensure no single server bears too much load. This improves application responsiveness and availability.</p>
+                </div>
+
+                <h3>🎬 Load Balancer Simulation</h3>
+                <div class="simulation">
+                    <div class="sim-controls">
+                        <button class="sim-btn" id="lbStartBtn" onclick="startLoadBalancing()">▶ Send Requests</button>
+                        <button class="sim-btn" onclick="resetLoadBalancing()">🔄 Reset</button>
+                        <div style="margin-top: 10px;">
+                            <label>Algorithm: </label>
+                            <select id="lbAlgorithm" style="padding: 8px; border-radius: 5px;">
+                                <option value="roundrobin">Round Robin</option>
+                                <option value="leastconn">Least Connections</option>
+                                <option value="random">Random</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="lb-sim" id="lbSimulation">
+                        <div class="lb-client">
+                            <div class="dns-icon">👥</div>
+                            <strong>Clients</strong>
+                        </div>
+                        
+                        <div class="lb-balancer">
+                            <div class="dns-icon" style="width: 120px; height: 120px; font-size: 3em;">⚖️</div>
+                            <strong>Load Balancer</strong>
+                        </div>
+                        
+                        <div class="lb-servers">
+                            <div class="server-box" id="server1">
+                                <div>Server 1</div>
+                                <div class="server-load">Load: <span id="load1">0</span></div>
+                            </div>
+                            <div class="server-box" id="server2">
+                                <div>Server 2</div>
+                                <div class="server-load">Load: <span id="load2">0</span></div>
+                            </div>
+                            <div class="server-box" id="server3">
+                                <div>Server 3</div>
+                                <div class="server-load">Load: <span id="load3">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Load Balancing Algorithms</h3>
+                <div class="card">
+                    <h4>1. Round Robin</h4>
+                    <p>Distributes requests sequentially across all servers. Simple and effective when all servers have similar capacity.</p>
+                    
+                    <h4>2. Least Connections</h4>
+                    <p>Sends requests to the server with the fewest active connections. Good for varying request processing times.</p>
+                    
+                    <h4>3. Weighted Round Robin</h4>
+                    <p>Similar to round robin but servers with higher weights receive more requests. Useful when servers have different capacities.</p>
+                    
+                    <h4>4. IP Hash</h4>
+                    <p>Uses client IP address to determine which server receives the request. Ensures same client always goes to same server.</p>
+                    
+                    <h4>5. Least Response Time</h4>
+                    <p>Sends requests to server with lowest response time and fewest connections.</p>
+                    
+                    <h4>6. Random</h4>
+                    <p>Randomly selects a server for each request. Simple but less predictable.</p>
+                </div>
+
+                <h3>Types of Load Balancers</h3>
+                <div class="card">
+                    <h4>Layer 4 (Transport Layer) Load Balancing</h4>
+                    <ul>
+                        <li>Operates at TCP/UDP level</li>
+                        <li>Faster, less resource intensive</li>
+                        <li>Routes based on IP address and port</li>
+                        <li>Cannot inspect packet contents</li>
+                    </ul>
+                    
+                    <h4>Layer 7 (Application Layer) Load Balancing</h4>
+                    <ul>
+                        <li>Operates at HTTP/HTTPS level</li>
+                        <li>Can route based on URL, headers, cookies</li>
+                        <li>Enables content-based routing</li>
+                        <li>More resource intensive but more flexible</li>
+                    </ul>
+                </div>
+
+                <h3>Pros and Cons of Load Balancing</h3>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>✅ Pros</h4>
+                        <ul>
+                            <li><strong>High Availability:</strong> If one server fails, traffic routes to others</li>
+                            <li><strong>Scalability:</strong> Easy to add/remove servers as demand changes</li>
+                            <li><strong>Performance:</strong> Distributes load prevents server overload</li>
+                            <li><strong>Flexibility:</strong> Can route traffic based on various criteria</li>
+                            <li><strong>Maintenance:</strong> Can take servers offline without downtime</li>
+                            <li><strong>Geographic Distribution:</strong> Route users to nearest server</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>❌ Cons</h4>
+                        <ul>
+                            <li><strong>Single Point of Failure:</strong> Load balancer itself can fail (mitigated with redundancy)</li>
+                            <li><strong>Complexity:</strong> Adds another layer to manage and troubleshoot</li>
+                            <li><strong>Cost:</strong> Hardware/software costs for load balancers</li>
+                            <li><strong>Session Persistence:</strong> Maintaining user sessions across servers can be tricky</li>
+                            <li><strong>SSL Termination:</strong> Can become a bottleneck for encrypted traffic</li>
+                            <li><strong>Configuration:</strong> Incorrect configuration can cause issues</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Health Checks</h3>
+                <div class="card">
+                    <p>Load balancers continuously monitor server health to avoid routing traffic to failed servers:</p>
+                    <ul>
+                        <li><strong>Active Health Checks:</strong> Periodically sends requests to check server status</li>
+                        <li><strong>Passive Health Checks:</strong> Monitors actual traffic and detects failures</li>
+                        <li><strong>HTTP Health Check:</strong> Sends HTTP request and expects specific response code</li>
+                        <li><strong>TCP Health Check:</strong> Attempts to establish TCP connection</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- GSLB Section -->
+            <div id="gslb" class="section">
+                <h2>🌍 GSLB (Global Server Load Balancing)</h2>
+
+                <div class="card">
+                    <h3>What is GSLB?</h3>
+                    <p><strong>GSLB (Global Server Load Balancing)</strong> distributes traffic across geographically dispersed data centers. It routes users to the nearest or best-performing data center, improving performance and providing disaster recovery.</p>
+                    <p>GSLB operates at the <strong>DNS level</strong>, returning different IP addresses based on user location, server health, and load.</p>
+                </div>
+
+                <h3>🎬 GSLB Simulation</h3>
+                <div class="simulation">
+                    <div class="sim-controls">
+                        <button class="sim-btn" onclick="startGSLBSimulation()">▶ Route Traffic</button>
+                        <button class="sim-btn" onclick="resetGSLBSimulation()">🔄 Reset</button>
+                    </div>
+                    
+                    <div class="gslb-sim" id="gslbSimulation">
+                        <!-- User locations will be positioned here -->
+                        <div class="user-location" style="left: 100px; top: 50px;">
+                            <div class="dns-icon" style="width: 60px; height: 60px; font-size: 1.5em;">👤</div>
+                            <strong style="font-size: 0.85em;">User (USA)</strong>
+                        </div>
+                        
+                        <!-- Data centers -->
+                        <div class="datacenter" id="dcUSA" style="right: 100px; top: 50px;">
+                            <div style="font-size: 1.5em;">🏢</div>
+                            <strong>USA DC</strong>
+                            <div style="font-size: 0.8em; margin-top: 5px;">Latency: 20ms</div>
+                        </div>
+                        
+                        <div class="datacenter" id="dcEurope" style="right: 100px; top: 200px;">
+                            <div style="font-size: 1.5em;">🏢</div>
+                            <strong>Europe DC</strong>
+                            <div style="font-size: 0.8em; margin-top: 5px;">Latency: 150ms</div>
+                        </div>
+                        
+                        <div class="datacenter" id="dcAsia" style="right: 100px; top: 350px;">
+                            <div style="font-size: 1.5em;">🏢</div>
+                            <strong>Asia DC</strong>
+                            <div style="font-size: 0.8em; margin-top: 5px;">Latency: 200ms</div>
+                        </div>
+                        
+                        <!-- GSLB Controller -->
+                        <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center;">
+                            <div class="dns-icon" style="width: 100px; height: 100px; font-size: 2.5em;">🌐</div>
+                            <strong>GSLB Controller</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="dns-log" id="gslbLog"></div>
+                </div>
+
+                <h3>How GSLB Works</h3>
+                <div class="card">
+                    <ol>
+                        <li><strong>User makes DNS request:</strong> User queries example.com</li>
+                        <li><strong>GSLB receives query:</strong> DNS request reaches GSLB controller</li>
+                        <li><strong>Evaluation:</strong> GSLB evaluates:
+                            <ul>
+                                <li>User's geographic location</li>
+                                <li>Data center health and availability</li>
+                                <li>Current load on each data center</li>
+                                <li>Network latency to each location</li>
+                            </ul>
+                        </li>
+                        <li><strong>Decision:</strong> GSLB selects optimal data center</li>
+                        <li><strong>Response:</strong> Returns IP address of chosen data center</li>
+                        <li><strong>Connection:</strong> User connects to selected data center</li>
+                    </ol>
+                </div>
+
+                <h3>GSLB Routing Methods</h3>
+                <div class="card">
+                    <h4>1. Geographic Proximity</h4>
+                    <p>Routes users to the nearest data center based on geographic location.</p>
+                    
+                    <h4>2. Performance-Based</h4>
+                    <p>Routes based on actual measured latency and response times.</p>
+                    
+                    <h4>3. Load-Based</h4>
+                    <p>Distributes traffic based on current server load across data centers.</p>
+                    
+                    <h4>4. Active-Passive Failover</h4>
+                    <p>Primary data center handles all traffic; backup takes over if primary fails.</p>
+                    
+                    <h4>5. Active-Active</h4>
+                    <p>All data centers actively serve traffic simultaneously.</p>
+                    
+                    <h4>6. Weighted Round Robin</h4>
+                    <p>Distributes traffic based on configured weights for each data center.</p>
+                </div>
+
+                <h3>Pros and Cons of GSLB</h3>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>✅ Pros</h4>
+                        <ul>
+                            <li><strong>Improved Performance:</strong> Users connect to nearest/fastest data center</li>
+                            <li><strong>Disaster Recovery:</strong> Automatic failover if data center goes down</li>
+                            <li><strong>Global Reach:</strong> Serve users worldwide efficiently</li>
+                            <li><strong>Compliance:</strong> Keep data in specific geographic regions</li>
+                            <li><strong>Cost Optimization:</strong> Balance load to avoid expensive peak pricing</li>
+                            <li><strong>Reduced Latency:</strong> Minimizes network hops and distance</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>❌ Cons</h4>
+                        <ul>
+                            <li><strong>Complexity:</strong> Requires sophisticated infrastructure and monitoring</li>
+                            <li><strong>Cost:</strong> Multiple data centers are expensive to maintain</li>
+                            <li><strong>DNS Caching:</strong> DNS TTL can delay failover and routing changes</li>
+                            <li><strong>Accuracy:</strong> IP geolocation isn't always accurate (VPNs, proxies)</li>
+                            <li><strong>Data Synchronization:</strong> Keeping data consistent across regions is challenging</li>
+                            <li><strong>Configuration:</strong> Complex setup and maintenance</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>GSLB vs Standard Load Balancing</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Standard Load Balancing</th>
+                            <th>GSLB</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Scope</td>
+                            <td>Single data center</td>
+                            <td>Multiple data centers globally</td>
+                        </tr>
+                        <tr>
+                            <td>Layer</td>
+                            <td>Layer 4 or Layer 7</td>
+                            <td>DNS layer (Layer 3)</td>
+                        </tr>
+                        <tr>
+                            <td>Decision Based On</td>
+                            <td>Server load, connections</td>
+                            <td>Geography, latency, health</td>
+                        </tr>
+                        <tr>
+                            <td>Failover Time</td>
+                            <td>Milliseconds to seconds</td>
+                            <td>Seconds to minutes (DNS TTL)</td>
+                        </tr>
+                        <tr>
+                            <td>Use Case</td>
+                            <td>High traffic to single location</td>
+                            <td>Global user base</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Message Broker Section -->
+            <div id="messagebroker" class="section">
+                <h2>📨 Message Brokers</h2>
+
+                <div class="card">
+                    <h3>What is a Message Broker?</h3>
+                    <p>A <strong>Message Broker</strong> is middleware that enables applications to communicate by sending and receiving messages. It decouples services by acting as an intermediary that receives messages from producers and delivers them to consumers.</p>
+                    <p><strong>Popular Message Brokers:</strong> RabbitMQ, Apache Kafka, AWS SQS, Azure Service Bus, Redis Pub/Sub</p>
+                </div>
+
+                <h3>🎬 Message Broker Simulation</h3>
+                <div class="simulation">
+                    <div class="sim-controls">
+                        <button class="sim-btn" onclick="sendMessage()">📤 Send Message</button>
+                        <button class="sim-btn" onclick="consumeMessage()">📥 Consume Message</button>
+                        <button class="sim-btn" onclick="resetMessageBroker()">🔄 Reset</button>
+                    </div>
+                    
+                    <div class="mb-sim" id="mbSimulation">
+                        <div class="producer" style="left: 50px; top: 50px;">
+                            <div class="dns-icon" style="width: 80px; height: 80px; font-size: 2em;">📤</div>
+                            <strong>Producer</strong>
+                            <div style="font-size: 0.8em; margin-top: 5px;">Sends messages</div>
+                        </div>
+                        
+                        <div class="broker" style="left: 50%; top: 50px; transform: translateX(-50%);">
+                            <div class="dns-icon" style="width: 100px; height: 100px; font-size: 2.5em;">📨</div>
+                            <strong>Message Broker</strong>
+                        </div>
+                        
+                        <div class="queue-visual" id="messageQueue" style="left: 50%; top: 200px; transform: translateX(-50%);">
+                            <div style="font-size: 0.8em; color: #666; white-space: nowrap;">Queue (FIFO)</div>
+                        </div>
+                        
+                        <div class="consumer" style="right: 50px; top: 350px;">
+                            <div class="dns-icon" style="width: 80px; height: 80px; font-size: 2em;">📥</div>
+                            <strong>Consumer</strong>
+                            <div style="font-size: 0.8em; margin-top: 5px;">Receives messages</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dns-log" id="mbLog"></div>
+                </div>
+
+                <h3>Message Broker Patterns</h3>
+                <div class="card">
+                    <h4>1. Point-to-Point (Queue)</h4>
+                    <p>One producer sends message to a queue. One consumer receives and processes it. Message is removed from queue after consumption.</p>
+                    
+                    <h4>2. Publish-Subscribe (Pub/Sub)</h4>
+                    <p>Producer publishes message to a topic. Multiple subscribers can receive the same message. Each subscriber gets a copy.</p>
+                    
+                    <h4>3. Request-Reply</h4>
+                    <p>Sender sends message and waits for response. Receiver processes and sends reply back.</p>
+                    
+                    <h4>4. Topic-Based</h4>
+                    <p>Messages are published to topics. Consumers subscribe to specific topics of interest.</p>
+                </div>
+
+                <h3>Synchronous vs Asynchronous Operations</h3>
+                <div class="card">
+                    <h4>Synchronous Communication (Without Message Broker)</h4>
+                    <div class="code-block">
+// Client makes HTTP request
+response = httpClient.post("/api/process", data);
+// Client WAITS for response
+// Blocked until server responds
+print(response);
+                    </div>
+                    <p><strong>Characteristics:</strong></p>
+                    <ul>
+                        <li>Client waits for immediate response</li>
+                        <li>Tightly coupled - both services must be available</li>
+                        <li>Simple to understand and debug</li>
+                        <li>Server failure causes client failure</li>
+                    </ul>
+                    
+                    <h4>Asynchronous Communication (With Message Broker)</h4>
+                    <div class="code-block">
+// Producer sends message to queue
+broker.send("processing-queue", data);
+// Producer continues immediately, doesn't wait
+// Message is processed later by consumer
+print("Message sent, continuing...");
+
+// Separate consumer process
+consumer.onMessage((message) => {
+    processData(message);
+});
+                    </div>
+                    <p><strong>Characteristics:</strong></p>
+                    <ul>
+                        <li>Producer sends and continues immediately</li>
+                        <li>Loosely coupled - services can be down temporarily</li>
+                        <li>Better scalability and resilience</li>
+                        <li>More complex to track and debug</li>
+                    </ul>
+                </div>
+
+                <h3>When to Use Message Brokers</h3>
+                <div class="card">
+                    <h4>✅ Use Message Brokers When:</h4>
+                    <ul>
+                        <li><strong>Decoupling Services:</strong> Services don't need to know about each other</li>
+                        <li><strong>Asynchronous Processing:</strong> Tasks can be processed later (email sending, image processing)</li>
+                        <li><strong>Load Leveling:</strong> Smooth out traffic spikes by queuing requests</li>
+                        <li><strong>Reliability:</strong> Messages persist even if consumer is down</li>
+                        <li><strong>Microservices:</strong> Enable event-driven architecture</li>
+                        <li><strong>Multiple Consumers:</strong> Different services need same data (pub/sub)</li>
+                        <li><strong>Rate Limiting:</strong> Control processing rate</li>
+                    </ul>
+                    
+                    <h4>❌ Don't Use Message Brokers When:</h4>
+                    <ul>
+                        <li><strong>Immediate Response Needed:</strong> User waiting for result (e.g., login)</li>
+                        <li><strong>Simple Direct Communication:</strong> Two services with straightforward interaction</li>
+                        <li><strong>Low Message Volume:</strong> Overhead not justified</li>
+                        <li><strong>Tight Consistency Required:</strong> Need immediate confirmation of state changes</li>
+                    </ul>
+                </div>
+
+                <h3>Pros and Cons of Message Brokers</h3>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>✅ Pros</h4>
+                        <ul>
+                            <li><strong>Decoupling:</strong> Services are independent</li>
+                            <li><strong>Scalability:</strong> Easy to add more consumers</li>
+                            <li><strong>Reliability:</strong> Messages persist, retry on failure</li>
+                            <li><strong>Load Leveling:</strong> Smooth out traffic spikes</li>
+                            <li><strong>Asynchronous:</strong> Non-blocking operations</li>
+                            <li><strong>Multiple Consumers:</strong> Broadcast to many services</li>
+                            <li><strong>Fault Tolerance:</strong> Continues working if one service fails</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>❌ Cons</h4>
+                        <ul>
+                            <li><strong>Complexity:</strong> Additional infrastructure to manage</li>
+                            <li><strong>Latency:</strong> Not suitable for real-time responses</li>
+                            <li><strong>Message Order:</strong> Can be difficult to guarantee ordering</li>
+                            <li><strong>Debugging:</strong> Harder to trace message flow</li>
+                            <li><strong>Duplicate Messages:</strong> May need idempotency handling</li>
+                            <li><strong>Storage:</strong> Messages consume disk space</li>
+                            <li><strong>Learning Curve:</strong> Team needs to understand messaging patterns</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Real-World Use Cases</h3>
+                <div class="card">
+                    <h4>E-commerce Order Processing</h4>
+                    <p>Order placed → Message to: Inventory Service, Payment Service, Shipping Service, Notification Service (all process independently)</p>
+                    
+                    <h4>Video Processing</h4>
+                    <p>User uploads video → Queue message → Worker processes (transcoding, thumbnails, metadata) without blocking user</p>
+                    
+                    <h4>Logging & Monitoring</h4>
+                    <p>Applications send logs to message broker → Multiple consumers: Storage, Analytics, Alerting</p>
+                    
+                    <h4>Microservices Events</h4>
+                    <p>User updates profile → Event published → Multiple services react (email, analytics, recommendations)</p>
+                </div>
+            </div>
+
+            <!-- API Gateway Section -->
+            <div id="apigateway" class="section">
+                <h2>🚪 API Gateway</h2>
+
+                <div class="card">
+                    <h3>What is an API Gateway?</h3>
+                    <p>An <strong>API Gateway</strong> is a server that acts as a single entry point for all client requests to a backend system. It sits between clients and microservices, routing requests, enforcing policies, and providing cross-cutting concerns.</p>
+                    <p><strong>Popular Solutions:</strong> Kong, AWS API Gateway, Azure API Management, Apigee, Nginx, Traefik</p>
+                </div>
+
+                <h3>🎬 API Gateway Simulation</h3>
+                <div class="simulation">
+                    <div class="sim-controls">
+                        <button class="sim-btn" onclick="sendAPIRequest('users')">👤 Get Users</button>
+                        <button class="sim-btn" onclick="sendAPIRequest('orders')">📦 Get Orders</button>
+                        <button class="sim-btn" onclick="sendAPIRequest('products')">🛍️ Get Products</button>
+                        <button class="sim-btn" onclick="resetAPIGateway()">🔄 Reset</button>
+                    </div>
+                    
+                    <div class="gateway-sim" id="gatewaySimulation">
+                        <div class="api-client">
+                            <div class="dns-icon" style="width: 100px; height: 100px; font-size: 2.5em;">📱</div>
+                            <strong>Mobile App</strong>
+                        </div>
+                        
+                        <div class="api-gateway">
+                            <div style="font-size: 2em; margin-bottom: 10px;">🚪</div>
+                            <strong style="font-size: 1.2em;">API Gateway</strong>
+                            <div class="gateway-features">
+                                ✓ Authentication<br>
+                                ✓ Rate Limiting<br>
+                                ✓ Routing<br>
+                                ✓ Caching
+                            </div>
+                        </div>
+                        
+                        <div class="microservices">
+                            <div class="microservice" id="userService">
+                                <div style="font-size: 1.3em;">👤</div>
+                                User Service
+                            </div>
+                            <div class="microservice" id="orderService">
+                                <div style="font-size: 1.3em;">📦</div>
+                                Order Service
+                            </div>
+                            <div class="microservice" id="productService">
+                                <div style="font-size: 1.3em;">🛍️</div>
+                                Product Service
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dns-log" id="gatewayLog"></div>
+                </div>
+
+                <h3>Key Features of API Gateway</h3>
+                <div class="card">
+                    <h4>1. Request Routing</h4>
+                    <p>Routes incoming requests to appropriate microservice based on path, headers, or other criteria.</p>
+                    <div class="code-block">
+/api/users/*      → User Service
+/api/orders/*     → Order Service
+/api/products/*   → Product Service
+                    </div>
+                    
+                    <h4>2. Authentication & Authorization</h4>
+                    <p>Validates API keys, JWT tokens, OAuth tokens before forwarding requests.</p>
+                    
+                    <h4>3. Rate Limiting</h4>
+                    <p>Prevents API abuse by limiting number of requests per client/time period.</p>
+                    
+                    <h4>4. Request/Response Transformation</h4>
+                    <p>Modifies requests before sending to backend or responses before returning to client.</p>
+                    
+                    <h4>5. Caching</h4>
+                    <p>Caches responses to reduce backend load and improve response times.</p>
+                    
+                    <h4>6. Load Balancing</h4>
+                    <p>Distributes requests across multiple instances of a service.</p>
+                    
+                    <h4>7. Protocol Translation</h4>
+                    <p>Converts between different protocols (HTTP to gRPC, REST to SOAP).</p>
+                    
+                    <h4>8. Monitoring & Logging</h4>
+                    <p>Centralized logging, metrics collection, and request tracing.</p>
+                </div>
+
+                <h3>When to Use an API Gateway</h3>
+                <div class="card">
+                    <h4>✅ Use API Gateway When:</h4>
+                    <ul>
+                        <li><strong>Microservices Architecture:</strong> Multiple backend services need unified access</li>
+                        <li><strong>Multiple Client Types:</strong> Mobile, web, IoT devices with different needs</li>
+                        <li><strong>Cross-Cutting Concerns:</strong> Authentication, logging, rate limiting needed everywhere</li>
+                        <li><strong>Legacy Integration:</strong> Need to expose old systems with modern API</li>
+                        <li><strong>API Versioning:</strong> Support multiple API versions simultaneously</li>
+                        <li><strong>Third-Party APIs:</strong> Provide APIs to external partners</li>
+                        <li><strong>Security:</strong> Hide internal service structure from public internet</li>
+                    </ul>
+                    
+                    <h4>❌ May Not Need API Gateway When:</h4>
+                    <ul>
+                        <li><strong>Monolithic Application:</strong> Single backend service</li>
+                        <li><strong>Internal Only:</strong> Services only communicate internally</li>
+                        <li><strong>Simple Architecture:</strong> Few services with direct client access</li>
+                        <li><strong>Performance Critical:</strong> Extra hop adds unacceptable latency</li>
+                    </ul>
+                </div>
+
+                <h3>How API Gateway is Used</h3>
+                <div class="highlight">
+                    <h4>Typical Request Flow:</h4>
+                    <ol>
+                        <li><strong>Client sends request:</strong> <code>GET https://api.example.com/users/123</code></li>
+                        <li><strong>Gateway receives request</strong></li>
+                        <li><strong>Authentication:</strong> Validates JWT token in header</li>
+                        <li><strong>Rate limiting check:</strong> Ensures client hasn't exceeded limits</li>
+                        <li><strong>Routing decision:</strong> Routes to User Service</li>
+                        <li><strong>Request forwarding:</strong> Sends to <code>http://user-service:8080/123</code></li>
+                        <li><strong>Response processing:</strong> May add headers, transform data</li>
+                        <li><strong>Caching:</strong> Stores response for future requests</li>
+                        <li><strong>Logging:</strong> Records request details</li>
+                        <li><strong>Return to client:</strong> Sends response back</li>
+                    </ol>
+                </div>
+
+                <h3>API Gateway Patterns</h3>
+                <div class="card">
+                    <h4>Backend for Frontend (BFF)</h4>
+                    <p>Separate gateway for each client type (mobile, web, IoT), each optimized for its client.</p>
+                    
+                    <h4>Aggregation Pattern</h4>
+                    <p>Gateway calls multiple services and combines results into single response.</p>
+                    <div class="code-block">
+Client Request: GET /dashboard
+
+Gateway calls:
+  - User Service (get user info)
+  - Order Service (get recent orders)
+  - Notification Service (get alerts)
+
+Gateway combines and returns all data in one response
+                    </div>
+                    
+                    <h4>Service Mesh vs API Gateway</h4>
+                    <ul>
+                        <li><strong>API Gateway:</strong> North-south traffic (external → internal)</li>
+                        <li><strong>Service Mesh:</strong> East-west traffic (service → service)</li>
+                    </ul>
+                </div>
+
+                <h3>Important Considerations</h3>
+                <div class="card">
+                    <h4>Performance</h4>
+                    <ul>
+                        <li>Gateway adds latency (typically 10-50ms)</li>
+                        <li>Use caching to reduce backend calls</li>
+                        <li>Monitor gateway resource usage</li>
+                    </ul>
+                    
+                    <h4>Availability</h4>
+                    <ul>
+                        <li>Gateway is critical - use redundancy</li>
+                        <li>Deploy multiple instances with load balancer</li>
+                        <li>Have failover strategy</li>
+                    </ul>
+                    
+                    <h4>Security</h4>
+                    <ul>
+                        <li>Gateway is security boundary</li>
+                        <li>Implement DDoS protection</li>
+                        <li>Use WAF (Web Application Firewall)</li>
+                        <li>Keep gateway updated and patched</li>
+                    </ul>
+                    
+                    <h4>Complexity</h4>
+                    <ul>
+                        <li>Don't overload gateway with business logic</li>
+                        <li>Keep routing rules simple</li>
+                        <li>Document all gateway configurations</li>
+                    </ul>
+                </div>
+
+                <h3>Pros and Cons of API Gateway</h3>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h4>✅ Pros</h4>
+                        <ul>
+                            <li><strong>Single Entry Point:</strong> Simplifies client interaction</li>
+                            <li><strong>Centralized Logic:</strong> Authentication, logging, rate limiting in one place</li>
+                            <li><strong>Protocol Translation:</strong> Support different protocols</li>
+                            <li><strong>Security:</strong> Hides internal architecture</li>
+                            <li><strong>Aggregation:</strong> Combine multiple service calls</li>
+                            <li><strong>Flexibility:</strong> Easy to change backend without affecting clients</li>
+                            <li><strong>Analytics:</strong> Centralized monitoring and metrics</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h4>❌ Cons</h4>
+                        <ul>
+                            <li><strong>Single Point of Failure:</strong> If gateway down, all services unavailable</li>
+                            <li><strong>Latency:</strong> Additional network hop</li>
+                            <li><strong>Complexity:</strong> Another component to manage</li>
+                            <li><strong>Bottleneck:</strong> Can become performance bottleneck</li>
+                            <li><strong>Development Dependency:</strong> Changes may require gateway updates</li>
+                            <li><strong>Cost:</strong> Infrastructure and operational costs</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>Real-World Example</h3>
+                <div class="card">
+                    <h4>E-commerce Platform</h4>
+                    <div class="code-block">
+Mobile App → API Gateway → 
+    ├─ User Service (authentication, profile)
+    ├─ Product Catalog Service (browse products)
+    ├─ Shopping Cart Service (cart management)
+    ├─ Order Service (checkout, order history)
+    ├─ Payment Service (payment processing)
+    └─ Notification Service (emails, push notifications)
+
+Gateway handles:
+- JWT authentication for all requests
+- Rate limiting: 1000 requests/hour per user
+- Caching product catalog responses
+- Request logging and monitoring
+- HTTPS termination
+- Version routing (v1, v2 APIs)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // DNS Simulation
+        let dnsAnimating = false;
+
+        function startDNSSimulation() {
+            if (dnsAnimating) return;
+            dnsAnimating = true;
+            
+            const log = document.getElementById('dnsLog');
+            const container = document.getElementById('dnsSimulation');
+            
+            log.innerHTML = '';
+            
+            // Create query message
+            const query = document.createElement('div');
+            query.className = 'dns-query';
+            query.textContent = 'DNS Query: www.example.com';
+            query.style.top = '180px';
+            query.style.left = '150px';
+            container.appendChild(query);
+            
+            setTimeout(() => {
+                query.style.opacity = '1';
+                query.style.transform = 'translateX(200px)';
+                query.style.transition = 'all 1s';
+                log.innerHTML = '<strong>[1]</strong> User browser sends DNS query for www.example.com<br>';
+            }, 100);
+            
+            setTimeout(() => {
+                log.innerHTML += '<strong>[2]</strong> DNS Resolver receives query<br>';
+            }, 1100);
+            
+            setTimeout(() => {
+                log.innerHTML += '<strong>[3]</strong> Resolver queries Root DNS → TLD DNS → Authoritative DNS<br>';
+            }, 2100);
+            
+            setTimeout(() => {
+                query.remove();
+                const response = document.createElement('div');
+                response.className = 'dns-response';
+                response.textContent = 'IP: 192.0.2.1';
+                response.style.top = '180px';
+                response.style.left = '500px';
+                response.style.background = '#51cf66';
+                container.appendChild(response);
+                
+                setTimeout(() => {
+                    response.style.opacity = '1';
+                    response.style.transform = 'translateX(-200px)';
+                    response.style.transition = 'all 1s';
+                    log.innerHTML += '<strong>[4]</strong> DNS Resolver returns IP address: 192.0.2.1<br>';
+                }, 100);
+                
+                setTimeout(() => {
+                    log.innerHTML += '<strong>[5]</strong> Browser caches DNS record (TTL: 3600s)<br>';
+                }, 1100);
+                
+                setTimeout(() => {
+                    response.remove();
+                    log.innerHTML += '<strong>[6]</strong> Browser connects to web server at 192.0.2.1<br>';
+                    log.innerHTML += '<strong>✅ DNS Resolution Complete!</strong>';
+                    dnsAnimating = false;
+                }, 2100);
+            }, 3100);
+        }
+
+        function resetDNSSimulation() {
+            document.getElementById('dnsLog').innerHTML = '';
+            document.querySelectorAll('.dns-query, .dns-response').forEach(el => el.remove());
+            dnsAnimating = false;
+        }
+
+        // Load Balancing Simulation
+        let lbRequestCount = 0;
+        let serverLoads = [0, 0, 0];
+        let lbRoundRobinIndex = 0;
+        let lbAnimating = false;
+
+        function startLoadBalancing() {
+            if (lbAnimating) return;
+            lbAnimating = true;
+            
+            const algorithm = document.getElementById('lbAlgorithm').value;
+            const startBtn = document.getElementById('lbStartBtn');
+            startBtn.disabled = true;
+            
+            let requests = 9;
+            let interval = setInterval(() => {
+                if (requests > 0) {
+                    sendLBRequest(algorithm);
+                    requests--;
+                } else {
+                    clearInterval(interval);
+                    startBtn.disabled = false;
+                    lbAnimating = false;
+                }
+            }, 600);
+        }
+
+        function sendLBRequest(algorithm) {
+            lbRequestCount++;
+            
+            // Determine which server based on algorithm
+            let serverIndex;
+            if (algorithm === 'roundrobin') {
+                serverIndex = lbRoundRobinIndex % 3;
+                lbRoundRobinIndex++;
+            } else if (algorithm === 'leastconn') {
+                serverIndex = serverLoads.indexOf(Math.min(...serverLoads));
+            } else {
+                serverIndex = Math.floor(Math.random() * 3);
+            }
+            
+            // Create request packet
+            const packet = document.createElement('div');
+            packet.className = 'request-packet';
+            packet.textContent = lbRequestCount;
+            packet.style.left = '150px';
+            packet.style.top = '240px';
+            document.getElementById('lbSimulation').appendChild(packet);
+            
+            // Animate to load balancer
+            setTimeout(() => {
+                packet.style.transition = 'all 0.5s';
+                packet.style.left = '50%';
+                packet.style.transform = 'translateX(-50%)';
+            }, 50);
+            
+            // Animate to server
+            setTimeout(() => {
+                const serverPositions = ['calc(100% - 150px)', 'calc(100% - 150px)', 'calc(100% - 150px)'];
+                const serverTops = ['60px', '170px', '280px'];
+                
+                packet.style.left = serverPositions[serverIndex];
+                packet.style.top = serverTops[serverIndex];
+                
+                serverLoads[serverIndex]++;
+                document.getElementById(`load${serverIndex + 1}`).textContent = serverLoads[serverIndex];
+            }, 600);
+            
+            // Remove packet
+            setTimeout(() => {
+                packet.remove();
+            }, 1200);
+        }
+
+        function resetLoadBalancing() {
+            serverLoads = [0, 0, 0];
+            lbRequestCount = 0;
+            lbRoundRobinIndex = 0;
+            document.getElementById('load1').textContent = '0';
+            document.getElementById('load2').textContent = '0';
+            document.getElementById('load3').textContent = '0';
+            document.querySelectorAll('.request-packet').forEach(el => el.remove());
+        }
+
+        // GSLB Simulation
+        function startGSLBSimulation() {
+            const log = document.getElementById('gslbLog');
+            const container = document.getElementById('gslbSimulation');
+            
+            log.innerHTML = '';
+            
+            // Clear old lines
+            document.querySelectorAll('.latency-line, .latency-label').forEach(el => el.remove());
+            
+            setTimeout(() => {
+                log.innerHTML = '<strong>[1]</strong> User in USA makes DNS request for www.example.com<br>';
+            }, 100);
+            
+            setTimeout(() => {
+                log.innerHTML += '<strong>[2]</strong> GSLB Controller receives request<br>';
+            }, 800);
+            
+            setTimeout(() => {
+                log.innerHTML += '<strong>[3]</strong> Evaluating data centers:<br>';
+                log.innerHTML += '&nbsp;&nbsp;&nbsp;• USA DC: 20ms latency ✓<br>';
+                log.innerHTML += '&nbsp;&nbsp;&nbsp;• Europe DC: 150ms latency<br>';
+                log.innerHTML += '&nbsp;&nbsp;&nbsp;• Asia DC: 200ms latency<br>';
+                
+                // Draw lines to all data centers
+                drawLatencyLine(100, 80, 1100, 90, '20ms', '#28a745');
+                drawLatencyLine(100, 80, 1100, 240, '150ms', '#ffc107');
+                drawLatencyLine(100, 80, 1100, 390, '200ms', '#dc3545');
+            }, 1600);
+            
+            setTimeout(() => {
+                log.innerHTML += '<strong>[4]</strong> Selected: USA DC (lowest latency)<br>';
+                document.getElementById('dcUSA').style.transform = 'scale(1.1)';
+                document.getElementById('dcUSA').style.transition = 'all 0.3s';
+            }, 2800);
+            
+            setTimeout(() => {
+                log.innerHTML += '<strong>[5]</strong> Returning IP: 203.0.113.1 (USA DC)<br>';
+            }, 3400);
+            
+            setTimeout(() => {
+                log.innerHTML += '<strong>✅ User connects to USA data center - Best performance!</strong>';
+                document.getElementById('dcUSA').style.transform = 'scale(1)';
+            }, 4200);
+        }
+
+        function drawLatencyLine(x1, y1, x2, y2, label, color) {
+            const container = document.getElementById('gslbSimulation');
+            const line = document.createElement('div');
+            line.className = 'latency-line';
+            
+            const length = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+            
+            line.style.width = length + 'px';
+            line.style.left = x1 + 'px';
+            line.style.top = y1 + 'px';
+            line.style.transform = `rotate(${angle}deg)`;
+            line.style.background = color;
+            container.appendChild(line);
+            
+            setTimeout(() => {
+                line.style.opacity = '0.5';
+                line.style.transition = 'opacity 0.5s';
+            }, 50);
+            
+            // Add label
+            const labelEl = document.createElement('div');
+            labelEl.className = 'latency-label';
+            labelEl.textContent = label;
+            labelEl.style.left = ((x1 + x2) / 2) + 'px';
+            labelEl.style.top = ((y1 + y2) / 2 - 15) + 'px';
+            labelEl.style.color = color;
+            labelEl.style.opacity = '0';
+            container.appendChild(labelEl);
+            
+            setTimeout(() => {
+                labelEl.style.opacity = '1';
+                labelEl.style.transition = 'opacity 0.5s';
+            }, 300);
+        }
+
+        function resetGSLBSimulation() {
+            document.getElementById('gslbLog').innerHTML = '';
+            document.querySelectorAll('.latency-line, .latency-label').forEach(el => el.remove());
+            document.getElementById('dcUSA').style.transform = 'scale(1)';
+        }
+
+        // Message Broker Simulation
+        let messageCounter = 0;
+
+        function sendMessage() {
+            messageCounter++;
+            const queue = document.getElementById('messageQueue');
+            const log = document.getElementById('mbLog');
+            
+            const message = document.createElement('div');
+            message.className = 'message-box';
+            message.textContent = `M${messageCounter}`;
+            message.setAttribute('data-id', messageCounter);
+            queue.appendChild(message);
+            
+            log.innerHTML = `<strong>Message M${messageCounter} sent to queue</strong><br>` + log.innerHTML;
+        }
+
+        function consumeMessage() {
+            const queue = document.getElementById('messageQueue');
+            const messages = queue.querySelectorAll('.message-box');
+            const log = document.getElementById('mbLog');
+            
+            if (messages.length > 0) {
+                const message = messages[0];
+                const id = message.getAttribute('data-id');
+                message.style.transition = 'all 0.5s';
+                message.style.transform = 'translateY(200px)';
+                message.style.opacity = '0';
+                
+                setTimeout(() => {
+                    message.remove();
+                }, 500);
+                
+                log.innerHTML = `<strong>Consumer processed message M${id}</strong><br>` + log.innerHTML;
+            } else {
+                log.innerHTML = `<strong>⚠️ Queue is empty!</strong><br>` + log.innerHTML;
+            }
+        }
+
+        function resetMessageBroker() {
+            document.getElementById('messageQueue').querySelectorAll('.message-box').forEach(el => el.remove());
+            document.getElementById('mbLog').innerHTML = '';
+            messageCounter = 0;
+        }
+
+        // API Gateway Simulation
+        let gatewayRequestId = 0;
+
+        function sendAPIRequest(service) {
+            gatewayRequestId++;
+            const container = document.getElementById('gatewaySimulation');
+            const log = document.getElementById('gatewayLog');
+            
+            const request = document.createElement('div');
+            request.className = 'api-request';
+            request.textContent = `GET /${service}`;
+            request.style.left = '150px';
+            request.style.top = '48%';
+            container.appendChild(request);
+            
+            setTimeout(() => {
+                request.style.opacity = '1';
+                request.style.transition = 'all 0.5s';
+                request.style.left = '38%';
+                log.innerHTML = `<strong>[${gatewayRequestId}]</strong> Request received: GET /api/${service}<br>` + log.innerHTML;
+            }, 50);
+            
+            setTimeout(() => {
+                log.innerHTML = `<strong>[${gatewayRequestId}]</strong> ✓ Authentication verified<br>` + log.innerHTML;
+            }, 600);
+            
+            setTimeout(() => {
+                log.innerHTML = `<strong>[${gatewayRequestId}]</strong> ✓ Rate limit check passed<br>` + log.innerHTML;
+            }, 1000);
+            
+            setTimeout(() => {
+                const servicePositions = {
+                    'users': 'calc(100% - 200px)',
+                    'orders': 'calc(100% - 200px)',
+                    'products': 'calc(100% - 200px)'
+                };
+                const serviceTops = {
+                    'users': '20%',
+                    'orders': '47%',
+                    'products': '74%'
+                };
+                
+                request.style.left = servicePositions[service];
+                request.style.top = serviceTops[service];
+                request.style.background = '#51cf66';
+                request.textContent = `→ ${service}`;
+                
+                log.innerHTML = `<strong>[${gatewayRequestId}]</strong> Routing to ${service} service<br>` + log.innerHTML;
+                
+                // Highlight service
+                const serviceEl = document.getElementById(`${service}Service`);
+                if (serviceEl) {
+                    serviceEl.style.transform = 'scale(1.1)';
+                    serviceEl.style.transition = 'all 0.3s';
+                }
+            }, 1400);
+            
+            setTimeout(() => {
+                log.innerHTML = `<strong>[${gatewayRequestId}]</strong> ✅ Response returned to client<br>` + log.innerHTML;
+                request.remove();
+                
+                // Reset service highlight
+                document.querySelectorAll('.microservice').forEach(el => {
+                    el.style.transform = 'scale(1)';
+                });
+            }, 2200);
+        }
+
+        function resetAPIGateway() {
+            document.getElementById('gatewayLog').innerHTML = '';
+            document.querySelectorAll('.api-request').forEach(el => el.remove());
+            document.querySelectorAll('.microservice').forEach(el => {
+                el.style.transform = 'scale(1)';
+            });
+            gatewayRequestId = 0;
+        }
+    </script>
+</body>
+</html>

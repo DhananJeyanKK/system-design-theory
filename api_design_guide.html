@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Design Guide - Interactive Learning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .nav-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .nav-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: #764ba2;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .animation-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .animation-controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .anim-btn {
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .anim-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        /* RPC Animation Styles */
+        .rpc-demo {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 300px;
+        }
+
+        .client, .server {
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .message {
+            position: absolute;
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            opacity: 0;
+            transform: translateX(0);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        .message.animate {
+            animation: rpcMessage 3s ease-in-out;
+        }
+
+        @keyframes rpcMessage {
+            0% { opacity: 0; transform: translateX(0); }
+            25% { opacity: 1; transform: translateX(200px); }
+            50% { opacity: 1; transform: translateX(200px); }
+            75% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(0); }
+        }
+
+        /* REST Animation Styles */
+        .rest-demo {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .http-request {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 15px;
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .http-request.show {
+            animation: slideDown 0.5s forwards;
+        }
+
+        @keyframes slideDown {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .method {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-right: 10px;
+            color: white;
+        }
+
+        .get { background: #28a745; }
+        .post { background: #007bff; }
+        .put { background: #ffc107; color: #333; }
+        .delete { background: #dc3545; }
+
+        .endpoint {
+            font-family: 'Courier New', monospace;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .response {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+        }
+
+        .highlight {
+            background: yellow;
+            color: #333;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .swagger-section {
+            background: linear-gradient(135deg, #85C540 0%, #5B9732 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .swagger-section h3 {
+            color: white;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 API Design Guide</h1>
+            <p class="subtitle">Interactive Learning with Animations</p>
+        </header>
+
+        <nav>
+            <button class="nav-btn active" onclick="showSection('categories')">API Categories</button>
+            <button class="nav-btn" onclick="showSection('practices')">Best Practices</button>
+            <button class="nav-btn" onclick="showSection('rpc')">RPC Style</button>
+            <button class="nav-btn" onclick="showSection('rest')">REST Style</button>
+            <button class="nav-btn" onclick="showSection('swagger')">Swagger/OpenAPI</button>
+        </nav>
+
+        <div class="content">
+            <!-- API Categories Section -->
+            <div id="categories" class="section active">
+                <h2>Categories of APIs</h2>
+                
+                <div class="grid">
+                    <div class="card">
+                        <div class="icon">🌍</div>
+                        <div class="card-title">Public APIs</div>
+                        <p><strong>Definition:</strong> Open to external developers and third parties, often with minimal restrictions.</p>
+                        <p><strong>Use Cases:</strong></p>
+                        <ul>
+                            <li>Payment gateways (Stripe, PayPal)</li>
+                            <li>Social media integration (Twitter, Facebook)</li>
+                            <li>Mapping services (Google Maps)</li>
+                            <li>Weather data (OpenWeatherMap)</li>
+                        </ul>
+                        <p><strong>Characteristics:</strong></p>
+                        <ul>
+                            <li>Extensive documentation required</li>
+                            <li>Rate limiting and API keys</li>
+                            <li>Stable versioning</li>
+                            <li>High security standards</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="icon">🔒</div>
+                        <div class="card-title">Internal/Private APIs</div>
+                        <p><strong>Definition:</strong> Used exclusively within an organization, not exposed externally.</p>
+                        <p><strong>Use Cases:</strong></p>
+                        <ul>
+                            <li>Microservices communication</li>
+                            <li>Internal data sharing between teams</li>
+                            <li>Backend-to-backend integration</li>
+                            <li>Employee management systems</li>
+                        </ul>
+                        <p><strong>Characteristics:</strong></p>
+                        <ul>
+                            <li>Less formal documentation</li>
+                            <li>Faster iteration cycles</li>
+                            <li>Internal authentication only</li>
+                            <li>Network-level restrictions</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="icon">🤝</div>
+                        <div class="card-title">Partner APIs</div>
+                        <p><strong>Definition:</strong> Shared with specific business partners under agreements.</p>
+                        <p><strong>Use Cases:</strong></p>
+                        <ul>
+                            <li>B2B integrations</li>
+                            <li>Supply chain management</li>
+                            <li>White-label solutions</li>
+                            <li>Reseller platforms</li>
+                        </ul>
+                        <p><strong>Characteristics:</strong></p>
+                        <ul>
+                            <li>Controlled access with contracts</li>
+                            <li>Custom SLAs (Service Level Agreements)</li>
+                            <li>Dedicated support</li>
+                            <li>Enhanced security and monitoring</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Practices Section -->
+            <div id="practices" class="section">
+                <h2>API Best Practices</h2>
+
+                <div class="card">
+                    <div class="card-title">📄 Pagination</div>
+                    <p>Handle large datasets by breaking them into manageable chunks.</p>
+                    <h4>Common Pagination Methods:</h4>
+                    <ul>
+                        <li><strong>Offset-based:</strong> <code>?limit=20&offset=40</code></li>
+                        <li><strong>Page-based:</strong> <code>?page=3&size=20</code></li>
+                        <li><strong>Cursor-based:</strong> <code>?cursor=eyJpZCI6MTAwfQ==</code> (best for real-time data)</li>
+                    </ul>
+                    <div class="code-block">
+{
+  "data": [...],
+  "pagination": {
+    "total": 1000,
+    "page": 2,
+    "size": 20,
+    "next": "/api/users?page=3&size=20",
+    "prev": "/api/users?page=1&size=20"
+  }
+}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🔄 Idempotency</div>
+                    <p>Same request produces same result, even if called multiple times. Critical for reliability.</p>
+                    <h4>Idempotent Methods:</h4>
+                    <ul>
+                        <li><strong>GET, PUT, DELETE:</strong> Naturally idempotent</li>
+                        <li><strong>POST:</strong> Needs idempotency keys</li>
+                    </ul>
+                    <div class="code-block">
+POST /api/payments
+Headers:
+  Idempotency-Key: unique-uuid-12345
+
+// First call: Creates payment
+// Repeated calls with same key: Returns same payment, no duplicate charge
+                    </div>
+                    <p><strong>Benefits:</strong> Prevents duplicate charges, safe retries, network fault tolerance</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">📦 Versioning</div>
+                    <p>Manage API changes without breaking existing clients.</p>
+                    <h4>Versioning Strategies:</h4>
+                    <ul>
+                        <li><strong>URI Versioning:</strong> <code>/api/v1/users</code>, <code>/api/v2/users</code></li>
+                        <li><strong>Header Versioning:</strong> <code>Accept: application/vnd.myapi.v2+json</code></li>
+                        <li><strong>Query Parameter:</strong> <code>/api/users?version=2</code></li>
+                    </ul>
+                    <div class="code-block">
+// Old version (v1)
+GET /api/v1/users/123
+Response: { "name": "John Doe" }
+
+// New version (v2) - added email
+GET /api/v2/users/123
+Response: { "name": "John Doe", "email": "john@example.com" }
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🎯 Complete Encapsulation</div>
+                    <p>Hide internal implementation details; expose only necessary interfaces.</p>
+                    <h4>Principles:</h4>
+                    <ul>
+                        <li>Don't expose database structure in API responses</li>
+                        <li>Use DTOs (Data Transfer Objects) to transform data</li>
+                        <li>Abstract business logic behind clear endpoints</li>
+                        <li>Version internal changes separately from API</li>
+                    </ul>
+                    <div class="code-block">
+// ❌ Bad: Exposes database columns
+{
+  "user_id": 123,
+  "created_at_timestamp": 1234567890,
+  "is_deleted": 0
+}
+
+// ✅ Good: Clean abstraction
+{
+  "id": 123,
+  "createdAt": "2024-01-15T10:30:00Z",
+  "status": "active"
+}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">⚡ Asynchronous Operations</div>
+                    <p>Handle long-running tasks without blocking the client.</p>
+                    <h4>Pattern:</h4>
+                    <ol>
+                        <li>Client initiates task → receives task ID immediately</li>
+                        <li>Server processes task in background</li>
+                        <li>Client polls status or receives webhook notification</li>
+                    </ol>
+                    <div class="code-block">
+// Step 1: Initiate async task
+POST /api/reports/generate
+Response: 202 Accepted
+{
+  "taskId": "task-789",
+  "status": "processing",
+  "statusUrl": "/api/tasks/task-789"
+}
+
+// Step 2: Check status
+GET /api/tasks/task-789
+Response: 200 OK
+{
+  "taskId": "task-789",
+  "status": "completed",
+  "result": {
+    "downloadUrl": "/api/reports/download/xyz"
+  }
+}
+                    </div>
+                    <p><strong>Use for:</strong> File processing, batch operations, complex calculations, external API calls</p>
+                </div>
+            </div>
+
+            <!-- RPC Section -->
+            <div id="rpc" class="section">
+                <h2>RPC (Remote Procedure Call) Style</h2>
+
+                <div class="card">
+                    <div class="card-title">🎯 What is RPC?</div>
+                    <p>RPC (Remote Procedure Call) style APIs focus on <strong>actions and procedures</strong> rather than resources. The API calls look like function calls.</p>
+                </div>
+
+                <h3>Features of RPC</h3>
+                <div class="grid">
+                    <div class="card">
+                        <strong>Action-Oriented</strong>
+                        <p>Endpoints represent operations/functions</p>
+                        <code>POST /calculateTax</code><br>
+                        <code>POST /sendEmail</code>
+                    </div>
+                    <div class="card">
+                        <strong>Simple & Direct</strong>
+                        <p>Easy to understand for developers familiar with function calls</p>
+                    </div>
+                    <div class="card">
+                        <strong>Flexible Parameters</strong>
+                        <p>Pass any data structure as function arguments</p>
+                    </div>
+                </div>
+
+                <h3>When to Use RPC Over REST</h3>
+                <ul>
+                    <li><strong>Action-heavy operations:</strong> When your API performs actions rather than managing resources (e.g., calculations, transformations)</li>
+                    <li><strong>Internal microservices:</strong> Communication between services where resources don't matter</li>
+                    <li><strong>Simple CRUD doesn't apply:</strong> Operations that don't fit REST verbs well</li>
+                    <li><strong>Real-time performance:</strong> When you need lightweight, fast calls (gRPC)</li>
+                </ul>
+
+                <h3>Advantages of RPC</h3>
+                <div class="card">
+                    <ul>
+                        <li>✅ <strong>Simplicity:</strong> Straightforward function-like calls</li>
+                        <li>✅ <strong>Performance:</strong> Binary protocols like gRPC are very fast</li>
+                        <li>✅ <strong>Strongly typed:</strong> With gRPC/Protocol Buffers, you get type safety</li>
+                        <li>✅ <strong>Language agnostic:</strong> Works across different programming languages</li>
+                        <li>✅ <strong>Bidirectional streaming:</strong> gRPC supports streaming data both ways</li>
+                    </ul>
+                </div>
+
+                <h3>🎬 RPC Animation Demo</h3>
+                <div class="animation-container">
+                    <div class="animation-controls">
+                        <button class="anim-btn" onclick="startRPCAnimation()">▶ Start RPC Call</button>
+                    </div>
+                    <div class="rpc-demo" id="rpcDemo">
+                        <div class="client">
+                            <div class="icon">💻</div>
+                            <div>Client</div>
+                        </div>
+                        <div class="server">
+                            <div class="icon">🖥️</div>
+                            <div>Server</div>
+                        </div>
+                    </div>
+                    <div id="rpcLog" style="margin-top: 20px; font-family: monospace; font-size: 0.9em;"></div>
+                </div>
+
+                <h3>RPC Example (gRPC)</h3>
+                <div class="code-block">
+// Protocol Buffer Definition
+service Calculator {
+  rpc Add(AddRequest) returns (AddResponse);
+}
+
+message AddRequest {
+  int32 a = 1;
+  int32 b = 2;
+}
+
+message AddResponse {
+  int32 result = 1;
+}
+
+// Client Call (looks like a local function)
+result = calculator.Add(5, 3);  // Returns 8
+                </div>
+            </div>
+
+            <!-- REST Section -->
+            <div id="rest" class="section">
+                <h2>REST (Representational State Transfer) Style</h2>
+
+                <div class="card">
+                    <div class="card-title">🎯 What is REST?</div>
+                    <p>REST is an architectural style that focuses on <strong>resources</strong> and uses standard HTTP methods to perform operations on those resources.</p>
+                </div>
+
+                <h3>Features of REST</h3>
+                <div class="grid">
+                    <div class="card">
+                        <strong>Resource-Based</strong>
+                        <p>Everything is a resource with a URI</p>
+                        <code>/users/123</code><br>
+                        <code>/products/456</code>
+                    </div>
+                    <div class="card">
+                        <strong>HTTP Methods</strong>
+                        <p>Uses GET, POST, PUT, DELETE</p>
+                    </div>
+                    <div class="card">
+                        <strong>Stateless</strong>
+                        <p>Each request contains all needed info</p>
+                    </div>
+                    <div class="card">
+                        <strong>Cacheable</strong>
+                        <p>Responses can be cached for performance</p>
+                    </div>
+                    <div class="card">
+                        <strong>Uniform Interface</strong>
+                        <p>Consistent, predictable structure</p>
+                    </div>
+                    <div class="card">
+                        <strong>Self-Descriptive</strong>
+                        <p>Messages contain metadata</p>
+                    </div>
+                </div>
+
+                <h3>When to Use REST Over Other Styles</h3>
+                <ul>
+                    <li><strong>CRUD operations:</strong> When managing resources (Create, Read, Update, Delete)</li>
+                    <li><strong>Public APIs:</strong> REST is well-understood and documented</li>
+                    <li><strong>Web services:</strong> Works naturally with HTTP and web browsers</li>
+                    <li><strong>Caching needs:</strong> HTTP caching works out of the box</li>
+                    <li><strong>Discoverability:</strong> Resources can be explored through links (HATEOAS)</li>
+                </ul>
+
+                <h3>Advantages of REST</h3>
+                <div class="card">
+                    <ul>
+                        <li>✅ <strong>Scalability:</strong> Stateless nature allows easy scaling</li>
+                        <li>✅ <strong>Flexibility:</strong> Supports multiple data formats (JSON, XML)</li>
+                        <li>✅ <strong>Caching:</strong> Built-in HTTP caching improves performance</li>
+                        <li>✅ <strong>Simplicity:</strong> Uses familiar HTTP protocol</li>
+                        <li>✅ <strong>Visibility:</strong> Easy to monitor and debug</li>
+                        <li>✅ <strong>Standardization:</strong> Well-established conventions</li>
+                    </ul>
+                </div>
+
+                <h3>🎬 REST Animation Demo</h3>
+                <div class="animation-container">
+                    <div class="animation-controls">
+                        <button class="anim-btn" onclick="startRESTAnimation()">▶ Start REST Demo</button>
+                    </div>
+                    <div class="rest-demo" id="restDemo">
+                        <!-- Animation content will be inserted here -->
+                    </div>
+                </div>
+
+                <h3>REST vs RPC Comparison</h3>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>REST</th>
+                            <th>RPC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Focus</td>
+                            <td>Resources (nouns)</td>
+                            <td>Actions (verbs)</td>
+                        </tr>
+                        <tr>
+                            <td>URL Structure</td>
+                            <td>/users/123</td>
+                            <td>/getUser or /user.get</td>
+                        </tr>
+                        <tr>
+                            <td>HTTP Methods</td>
+                            <td>Uses all (GET, POST, PUT, DELETE)</td>
+                            <td>Primarily POST</td>
+                        </tr>
+                        <tr>
+                            <td>Best For</td>
+                            <td>CRUD operations, public APIs</td>
+                            <td>Actions, internal services</td>
+                        </tr>
+                        <tr>
+                            <td>Caching</td>
+                            <td>Excellent HTTP caching</td>
+                            <td>Limited caching</td>
+                        </tr>
+                        <tr>
+                            <td>Performance</td>
+                            <td>Good (JSON/HTTP)</td>
+                            <td>Excellent (gRPC/binary)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Swagger Section -->
+            <div id="swagger" class="section">
+                <h2>Swagger / OpenAPI Specification</h2>
+
+                <div class="swagger-section">
+                    <h3>🔍 What is Swagger?</h3>
+                    <p><strong>Swagger</strong> is now called <strong>OpenAPI Specification (OAS)</strong>. It's a standard, language-agnostic way to describe REST APIs.</p>
+                    
+                    <p style="margin-top: 15px;"><strong>Key Components:</strong></p>
+                    <ul>
+                        <li><strong>OpenAPI Specification:</strong> The standard format (YAML/JSON)</li>
+                        <li><strong>Swagger UI:</strong> Interactive API documentation</li>
+                        <li><strong>Swagger Editor:</strong> Tool to design APIs</li>
+                        <li><strong>Swagger Codegen:</strong> Generates client/server code</li>
+                    </ul>
+                </div>
+
+                <h3>Where Swagger Fits in REST</h3>
+                <div class="card">
+                    <p>Swagger is <strong>primarily designed for REST APIs</strong>. It describes:</p>
+                    <ul>
+                        <li>Available endpoints (paths)</li>
+                        <li>HTTP methods for each endpoint</li>
+                        <li>Request/response formats</li>
+                        <li>Authentication methods</li>
+                        <li>Parameters and data models</li>
+                    </ul>
+                    <p style="margin-top: 15px;"><strong>Example:</strong> When you create a REST API, you write an OpenAPI spec, and Swagger UI automatically generates interactive documentation where developers can test your API directly in the browser.</p>
+                </div>
+
+                <h3>Does Swagger Work with RPC?</h3>
+                <div class="card">
+                    <p><strong>Short answer: Not well.</strong></p>
+                    <p>Swagger/OpenAPI is designed around REST principles (resources, HTTP methods). For RPC-style APIs:</p>
+                    <ul>
+                        <li><strong>JSON-RPC:</strong> Can be documented with OpenAPI, but it's awkward since all calls use POST</li>
+                        <li><strong>gRPC:</strong> Uses Protocol Buffers, not OpenAPI. gRPC has its own tooling:
+                            <ul>
+                                <li><code>.proto</code> files define the service</li>
+                                <li>gRPC reflection for service discovery</li>
+                                <li>Tools like grpcurl, BloomRPC for testing</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <h3>OpenAPI Specification Example</h3>
+                <div class="code-block">
+openapi: 3.0.0
+info:
+  title: User API
+  version: 1.0.0
+  description: API for managing users
+
+paths:
+  /users:
+    get:
+      summary: List all users
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+    
+    post:
+      summary: Create a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '201':
+          description: User created
+
+  /users/{id}:
+    get:
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User found
+        '404':
+          description: User not found
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+    
+    UserInput:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+                </div>
+
+                <h3>Benefits of Using Swagger/OpenAPI</h3>
+                <div class="grid">
+                    <div class="card">
+                        <strong>📚 Auto Documentation</strong>
+                        <p>Generate beautiful, interactive docs automatically</p>
+                    </div>
+                    <div class="card">
+                        <strong>🧪 API Testing</strong>
+                        <p>Test endpoints directly from documentation</p>
+                    </div>
+                    <div class="card">
+                        <strong>⚙️ Code Generation</strong>
+                        <p>Generate client SDKs in multiple languages</p>
+                    </div>
+                    <div class="card">
+                        <strong>✅ Validation</strong>
+                        <p>Validate requests/responses against spec</p>
+                    </div>
+                    <div class="card">
+                        <strong>🔗 Standardization</strong>
+                        <p>Team-wide API design consistency</p>
+                    </div>
+                    <div class="card">
+                        <strong>🚀 Developer Experience</strong>
+                        <p>Easier onboarding for API consumers</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">🔧 Popular Tools</div>
+                    <ul>
+                        <li><strong>Swagger UI:</strong> Interactive API documentation viewer</li>
+                        <li><strong>Swagger Editor:</strong> Design APIs with real-time preview</li>
+                        <li><strong>Postman:</strong> Supports OpenAPI import/export</li>
+                        <li><strong>Stoplight:</strong> Visual API design platform</li>
+                        <li><strong>ReDoc:</strong> Alternative documentation renderer</li>
+                        <li><strong>OpenAPI Generator:</strong> Generate clients/servers in 50+ languages</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // RPC Animation
+        function startRPCAnimation() {
+            const demo = document.getElementById('rpcDemo');
+            const log = document.getElementById('rpcLog');
+            
+            // Clear previous messages
+            const oldMessages = demo.querySelectorAll('.message');
+            oldMessages.forEach(msg => msg.remove());
+            
+            log.innerHTML = '';
+            
+            // Create request message
+            const requestMsg = document.createElement('div');
+            requestMsg.className = 'message';
+            requestMsg.textContent = 'calculateTax(1000)';
+            requestMsg.style.top = '140px';
+            requestMsg.style.left = '180px';
+            demo.appendChild(requestMsg);
+            
+            // Start animation
+            setTimeout(() => {
+                requestMsg.classList.add('animate');
+                log.innerHTML = '<strong>Step 1:</strong> Client calls calculateTax(1000)<br>';
+            }, 100);
+            
+            setTimeout(() => {
+                log.innerHTML += '<strong>Step 2:</strong> Request sent to server<br>';
+            }, 1000);
+            
+            setTimeout(() => {
+                log.innerHTML += '<strong>Step 3:</strong> Server executes calculateTax function<br>';
+            }, 2000);
+            
+            setTimeout(() => {
+                const responseMsg = document.createElement('div');
+                responseMsg.className = 'message';
+                responseMsg.textContent = 'result: 80';
+                responseMsg.style.top = '160px';
+                responseMsg.style.left = '540px';
+                responseMsg.style.background = '#51cf66';
+                demo.appendChild(responseMsg);
+                
+                setTimeout(() => {
+                    responseMsg.classList.add('animate');
+                    log.innerHTML += '<strong>Step 4:</strong> Server returns result: 80<br>';
+                }, 100);
+                
+                setTimeout(() => {
+                    log.innerHTML += '<strong>✅ Complete:</strong> Client receives 80 (looks like a local function call!)';
+                }, 1000);
+            }, 3000);
+        }
+
+        // REST Animation
+        function startRESTAnimation() {
+            const demo = document.getElementById('restDemo');
+            demo.innerHTML = '';
+            
+            const requests = [
+                {
+                    method: 'GET',
+                    endpoint: '/api/users',
+                    response: '[\n  {"id": 1, "name": "Alice"},\n  {"id": 2, "name": "Bob"}\n]',
+                    delay: 0
+                },
+                {
+                    method: 'POST',
+                    endpoint: '/api/users',
+                    response: '{\n  "id": 3,\n  "name": "Charlie",\n  "created": true\n}',
+                    delay: 1000
+                },
+                {
+                    method: 'PUT',
+                    endpoint: '/api/users/3',
+                    response: '{\n  "id": 3,\n  "name": "Charlie Updated",\n  "updated": true\n}',
+                    delay: 2000
+                },
+                {
+                    method: 'DELETE',
+                    endpoint: '/api/users/3',
+                    response: '{\n  "message": "User deleted",\n  "success": true\n}',
+                    delay: 3000
+                }
+            ];
+            
+            requests.forEach(req => {
+                setTimeout(() => {
+                    const reqDiv = document.createElement('div');
+                    reqDiv.className = 'http-request';
+                    reqDiv.innerHTML = `
+                        <div>
+                            <span class="method ${req.method.toLowerCase()}">${req.method}</span>
+                            <span class="endpoint">${req.endpoint}</span>
+                        </div>
+                        <div class="response">Response: ${req.response}</div>
+                    `;
+                    demo.appendChild(reqDiv);
+                    
+                    setTimeout(() => {
+                        reqDiv.classList.add('show');
+                    }, 50);
+                }, req.delay);
+            });
+        }
+
+        // Auto-play animations when sections are opened
+        document.addEventListener('DOMContentLoaded', function() {
+            // Optional: auto-start RPC animation
+            // setTimeout(startRPCAnimation, 1000);
+        });
+    </script>
+</body>
+</html>
