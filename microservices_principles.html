@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Microservices Principles & Architecture</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Instrument+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090f;--s1:#0d1018;--s2:#131620;--s3:#1a1f2e;--s4:#222840;
+  --b1:rgba(255,255,255,0.05);--b2:rgba(255,255,255,0.09);--b3:rgba(255,255,255,0.16);
+  --tx:#dfe4f0;--t2:#8892aa;--t3:#454e65;--t4:#252c3f;
+  --blue:#4f8ef7;--bd:rgba(79,142,247,0.14);
+  --cyan:#00d4ff;--cd:rgba(0,212,255,0.1);
+  --green:#2ecc71;--gd:rgba(46,204,113,0.11);
+  --amber:#f59e0b;--ad:rgba(245,158,11,0.12);
+  --red:#ef4444;--rd:rgba(239,68,68,0.12);
+  --purple:#a855f7;--pd:rgba(168,85,247,0.12);
+  --coral:#ff6b6b;--cord:rgba(255,107,107,0.11);
+  --teal:#14b8a6;--tld:rgba(20,184,166,0.11);
+  --font:'Instrument Sans',sans-serif;
+  --serif:'Syne',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);display:flex;flex-direction:column}
+
+/* NAV */
+#nav{display:flex;align-items:stretch;border-bottom:0.5px solid var(--b2);background:var(--s1);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+#nav::-webkit-scrollbar{display:none}
+.nb{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;padding:11px 13px;background:none;border:none;border-bottom:2px solid transparent;color:var(--t3);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+.nb:hover{color:var(--t2);background:var(--b1)}
+.nb.on{color:var(--cyan);border-bottom-color:var(--cyan);background:var(--cd)}
+
+/* SLIDES */
+#slides{flex:1;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;overflow-y:auto;padding:28px 36px 48px;scrollbar-width:thin;scrollbar-color:var(--b3) transparent}
+.slide.on{display:flex}
+.slide::-webkit-scrollbar{width:3px}
+.slide::-webkit-scrollbar-thumb{background:var(--b3);border-radius:3px}
+
+/* TYPOGRAPHY */
+.ey{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--cyan);text-transform:uppercase;margin-bottom:7px}
+.title{font-family:var(--serif);font-size:30px;font-weight:700;line-height:1.13;letter-spacing:-.025em;margin-bottom:5px}
+.title em{font-style:italic;font-weight:400;color:var(--cyan)}
+.sub{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:24px;max-width:640px}
+.sec{font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;margin-top:20px}
+
+/* LAYOUT */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--s2);border:0.5px solid var(--b2);border-radius:13px;padding:18px 20px}
+.card-t{font-size:12.5px;font-weight:500;margin-bottom:5px}
+.card-b{font-size:12px;color:var(--t2);line-height:1.65}
+.div{height:.5px;background:var(--b2);margin:20px 0}
+.tag{display:inline-block;font-family:var(--mono);font-size:9.5px;padding:2px 7px;border-radius:16px;margin:1px}
+.tg{background:var(--gd);color:var(--green);border:.5px solid rgba(46,204,113,.25)}
+.tr{background:var(--rd);color:var(--red);border:.5px solid rgba(239,68,68,.25)}
+.ta{background:var(--ad);color:var(--amber);border:.5px solid rgba(245,158,11,.25)}
+.tb{background:var(--bd);color:var(--blue);border:.5px solid rgba(79,142,247,.25)}
+.tc{background:var(--cd);color:var(--cyan);border:.5px solid rgba(0,212,255,.25)}
+.tp{background:var(--pd);color:var(--purple);border:.5px solid rgba(168,85,247,.25)}
+
+/* BUTTONS */
+.btn{font-family:var(--mono);font-size:10.5px;padding:6px 14px;border-radius:7px;border:.5px solid var(--b3);background:var(--s3);color:var(--tx);cursor:pointer;transition:all .2s;letter-spacing:.03em}
+.btn:hover{background:var(--b2)}
+.btn.p{background:var(--cd);border-color:var(--cyan);color:var(--cyan)}
+.btn.p:hover{background:rgba(0,212,255,.18)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* FOOTER */
+#foot{display:flex;align-items:center;justify-content:space-between;padding:7px 22px;border-top:.5px solid var(--b1);background:var(--s1);flex-shrink:0}
+#foot-lbl{font-family:var(--mono);font-size:9.5px;color:var(--t3)}
+.fnav{display:flex;gap:7px}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:.3;transform:scale(1.18)}}
+@keyframes flow{0%{stroke-dashoffset:30}100%{stroke-dashoffset:0}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes popIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes slide-right{0%{left:5%}100%{left:88%}}
+@keyframes ripple{0%{r:4;opacity:1}100%{r:24;opacity:0}}
+.au{animation:fadeUp .4s ease both}
+
+/* ===== SLIDE 1: DB per Microservice ===== */
+#db-sim{background:var(--s1);border:.5px solid var(--b2);border-radius:13px;overflow:hidden;margin-bottom:14px}
+#db-stage{position:relative;width:100%;height:220px}
+#db-svg{position:absolute;inset:0;width:100%;height:100%}
+#db-controls{padding:12px 16px;border-top:.5px solid var(--b1);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#db-log{font-family:var(--mono);font-size:10px;color:var(--t2);margin-left:auto;max-width:280px;text-align:right;min-height:16px}
+
+/* ===== SLIDE 2: DRY / Shared Library ===== */
+.dry-tabs{display:flex;border-bottom:.5px solid var(--b2);margin-bottom:16px}
+.dtab{font-family:var(--mono);font-size:10px;padding:8px 16px;background:none;border:none;border-bottom:2px solid transparent;color:var(--t3);cursor:pointer;transition:all .2s}
+.dtab.on{color:var(--cyan);border-bottom-color:var(--cyan)}
+.dtab-p{display:none}.dtab-p.on{display:block}
+#shared-lib-sim{position:relative;width:100%;height:200px;background:var(--s1);border:.5px solid var(--b2);border-radius:12px;overflow:hidden;margin-bottom:14px}
+#sl-svg{position:absolute;inset:0;width:100%;height:100%}
+#dep-hell-sim{width:100%;height:200px;background:var(--s1);border:.5px solid var(--b2);border-radius:12px;position:relative;overflow:hidden;margin-bottom:14px}
+
+/* ===== SLIDE 3: Data Duplication ===== */
+#cache-sim{background:var(--s1);border:.5px solid var(--b2);border-radius:13px;overflow:hidden;margin-bottom:14px}
+#cache-stage{position:relative;width:100%;height:200px}
+#cache-svg{position:absolute;inset:0;width:100%;height:100%}
+#cache-controls{padding:12px 16px;border-top:.5px solid var(--b1);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#cache-log{font-family:var(--mono);font-size:10px;color:var(--t2);margin-left:auto}
+
+/* ===== SLIDE 4: Structured Autonomy ===== */
+#autonomy-sim{margin-bottom:14px}
+.tier-row{display:flex;align-items:stretch;gap:0;border:.5px solid var(--b2);border-radius:13px;overflow:hidden;margin-bottom:10px;cursor:pointer;transition:all .2s}
+.tier-row:hover{border-color:var(--b3)}
+.tier-row.expanded .tier-body{display:block}
+.tier-num{width:56px;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:22px;font-weight:700;flex-shrink:0;border-right:.5px solid var(--b1)}
+.tier-head{flex:1;padding:14px 16px;background:var(--s2)}
+.tier-label{font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.tier-name{font-size:13px;font-weight:500}
+.tier-body{display:none;padding:12px 16px;background:var(--s1);border-top:.5px solid var(--b1);font-size:12px;color:var(--t2);line-height:1.7}
+.tier-items{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.team-demo{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.team-card{background:var(--s2);border:.5px solid var(--b2);border-radius:10px;padding:12px 14px}
+.team-name{font-size:11px;font-weight:500;margin-bottom:6px}
+.team-row{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--t2);margin-bottom:4px}
+.chk{width:12px;height:12px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0}
+
+/* ===== SLIDE 5: Micro-Frontend ===== */
+#mfe-sim{background:var(--s1);border:.5px solid var(--b2);border-radius:13px;overflow:hidden;margin-bottom:14px}
+#mfe-stage{position:relative;width:100%;height:260px}
+#mfe-controls{padding:12px 16px;border-top:.5px solid var(--b1);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* RESPONSIVE */
+@media(max-width:640px){
+  .g2,.g3{grid-template-columns:1fr}
+  .slide{padding:18px 16px 36px}
+  .title{font-size:23px}
+  .team-demo{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <button class="nb on"  onclick="go(0)">01 · DB per Microservice</button>
+  <button class="nb"     onclick="go(1)">02 · DRY &amp; Shared Library</button>
+  <button class="nb"     onclick="go(2)">03 · Data Duplication</button>
+  <button class="nb"     onclick="go(3)">04 · Structured Autonomy</button>
+  <button class="nb"     onclick="go(4)">05 · Micro-Frontends</button>
+</nav>
+
+<div id="slides">
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 0 · DB per Microservice -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="slide on" id="s0">
+  <div class="ey">Principles · Data Architecture</div>
+  <div class="title">Database per <em>Microservice</em></div>
+  <div class="sub">Each service owns its own data store. No shared schema. No cross-service DB joins. This is the price of true independence — and it's worth it.</div>
+
+  <div class="sec">Why shared DB breaks cohesion</div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card" style="border-color:rgba(239,68,68,.25)">
+      <div class="card-t" style="color:var(--red)">❌ Shared Database Problem</div>
+      <div class="card-b">Service A changes a column → Service B's queries break. Schema migrations require coordinating all teams simultaneously. Cohesion is violated — services are secretly coupled through the database.</div>
+    </div>
+    <div class="card" style="border-color:rgba(46,204,113,.25)">
+      <div class="card-t" style="color:var(--green)">✓ DB per Service Solution</div>
+      <div class="card-b">Each service abstracts its own storage. Schema changes are local. You can version APIs without breaking consumers. Switch from Postgres to MongoDB? Only that one team needs to know.</div>
+    </div>
+  </div>
+
+  <div class="sec">Interactive — DB per Service simulator</div>
+  <div id="db-sim">
+    <div id="db-stage"><svg id="db-svg"></svg></div>
+    <div id="db-controls">
+      <button class="btn p" onclick="dbDemo('normal')">▶ Normal query</button>
+      <button class="btn" style="border-color:rgba(245,158,11,.4);color:var(--amber)" onclick="dbDemo('cross')">Cross-service data need</button>
+      <button class="btn" style="border-color:rgba(239,68,68,.4);color:var(--red)" onclick="dbDemo('shared')">Simulate shared DB failure</button>
+      <div id="db-log">Click a scenario to simulate</div>
+    </div>
+  </div>
+
+  <div class="sec">Trade-offs</div>
+  <div class="g3">
+    <div class="card" style="border-left:2px solid var(--amber)">
+      <div class="card-t" style="color:var(--amber)">⚡ Added Latency</div>
+      <div class="card-b">Service A needs Service B's data? Network call required. No local join. Design your data boundaries so cross-service calls are rare.</div>
+    </div>
+    <div class="card" style="border-left:2px solid var(--red)">
+      <div class="card-t" style="color:var(--red)">🔗 No SQL Joins</div>
+      <div class="card-b">Cross-database joins are impossible. Data must be assembled at the application layer via API composition or event-driven denormalization.</div>
+    </div>
+    <div class="card" style="border-left:2px solid var(--purple)">
+      <div class="card-t" style="color:var(--purple)">⚗️ Distributed Atomicity</div>
+      <div class="card-b">Transactions now span network calls. Traditional ACID across services is gone — use Saga pattern or eventual consistency. Patterns exist; plan for them.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 1 · DRY & Shared Library -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s1">
+  <div class="ey">Principles · Code Sharing</div>
+  <div class="title">DRY doesn't apply the <em>same way</em> in Microservices</div>
+  <div class="sub">Don't Repeat Yourself is gospel in monoliths. In microservices, shared libraries become the hidden coupling that destroys independence.</div>
+
+  <div class="dry-tabs">
+    <button class="dtab on" onclick="dryTab(0)">The DRY Problem</button>
+    <button class="dtab" onclick="dryTab(1)">Dependency Hell</button>
+    <button class="dtab" onclick="dryTab(2)">Alternatives</button>
+    <button class="dtab" onclick="dryTab(3)">What's OK to duplicate</button>
+    <button class="dtab" onclick="dryTab(4)">Sidecar Pattern</button>
+  </div>
+
+  <div class="dtab-p on" id="dp0">
+    <div id="shared-lib-sim"><svg id="sl-svg"></svg></div>
+    <div class="g2">
+      <div class="card" style="border-color:rgba(239,68,68,.2)">
+        <div class="card-t" style="color:var(--red)">Shared Library = Tight Coupling</div>
+        <div class="card-b">Any bug or change in the shared lib forces every consumer to <strong>rebuild → retest → redeploy</strong>. You've recreated a monolith dependency graph — just spread across services.<br><br><span class="tr">Rebuild</span> <span class="tr">Retest</span> <span class="tr">Redeploy</span> <span class="tr">Vulnerability cascade</span></div>
+      </div>
+      <div class="card" style="border-color:rgba(245,158,11,.2)">
+        <div class="card-t" style="color:var(--amber)">The Root Cause</div>
+        <div class="card-b">Shared business logic between two microservices usually means <strong>incorrect boundaries</strong>. The fact that you need to share it is a signal — not a problem to work around, but a boundary to reconsider.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dtab-p" id="dp1">
+    <div id="dep-hell-sim"><canvas id="dep-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas></div>
+    <div class="card" style="border-color:rgba(239,68,68,.2);background:var(--rd)">
+      <div class="card-t" style="color:var(--red)">🔥 Dependency Hell</div>
+      <div class="card-b">Shared Library v1.0 works. Then v1.1 drops. Service A upgrades. Service B can't upgrade yet (breaking change). Service C depends on A's internal behavior. Now you can't update anything without a full cascade. This is the monolith's stranglehold, distributed.</div>
+    </div>
+  </div>
+
+  <div class="dtab-p" id="dp2">
+    <div class="sec" style="margin-top:0">Situation 1: Shared Business Logic</div>
+    <div class="g2" style="margin-bottom:14px">
+      <div class="card" style="border-color:rgba(0,212,255,.2)">
+        <div class="card-t" style="color:var(--cyan)">Option 1 — Reevaluate Boundaries</div>
+        <div class="card-b">If two services share business logic, their boundaries may be wrong. Merge them into one service or re-draw the boundary so the shared logic lives in exactly one place.</div>
+      </div>
+      <div class="card" style="border-color:rgba(46,204,113,.2)">
+        <div class="card-t" style="color:var(--green)">Option 2 — Create a Reusable Service</div>
+        <div class="card-b">Extract the shared logic into its own microservice. Consumers call it via API. The service is independently deployable, versioned, and owned by one team.</div>
+      </div>
+    </div>
+    <div class="sec">Situation 2: Common Data Models for Communication</div>
+    <div class="g2">
+      <div class="card" style="border-color:rgba(79,142,247,.2)">
+        <div class="card-t" style="color:var(--blue)">Option 1 — Shared Library ✓ (acceptable here)</div>
+        <div class="card-b">For <em>data transfer objects / API schemas only</em> — no business logic — a shared library is acceptable. Changes to data models are versioned, not behavioral.</div>
+      </div>
+      <div class="card" style="border-color:rgba(168,85,247,.2)">
+        <div class="card-t" style="color:var(--purple)">Option 2 — Schema + Code Generation</div>
+        <div class="card-b">Define schemas in Protobuf / OpenAPI / Avro. Generate client code per language. Each service regenerates independently. No runtime coupling.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dtab-p" id="dp3">
+    <div class="g2">
+      <div class="card" style="border-color:rgba(46,204,113,.2)">
+        <div class="card-t" style="color:var(--green)">✓ Safe to Duplicate</div>
+        <div class="card-b">
+          <div style="margin-bottom:6px">Utility methods that change frequently — each service has its own optimized version and can evolve independently.</div>
+          <div style="margin-bottom:6px">Generic helpers (date formatting, string utils) — duplication makes migration to a new language much easier.</div>
+          <span class="tg">Utility methods</span> <span class="tg">Format helpers</span> <span class="tg">Validation rules</span>
+        </div>
+      </div>
+      <div class="card" style="border-color:rgba(239,68,68,.2)">
+        <div class="card-t" style="color:var(--red)">✗ Don't Duplicate</div>
+        <div class="card-b">
+          <div style="margin-bottom:6px">Business rules that represent your domain — these belong in a service, not copy-pasted across 8 codebases. Bugs multiply.</div>
+          <div style="margin-bottom:6px">Security / auth logic — one vulnerability becomes eight vulnerabilities.</div>
+          <span class="tr">Business rules</span> <span class="tr">Auth/security logic</span> <span class="tr">Payment calculations</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dtab-p" id="dp4">
+    <div id="sidecar-anim" style="background:var(--s1);border:.5px solid var(--b2);border-radius:12px;overflow:hidden;margin-bottom:14px">
+      <svg id="sc-svg" style="width:100%;height:190px;display:block"></svg>
+    </div>
+    <div class="g2">
+      <div class="card" style="border-color:rgba(0,212,255,.2)">
+        <div class="card-t" style="color:var(--cyan)">Sidecar Pattern</div>
+        <div class="card-b">Package the shared process as a separate deployable that runs <strong>on the same host</strong> as the service. Minimal performance overhead. No network call — it's local IPC.</div>
+      </div>
+      <div class="card">
+        <div class="card-t">Good sidecar candidates</div>
+        <div class="card-b">
+          <span class="tb">Logging</span> <span class="tb">Retry logic</span> <span class="tb">Health checks</span> <span class="tb">TLS termination</span> <span class="tb">Metrics collection</span><br><br>
+          These are <em>stable</em> cross-cutting concerns that rarely change and have no business logic.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 2 · Data Duplication -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="ey">Principles · Data Strategy</div>
+  <div class="title">Data Duplication — <em>costly or necessary?</em></div>
+  <div class="sub">Duplication seems wasteful. But for services that must respond immediately, caching another service's data is often the right trade-off — with one strict rule.</div>
+
+  <div class="sec">Interactive — consistency vs performance trade-off</div>
+  <div id="cache-sim">
+    <div id="cache-stage"><svg id="cache-svg"></svg></div>
+    <div id="cache-controls">
+      <button class="btn p" onclick="cacheDemo('fast')">▶ Immediate response (cached)</button>
+      <button class="btn" style="border-color:rgba(245,158,11,.4);color:var(--amber)" onclick="cacheDemo('stale')">Show stale data risk</button>
+      <button class="btn" style="border-color:rgba(239,68,68,.4);color:var(--red)" onclick="cacheDemo('strict')">Strict consistency cost</button>
+      <div id="cache-log" style="font-family:var(--mono);font-size:10px;color:var(--t2);margin-left:auto">Click to simulate</div>
+    </div>
+  </div>
+
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card" style="border-color:rgba(46,204,113,.2)">
+      <div class="card-t" style="color:var(--green)">When duplication is justified</div>
+      <div class="card-b">
+        Service needs data from another service to serve requests immediately (display Product name in Order service). Calling out on every request adds unacceptable latency or creates a hard dependency on availability.<br><br>
+        <span class="tg">Immediate responses</span> <span class="tg">Reduce latency</span> <span class="tg">Avoid runtime dependency</span>
+      </div>
+    </div>
+    <div class="card" style="border-color:rgba(239,68,68,.2)">
+      <div class="card-t" style="color:var(--red)">The golden rule — one source of truth</div>
+      <div class="card-b">
+        Data duplication gives you <span class="ta">eventual consistency</span> — not <span class="tr">strict consistency</span>. The source of truth must live in exactly one service. All copies are derived and may lag.<br><br>
+        If you need strict consistency: avoid duplication and call the owner service directly.
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="border-color:rgba(0,212,255,.15)">
+    <div class="card-t" style="color:var(--cyan)">Event-driven synchronization</div>
+    <div class="card-b">The owner service publishes events when data changes (e.g. <code style="font-family:var(--mono);font-size:10px;background:var(--s3);padding:1px 5px;border-radius:4px">product.price.updated</code>). Consumers subscribe and update their local cache. This keeps copies fresh without tight coupling — the producer doesn't know who's listening.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 3 · Structured Autonomy -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="ey">Principles · Team Organization</div>
+  <div class="title">Structured <em>Autonomy</em></div>
+  <div class="sub">The myth: each team picks their own everything. The reality: complete autonomy creates infrastructure chaos, non-uniform APIs, and soaring costs. The answer is structured autonomy — freedom within boundaries.</div>
+
+  <div class="card" style="border-color:rgba(239,68,68,.2);background:var(--rd);margin-bottom:16px">
+    <div class="card-t" style="color:var(--red)">❌ Full Autonomy Problems</div>
+    <div class="card-b">
+      <span class="tr">High infra setup cost</span> <span class="tr">Ongoing maintenance overhead</span> <span class="tr">Steep learning curves</span> <span class="tr">Non-uniform APIs</span> <span class="tr">Security gaps</span> <span class="tr">Compliance nightmares</span>
+    </div>
+  </div>
+
+  <div class="sec">The Three-Tier Model — click each tier to expand</div>
+  <div id="autonomy-sim">
+
+    <div class="tier-row" onclick="toggleTier(0)" id="tier0">
+      <div class="tier-num" style="background:rgba(239,68,68,.1);color:var(--red)">1</div>
+      <div class="tier-head">
+        <div class="tier-label">Tier 1 · Fully Restrictive</div>
+        <div class="tier-name" style="color:var(--red)">Everyone must follow — no exceptions</div>
+      </div>
+    </div>
+    <div id="tbody0" style="display:none;background:var(--s1);border:.5px solid rgba(239,68,68,.2);border-top:none;border-radius:0 0 10px 10px;padding:14px 18px;margin-bottom:10px;font-size:12px;color:var(--t2);line-height:1.7">
+      These are non-negotiable foundations. Deviating here causes org-wide chaos.<br><br>
+      <span class="tr">CI/CD pipeline standard</span> <span class="tr">Monitoring &amp; alerting tooling</span> <span class="tr">Security standards</span> <span class="tr">Compliance requirements</span> <span class="tr">Public API design guidelines</span><br><br>
+      <em>Why restrictive?</em> These affect every other team. An inconsistent CI/CD means ops can't support anyone. Inconsistent monitoring means on-call can't debug incidents.
+    </div>
+
+    <div class="tier-row" onclick="toggleTier(1)" id="tier1">
+      <div class="tier-num" style="background:rgba(245,158,11,.1);color:var(--amber)">2</div>
+      <div class="tier-head">
+        <div class="tier-label">Tier 2 · Freedom within Boundaries</div>
+        <div class="tier-name" style="color:var(--amber)">Team choice — with guardrails</div>
+      </div>
+    </div>
+    <div id="tbody1" style="display:none;background:var(--s1);border:.5px solid rgba(245,158,11,.2);border-top:none;border-radius:0 0 10px 10px;padding:14px 18px;margin-bottom:10px;font-size:12px;color:var(--t2);line-height:1.7">
+      Teams pick from an approved list — not from the entire ecosystem.<br><br>
+      <span class="ta">Programming language</span> <span class="ta">Database technology</span> <span class="ta">Internal API style</span> <span class="ta">Test frameworks</span><br><br>
+      <em>Example:</em> "You may use Go, Python, Java, or Node. You may use PostgreSQL, MongoDB, or Redis." The list is curated — infra team has pre-built support and expertise for these options.
+    </div>
+
+    <div class="tier-row" onclick="toggleTier(2)" id="tier2">
+      <div class="tier-num" style="background:rgba(46,204,113,.1);color:var(--green)">3</div>
+      <div class="tier-head">
+        <div class="tier-label">Tier 3 · Complete Autonomy</div>
+        <div class="tier-name" style="color:var(--green)">Your call — total ownership</div>
+      </div>
+    </div>
+    <div id="tbody2" style="display:none;background:var(--s1);border:.5px solid rgba(46,204,113,.2);border-top:none;border-radius:0 0 10px 10px;padding:14px 18px;margin-bottom:10px;font-size:12px;color:var(--t2);line-height:1.7">
+      No oversight needed — teams own these decisions fully and bear the consequences.<br><br>
+      <span class="tg">Release schedule</span> <span class="tg">Internal scripts &amp; tooling</span> <span class="tg">Code style &amp; conventions</span> <span class="tg">Sprint cadence</span> <span class="tg">Local dev environment</span><br><br>
+      <em>Why total freedom?</em> These decisions have zero impact on other teams. Team A deploying daily vs weekly affects only Team A.
+    </div>
+  </div>
+
+  <div class="sec">Team Autonomy Comparison</div>
+  <div class="team-demo">
+    <div class="team-card">
+      <div class="team-name" style="color:var(--blue)">Platform Team</div>
+      <div class="team-row"><div class="chk" style="background:var(--rd);color:var(--red)">✗</div> Choose own CI/CD</div>
+      <div class="team-row"><div class="chk" style="background:var(--gd);color:var(--green)">✓</div> Go + PostgreSQL</div>
+      <div class="team-row"><div class="chk" style="background:var(--gd);color:var(--green)">✓</div> Daily releases</div>
+      <div class="team-row"><div class="chk" style="background:var(--rd);color:var(--red)">✗</div> Skip monitoring</div>
+    </div>
+    <div class="team-card">
+      <div class="team-name" style="color:var(--purple)">Data Team</div>
+      <div class="team-row"><div class="chk" style="background:var(--rd);color:var(--red)">✗</div> Choose own CI/CD</div>
+      <div class="team-row"><div class="chk" style="background:var(--gd);color:var(--green)">✓</div> Python + MongoDB</div>
+      <div class="team-row"><div class="chk" style="background:var(--gd);color:var(--green)">✓</div> Weekly releases</div>
+      <div class="team-row"><div class="chk" style="background:var(--rd);color:var(--red)">✗</div> Custom auth scheme</div>
+    </div>
+    <div class="team-card">
+      <div class="team-name" style="color:var(--amber)">Frontend Team</div>
+      <div class="team-row"><div class="chk" style="background:var(--rd);color:var(--red)">✗</div> Choose own CI/CD</div>
+      <div class="team-row"><div class="chk" style="background:var(--gd);color:var(--green)">✓</div> Node.js + Redis</div>
+      <div class="team-row"><div class="chk" style="background:var(--gd);color:var(--green)">✓</div> On-demand releases</div>
+      <div class="team-row"><div class="chk" style="background:var(--rd);color:var(--red)">✗</div> Non-standard API</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 4 · Micro-Frontends -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="ey">Principles · Frontend Architecture</div>
+  <div class="title">Micro-<em>Frontends</em></div>
+  <div class="sub">Apply microservices thinking to the frontend. Split a monolithic SPA into independently deployable UI fragments — each owned by a full-stack team end-to-end.</div>
+
+  <div class="sec">Interactive — Monolith SPA vs Micro-Frontend</div>
+  <div id="mfe-sim">
+    <div id="mfe-stage"><svg id="mfe-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div id="mfe-controls">
+      <button class="btn p" onclick="mfeMode('mono')">Show Monolith SPA</button>
+      <button class="btn" style="border-color:rgba(46,204,113,.4);color:var(--green)" onclick="mfeMode('mfe')">Show Micro-Frontends</button>
+      <button class="btn" style="border-color:rgba(239,68,68,.4);color:var(--red)" onclick="mfeMode('deploy')">Simulate deploy one fragment</button>
+    </div>
+  </div>
+
+  <div class="g3" style="margin-bottom:14px">
+    <div class="card" style="border-color:rgba(46,204,113,.2)">
+      <div class="card-t" style="color:var(--green)">Independent Deployability</div>
+      <div class="card-b">Teams release their UI fragment on their own schedule. The Checkout team ships without waiting for the Product team to finish their changes.</div>
+    </div>
+    <div class="card" style="border-color:rgba(0,212,255,.2)">
+      <div class="card-t" style="color:var(--cyan)">Easy to Test in Isolation</div>
+      <div class="card-b">Each micro-frontend is a standalone SPA for testing purposes. No need to spin up the whole application to test the Basket fragment.</div>
+    </div>
+    <div class="card" style="border-color:rgba(168,85,247,.2)">
+      <div class="card-t" style="color:var(--purple)">Full-Stack Ownership</div>
+      <div class="card-b">One team owns the entire vertical slice: API, business logic, database, and UI for their domain. Conway's Law working for you, not against you.</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card" style="border-color:rgba(245,158,11,.2)">
+      <div class="card-t" style="color:var(--amber)">⚠️ Challenges</div>
+      <div class="card-b">
+        <span class="ta">Consistent design system</span> <span class="ta">Shared shell/container app</span> <span class="ta">Cross-fragment state</span> <span class="ta">Performance (multiple bundles)</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-t">Common patterns</div>
+      <div class="card-b">
+        <span class="tb">iFrame composition</span> <span class="tb">Web Components</span> <span class="tb">Module Federation (Webpack 5)</span> <span class="tb">Server-side composition</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /slides -->
+
+<div id="foot">
+  <div id="foot-lbl">Microservices Principles &amp; Architecture</div>
+  <div class="fnav">
+    <button class="btn" onclick="prev()">‹ Prev</button>
+    <button class="btn p" onclick="next()">Next ›</button>
+  </div>
+</div>
+
+<script>
+// ─── Navigation ─────────────────────────────────────────────────────────────
+let cur = 0;
+function go(n) {
+  document.querySelectorAll('.slide').forEach((s,i) => s.classList.toggle('on', i===n));
+  document.querySelectorAll('.nb').forEach((b,i) => b.classList.toggle('on', i===n));
+  cur = n;
+  if (n===0) initDB();
+  if (n===1) { initSharedLib(); initDepHell(); initSidecar(); }
+  if (n===2) initCache();
+  if (n===4) { initMFE(); mfeMode('mono'); }
+}
+function next() { if (cur<4) go(cur+1); }
+function prev() { if (cur>0) go(cur-1); }
+
+// ─── SVG helpers ────────────────────────────────────────────────────────────
+const NS = 'http://www.w3.org/2000/svg';
+function el(tag, attrs) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+function rect(svg, x,y,w,h, fill, stroke, rx, opacity) {
+  svg.appendChild(el('rect', {x,y,width:w,height:h,rx:rx||8,fill,stroke:stroke||'none','stroke-width':'0.5',opacity:opacity||1}));
+}
+function txt(svg, x,y,str, size, fill, anchor, mono, weight) {
+  const t = el('text',{x,y,'text-anchor':anchor||'middle','dominant-baseline':'central','font-size':size||11,'font-family':mono?'JetBrains Mono,monospace':'Instrument Sans,sans-serif','fill':fill||'#dfe4f0','font-weight':weight||'400'});
+  t.textContent = str; svg.appendChild(t); return t;
+}
+function line(svg, x1,y1,x2,y2, stroke, w, dash) {
+  const l = el('line',{x1,y1,x2,y2,stroke:stroke||'rgba(255,255,255,0.2)','stroke-width':w||1.2});
+  if(dash) l.setAttribute('stroke-dasharray', dash);
+  svg.appendChild(l); return l;
+}
+function circle(svg, cx,cy,r, fill, stroke) {
+  svg.appendChild(el('circle',{cx,cy,r,fill,stroke:stroke||'none','stroke-width':'0.5'}));
+}
+
+// ─── SLIDE 0: DB per Microservice ───────────────────────────────────────────
+let dbInited = false;
+const DB_SVCS = [
+  {id:'order', label:'Order Svc', db:'Orders DB', x:12, color:'#4f8ef7', dbColor:'rgba(79,142,247,0.35)'},
+  {id:'user',  label:'User Svc',  db:'Users DB',  x:38, color:'#2ecc71', dbColor:'rgba(46,204,113,0.35)'},
+  {id:'pay',   label:'Pay Svc',   db:'Pay DB',    x:62, color:'#a855f7', dbColor:'rgba(168,85,247,0.35)'},
+  {id:'notify',label:'Notify Svc',db:'Notif DB',  x:86, color:'#f59e0b', dbColor:'rgba(245,158,11,0.35)'},
+];
+
+function initDB() {
+  if (dbInited) return; dbInited = true;
+  drawDB();
+}
+
+function drawDB() {
+  const svg = document.getElementById('db-svg');
+  svg.innerHTML = '';
+  const W = document.getElementById('db-stage').offsetWidth || 700;
+  const H = 220;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+
+  DB_SVCS.forEach(s => {
+    const cx = s.x/100 * W;
+    // Service box
+    rect(svg, cx-52, 20, 104, 44, s.color+'22', s.color, 8);
+    txt(svg, cx, 42, s.label, 11.5, s.color, 'middle', false, '500');
+    // Line down
+    line(svg, cx, 64, cx, 105, s.color+'66', 1.5, '4 3');
+    // DB cylinder simulation
+    rect(svg, cx-46, 105, 92, 50, s.dbColor, s.color, 8);
+    txt(svg, cx, 125, '🗄', 13, '#fff', 'middle');
+    txt(svg, cx, 143, s.db, 9.5, s.color, 'middle', true);
+  });
+
+  txt(svg, W/2, 185, 'Each service owns its own database — schema changes are local', 10.5, '#454e65', 'middle', true);
+}
+
+function dbDemo(mode) {
+  const svg = document.getElementById('db-svg');
+  const log = document.getElementById('db-log');
+  const W = document.getElementById('db-stage').offsetWidth || 700;
+  const H = 220;
+
+  // Clear existing packets/overlays
+  svg.querySelectorAll('.demo-el').forEach(e=>e.remove());
+
+  if (mode === 'normal') {
+    // Order service queries its own DB
+    log.style.color = '#2ecc71';
+    log.textContent = '✓ Order Svc queries Orders DB — fast, local, no coordination';
+    animPacket(svg, 12/100*W, 64, 12/100*W, 105, '#4f8ef7', '100ms', 0);
+    setTimeout(()=>animPacket(svg, 12/100*W, 105, 12/100*W, 64, '#4f8ef7', 'data', 200), 400);
+  }
+  else if (mode === 'cross') {
+    // Order service needs user data → network call
+    log.style.color = '#f59e0b';
+    log.textContent = '⚡ Order Svc needs User data → network call required (latency added)';
+    // arrow from order to user svc
+    const arrow = el('path', {'class':'demo-el', d:`M${12/100*W+52} 42 Q${W/2} 5 ${38/100*W-52} 42`, 'fill':'none','stroke':'#f59e0b','stroke-width':'1.5','stroke-dasharray':'5 3','marker-end':'url(#arrow-a)'});
+    svg.appendChild(arrow);
+    const t = el('text',{'class':'demo-el',x:W/2,y:14,'text-anchor':'middle','font-size':'9','font-family':'JetBrains Mono,monospace','fill':'#f59e0b'});
+    t.textContent = 'GET /users/{id}'; svg.appendChild(t);
+    addArrowDef(svg);
+  }
+  else if (mode === 'shared') {
+    // Visualize schema change cascade
+    log.style.color = '#ef4444';
+    log.textContent = '💥 Shared DB schema change → ALL services affected simultaneously!';
+    // Red overlay on all DBs
+    DB_SVCS.forEach((s,i) => {
+      const cx = s.x/100*W;
+      const ov = el('rect',{'class':'demo-el',x:cx-46,y:105,width:92,height:50,rx:8,fill:'rgba(239,68,68,0.35)',stroke:'#ef4444','stroke-width':'1.5'});
+      svg.appendChild(ov);
+      setTimeout(()=>{ ov.style.transition='opacity .5s'; ov.style.opacity='0.8';}, i*120);
+    });
+    // Central shared DB
+    const sharedBg = el('rect',{'class':'demo-el', x:W/2-70, y:80, width:140, height:55, rx:10, fill:'rgba(239,68,68,0.15)', stroke:'#ef4444','stroke-width':'1'});
+    svg.appendChild(sharedBg);
+    const st = el('text',{'class':'demo-el',x:W/2,y:110,'text-anchor':'middle','font-size':'11','font-family':'JetBrains Mono,monospace','fill':'#ef4444','dominant-baseline':'central'});
+    st.textContent = '💥 SHARED DB'; svg.appendChild(st);
+  }
+}
+
+function animPacket(svg, x1,y1,x2,y2, color, label, delay) {
+  setTimeout(()=>{
+    const pk = el('circle',{'class':'demo-el', cx:x1,cy:y1,r:5,fill:color,'opacity':'0.9'});
+    svg.appendChild(pk);
+    let t=0;
+    const iv = setInterval(()=>{
+      t+=0.05;
+      if(t>=1){clearInterval(iv);pk.remove();return;}
+      pk.setAttribute('cx', x1+(x2-x1)*t);
+      pk.setAttribute('cy', y1+(y2-y1)*t);
+    },16);
+  }, delay);
+}
+
+function addArrowDef(svg) {
+  if (svg.querySelector('#arrow-a')) return;
+  const defs = el('defs',{});
+  const marker = el('marker',{id:'arrow-a',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'5',markerHeight:'5',orient:'auto-start-reverse'});
+  const path = el('path',{d:'M2 1L8 5L2 9',fill:'none',stroke:'#f59e0b','stroke-width':'1.5','stroke-linecap':'round','stroke-linejoin':'round'});
+  marker.appendChild(path); defs.appendChild(marker); svg.insertBefore(defs, svg.firstChild);
+}
+
+// ─── SLIDE 1: Shared Library sim ────────────────────────────────────────────
+let slInited = false;
+function initSharedLib() {
+  if (slInited) return; slInited = true;
+  drawSharedLib();
+}
+
+function drawSharedLib() {
+  const svg = document.getElementById('sl-svg');
+  svg.innerHTML = '';
+  const W = document.getElementById('shared-lib-sim').offsetWidth || 700;
+  svg.setAttribute('viewBox', `0 0 ${W} 200`);
+  const SVCS = [{l:'Auth Svc',x:.15,c:'#4f8ef7'},{l:'Order Svc',x:.35,c:'#2ecc71'},{l:'Pay Svc',x:.55,c:'#a855f7'},{l:'Notify Svc',x:.75,c:'#f59e0b'}];
+  // Shared lib in center bottom
+  rect(svg, W/2-75, 130, 150, 44, 'rgba(239,68,68,0.15)', '#ef4444', 8);
+  txt(svg, W/2, 152, '📦 shared-lib v1.0', 10.5, '#ef4444', 'middle', true);
+  // Services
+  SVCS.forEach(s=>{
+    const cx = s.x*W;
+    rect(svg, cx-48, 24, 96, 40, s.c+'22', s.c, 7);
+    txt(svg, cx, 44, s.l, 10.5, s.c, 'middle', false, '500');
+    // Dependency arrow
+    const lx = cx, ly = 64;
+    const tx = W/2, ty = 130;
+    line(svg, lx, ly, tx, ty, 'rgba(239,68,68,0.45)', 1.2, '4 3');
+  });
+  // Version bump warning
+  txt(svg, W/2, 185, '⚠ v1.1 released → all 4 services must rebuild + redeploy', 10, '#ef4444', 'middle', true);
+}
+
+// Dependency Hell canvas animation
+let depHellInited = false;
+function initDepHell() {
+  if (depHellInited) return; depHellInited = true;
+  const canvas = document.getElementById('dep-canvas');
+  const container = document.getElementById('dep-hell-sim');
+  canvas.width = container.offsetWidth || 700;
+  canvas.height = 200;
+  const ctx = canvas.getContext('2d');
+  const nodes = [];
+  const N = 12;
+  for(let i=0;i<N;i++){
+    nodes.push({
+      x: 40 + (i%4)*((canvas.width-80)/3),
+      y: 30 + Math.floor(i/4)*55,
+      label: ['Auth','Order','Pay','Notif','User','Search','Analytics','Email','Gateway','Config','Cache','Logger'][i],
+      color: ['#4f8ef7','#2ecc71','#a855f7','#f59e0b','#ef4444','#00d4ff','#ff6b6b','#14b8a6','#4f8ef7','#2ecc71','#a855f7','#f59e0b'][i],
+      vx: (Math.random()-.5)*0.4,
+      vy: (Math.random()-.5)*0.4
+    });
+  }
+  const edges = [[0,4],[1,0],[2,1],[3,0],[4,5],[5,6],[6,2],[7,3],[8,0],[8,1],[8,2],[9,4],[9,5],[10,6],[11,7],[0,6],[1,5],[2,8]];
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    frame++;
+    edges.forEach(([a,b])=>{
+      ctx.beginPath();
+      ctx.moveTo(nodes[a].x, nodes[a].y);
+      ctx.lineTo(nodes[b].x, nodes[b].y);
+      const pulse = .2 + .15*Math.sin(frame*.05 + a);
+      ctx.strokeStyle = `rgba(239,68,68,${pulse})`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4,4]);
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
+    nodes.forEach((n,i)=>{
+      n.x += n.vx; n.y += n.vy;
+      if(n.x<20||n.x>canvas.width-20) n.vx*=-1;
+      if(n.y<16||n.y>184) n.vy*=-1;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 18, 0, Math.PI*2);
+      ctx.fillStyle = n.color+'22';
+      ctx.strokeStyle = n.color;
+      ctx.lineWidth = 0.8;
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = n.color;
+      ctx.font = '8.5px JetBrains Mono';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(n.label, n.x, n.y);
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// Sidecar animation
+let scInited = false;
+function initSidecar() {
+  if (scInited) return; scInited = true;
+  drawSidecar();
+}
+function drawSidecar() {
+  const svg = document.getElementById('sc-svg');
+  svg.innerHTML = '';
+  const W = svg.parentElement.offsetWidth || 700;
+  svg.setAttribute('viewBox',`0 0 ${W} 190`);
+  // Host boundary
+  const hostX = W/2-180, hostW = 360;
+  rect(svg, hostX, 20, hostW, 145, 'rgba(0,212,255,0.04)', 'rgba(0,212,255,0.2)', 12);
+  txt(svg, W/2, 35, 'SAME HOST / POD', 9, '#00d4ff55', 'middle', true);
+  // Main service
+  rect(svg, W/2-160, 50, 140, 100, 'rgba(79,142,247,0.15)', '#4f8ef7', 9);
+  txt(svg, W/2-90, 78, '🚀', 16, '#fff', 'middle');
+  txt(svg, W/2-90, 100, 'Main Service', 11, '#4f8ef7', 'middle', false, '500');
+  txt(svg, W/2-90, 118, 'Business Logic', 9.5, '#454e65', 'middle', true);
+  txt(svg, W/2-90, 133, 'Port 8080', 9, '#4f8ef7', 'middle', true);
+  // Sidecar
+  rect(svg, W/2+20, 50, 130, 100, 'rgba(0,212,255,0.12)', '#00d4ff', 9);
+  txt(svg, W/2+85, 78, '🔧', 16, '#fff', 'middle');
+  txt(svg, W/2+85, 100, 'Sidecar', 11, '#00d4ff', 'middle', false, '500');
+  txt(svg, W/2+85, 118, 'Logging · Retry', 9.5, '#454e65', 'middle', true);
+  txt(svg, W/2+85, 133, 'IPC · Port 9090', 9, '#00d4ff', 'middle', true);
+  // IPC line between them
+  line(svg, W/2-20, 100, W/2+20, 100, 'rgba(0,212,255,0.5)', 1.5, '3 2');
+  txt(svg, W/2, 93, 'local IPC', 9, 'rgba(0,212,255,0.5)', 'middle', true);
+  // External traffic arrow
+  line(svg, hostX-60, 100, hostX, 100, '#4f8ef788', 1.5);
+  txt(svg, hostX-30, 88, 'Traffic', 9, '#4f8ef788', 'middle');
+}
+
+// DRY tabs
+function dryTab(n) {
+  document.querySelectorAll('.dtab').forEach((t,i) => t.classList.toggle('on', i===n));
+  document.querySelectorAll('.dtab-p').forEach((p,i) => p.classList.toggle('on', i===n));
+}
+
+// ─── SLIDE 2: Data Duplication ───────────────────────────────────────────────
+let cacheInited = false;
+function initCache() {
+  if (cacheInited) return; cacheInited = true;
+  drawCache();
+}
+
+function drawCache() {
+  const svg = document.getElementById('cache-svg');
+  svg.innerHTML = '';
+  const W = document.getElementById('cache-stage').offsetWidth || 700;
+  const H = 200;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  // Order service
+  rect(svg, 20, 60, 130, 80, 'rgba(79,142,247,0.15)', '#4f8ef7', 9);
+  txt(svg, 85, 85, 'Order Svc', 11, '#4f8ef7', 'middle', false, '500');
+  txt(svg, 85, 103, '📋 Local Cache', 9.5, '#4f8ef799', 'middle', true);
+  txt(svg, 85, 118, 'product_name', 9, '#4f8ef766', 'middle', true);
+  txt(svg, 85, 132, '← cached copy', 9, '#4f8ef744', 'middle', true);
+
+  // Product service
+  rect(svg, W-150, 60, 130, 80, 'rgba(46,204,113,0.15)', '#2ecc71', 9);
+  txt(svg, W-85, 85, 'Product Svc', 11, '#2ecc71', 'middle', false, '500');
+  txt(svg, W-85, 103, '🗄 Products DB', 9.5, '#2ecc7199', 'middle', true);
+  txt(svg, W-85, 118, 'SOURCE OF TRUTH', 8.5, '#2ecc7166', 'middle', true);
+
+  // Event bus in middle
+  rect(svg, W/2-75, 75, 150, 50, 'rgba(245,158,11,0.1)', '#f59e0b', 8);
+  txt(svg, W/2, 95, '📡 Event Bus', 10.5, '#f59e0b', 'middle', false, '500');
+  txt(svg, W/2, 111, 'product.updated', 9, '#f59e0b88', 'middle', true);
+
+  // Arrows
+  line(svg, 150, 100, W/2-75, 100, '#4f8ef766', 1.2, '4 3');
+  line(svg, W/2+75, 100, W-150, 100, '#2ecc7166', 1.2, '4 3');
+
+  txt(svg, W/2, 175, 'Order Svc caches product names locally — Product Svc is the single source of truth', 10, '#454e65', 'middle', true);
+}
+
+function cacheDemo(mode) {
+  const svg = document.getElementById('cache-svg');
+  const log = document.getElementById('cache-log');
+  const W = document.getElementById('cache-stage').offsetWidth || 700;
+
+  svg.querySelectorAll('.cache-el').forEach(e=>e.remove());
+
+  if (mode === 'fast') {
+    log.style.color = '#2ecc71';
+    log.textContent = '✓ 3ms — served from local cache, no network hop';
+    // Green flash on order svc
+    const flash = el('rect',{'class':'cache-el',x:20,y:60,width:130,height:80,rx:9,fill:'rgba(46,204,113,0.25)',stroke:'#2ecc71','stroke-width':'1.5'});
+    svg.appendChild(flash);
+    const label = el('text',{'class':'cache-el',x:85,y:155,'text-anchor':'middle','dominant-baseline':'central','font-size':9.5,'font-family':'JetBrains Mono,monospace','fill':'#2ecc71'});
+    label.textContent = '⚡ 3ms response'; svg.appendChild(label);
+    setTimeout(()=>{ flash.setAttribute('opacity','0'); flash.style.transition='opacity .8s'; },600);
+  }
+  else if (mode === 'stale') {
+    log.style.color = '#f59e0b';
+    log.textContent = '⚠ Stale data — Product Svc updated price but cache not yet synced';
+    // Show product DB updated
+    const upd = el('rect',{'class':'cache-el',x:W-150,y:60,width:130,height:80,rx:9,fill:'rgba(245,158,11,0.2)',stroke:'#f59e0b','stroke-width':'1.5'});
+    svg.appendChild(upd);
+    const updT = el('text',{'class':'cache-el',x:W-85,y:155,'text-anchor':'middle','dominant-baseline':'central','font-size':9.5,'font-family':'JetBrains Mono,monospace','fill':'#f59e0b'});
+    updT.textContent = 'Price: $9→$12'; svg.appendChild(updT);
+    // Red stale indicator on order svc
+    const stale = el('text',{'class':'cache-el',x:85,y:155,'text-anchor':'middle','dominant-baseline':'central','font-size':9.5,'font-family':'JetBrains Mono,monospace','fill':'#f59e0b'});
+    stale.textContent = 'Still shows $9 ⚠'; svg.appendChild(stale);
+  }
+  else if (mode === 'strict') {
+    log.style.color = '#ef4444';
+    log.textContent = '⏱ 340ms — strict mode: Order Svc calls Product Svc on every request';
+    // Arrow from order to product
+    const callLine = el('line',{'class':'cache-el',x1:150,y1:90,x2:W-150,y2:90,stroke:'#ef4444','stroke-width':'1.5','stroke-dasharray':'0'});
+    svg.appendChild(callLine);
+    const callT = el('text',{'class':'cache-el',x:W/2,y:76,'text-anchor':'middle','font-size':9.5,'font-family':'JetBrains Mono,monospace','fill':'#ef4444'});
+    callT.textContent = 'GET /product → 340ms latency'; svg.appendChild(callT);
+    // Show dependency
+    const dep = el('text',{'class':'cache-el',x:W/2,y:155,'text-anchor':'middle','font-size':9.5,'font-family':'JetBrains Mono,monospace','fill':'#ef4444'});
+    dep.textContent = '⚠ Now Order Svc is unavailable if Product Svc is down'; svg.appendChild(dep);
+  }
+}
+
+// ─── SLIDE 3: Structured Autonomy ───────────────────────────────────────────
+function toggleTier(n) {
+  const body = document.getElementById('tbody'+n);
+  body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+// ─── SLIDE 4: Micro-Frontend ─────────────────────────────────────────────────
+let mfeInited = false;
+function initMFE() {
+  if (mfeInited) return; mfeInited = true;
+}
+
+const MFE_FRAGMENTS = [
+  {name:'Shell / App Container', x:.05, y:.07, w:.9, h:.86, color:'#8892aa', light:true},
+  {name:'Nav Fragment', team:'Platform Team', x:.07, y:.1, w:.86, h:.13, color:'#4f8ef7'},
+  {name:'Product Catalogue Fragment', team:'Catalogue Team', x:.07, y:.27, w:.56, h:.35, color:'#2ecc71'},
+  {name:'Recommendations Fragment', team:'ML Team', x:.65, y:.27, w:.28, h:.35, color:'#a855f7'},
+  {name:'Basket / Checkout Fragment', team:'Checkout Team', x:.07, y:.66, w:.4, h:.22, color:'#f59e0b'},
+  {name:'User Profile Fragment', team:'Identity Team', x:.49, y:.66, w:.44, h:.22, color:'#00d4ff'},
+];
+
+function mfeMode(mode) {
+  const svg = document.getElementById('mfe-svg');
+  svg.innerHTML = '';
+  const stage = document.getElementById('mfe-stage');
+  const W = stage.offsetWidth || 700;
+  const H = 260;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  if (mode === 'mono') {
+    rect(svg, 20, 10, W-40, H-20, 'rgba(239,68,68,0.08)', '#ef4444', 10);
+    txt(svg, W/2, 32, 'MONOLITH SPA', 10, '#ef4444', 'middle', true);
+    // Packed grid of features showing they're all one blob
+    const feats = ['Auth','Nav','Products','Cart','Checkout','Profile','Search','Reviews','Recco','Filters','Sort','Promo'];
+    feats.forEach((f,i)=>{
+      const col=i%4, row=Math.floor(i/4);
+      const fx = 30+col*((W-60)/4), fy = 48+row*55;
+      rect(svg, fx, fy, (W-80)/4-4, 44, 'rgba(239,68,68,0.15)', 'rgba(239,68,68,0.4)', 6);
+      txt(svg, fx+(W-80)/8-2, fy+22, f, 10, '#ef4444aa', 'middle');
+    });
+    txt(svg, W/2, H-12, '❌ One team owns everything — deploy all-or-nothing', 10, '#454e65', 'middle', true);
+  }
+  else if (mode === 'mfe') {
+    // Draw shell
+    rect(svg, 10, 5, W-20, H-10, 'rgba(136,146,170,0.06)', 'rgba(136,146,170,0.25)', 11);
+    txt(svg, W/2, 18, 'Shell App (routes, shared design system)', 9.5, '#4a5168', 'middle', true);
+    // Draw fragments
+    MFE_FRAGMENTS.slice(1).forEach((f,i)=>{
+      const fx=f.x*W, fy=f.y*H, fw=f.w*W, fh=f.h*H;
+      rect(svg, fx, fy, fw, fh, f.color+'18', f.color, 8);
+      txt(svg, fx+fw/2, fy+fh/2-8, f.name.replace(' Fragment',''), 10.5, f.color, 'middle', false, '500');
+      txt(svg, fx+fw/2, fy+fh/2+9, f.team||'', 9, f.color+'88', 'middle', true);
+    });
+  }
+  else if (mode === 'deploy') {
+    mfeMode('mfe');
+    // Animate deploy on Basket fragment only
+    setTimeout(()=>{
+      const f = MFE_FRAGMENTS[4]; // Basket
+      const fx=f.x*W, fy=f.y*H, fw=f.w*W, fh=f.h*H;
+      const glow = el('rect',{x:fx,y:fy,width:fw,height:fh,rx:8,fill:'rgba(245,158,11,0.35)',stroke:'#f59e0b','stroke-width':'2'});
+      svg.appendChild(glow);
+      const badge = el('rect',{x:fx+fw/2-45,y:fy-16,width:90,height:20,rx:10,fill:'rgba(245,158,11,0.9)'});
+      svg.appendChild(badge);
+      const bt = el('text',{x:fx+fw/2,y:fy-6,'text-anchor':'middle','dominant-baseline':'central','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#07090f'});
+      bt.textContent = '🚀 Deploying v2.4'; svg.appendChild(bt);
+      const note = el('text',{x:W/2,y:H-12,'text-anchor':'middle','dominant-baseline':'central','font-size':9.5,'font-family':'JetBrains Mono,monospace','fill':'#f59e0b'});
+      note.textContent = '✓ Only Basket fragment redeploys — other teams unaffected'; svg.appendChild(note);
+    }, 100);
+  }
+}
+
+// Boot
+window.addEventListener('resize', ()=>{ dbInited=false; slInited=false; cacheInited=false; mfeInited=false; go(cur); });
+initDB();
+</script>
+</body>
+</html>

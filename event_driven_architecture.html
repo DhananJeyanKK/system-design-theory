@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event-Driven Architecture</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=Outfit:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080a10;--s1:#0d1018;--s2:#12161f;--s3:#181d28;--s4:#1e2535;
+  --b1:rgba(255,255,255,0.05);--b2:rgba(255,255,255,0.09);--b3:rgba(255,255,255,0.16);
+  --tx:#dde3f0;--t2:#8992a8;--t3:#434c63;--t4:#232838;
+  --blue:#4f8cf5;--bd:rgba(79,140,245,0.13);
+  --cyan:#00d4ff;--cd:rgba(0,212,255,0.1);
+  --green:#22c55e;--gd:rgba(34,197,94,0.11);
+  --amber:#f59e0b;--ad:rgba(245,158,11,0.12);
+  --red:#ef4444;--rd:rgba(239,68,68,0.11);
+  --purple:#a855f7;--pd:rgba(168,85,247,0.12);
+  --teal:#14b8a6;--tld:rgba(20,184,166,0.11);
+  --orange:#fb923c;--od:rgba(251,146,60,0.11);
+  --font:'Outfit',sans-serif;
+  --serif:'Syne',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--tx);display:flex;flex-direction:column}
+
+/* NAV */
+#nav{display:flex;align-items:stretch;border-bottom:0.5px solid var(--b2);background:var(--s1);overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+#nav::-webkit-scrollbar{display:none}
+.nb{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;padding:10px 13px;background:none;border:none;border-bottom:2px solid transparent;color:var(--t3);cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+.nb:hover{color:var(--t2);background:var(--b1)}
+.nb.on{color:var(--cyan);border-bottom-color:var(--cyan);background:var(--cd)}
+
+/* SLIDES */
+#slides{flex:1;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;display:none;flex-direction:column;overflow-y:auto;padding:26px 34px 44px;scrollbar-width:thin;scrollbar-color:var(--b3) transparent}
+.slide.on{display:flex}
+.slide::-webkit-scrollbar{width:3px}
+.slide::-webkit-scrollbar-thumb{background:var(--b3);border-radius:3px}
+
+/* TYPE */
+.ey{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--cyan);text-transform:uppercase;margin-bottom:6px}
+.title{font-family:var(--serif);font-size:28px;font-weight:700;line-height:1.13;letter-spacing:-.025em;margin-bottom:5px}
+.title em{font-style:italic;font-weight:400;color:var(--cyan)}
+.title .red{color:var(--red)}
+.sub{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:20px;max-width:640px}
+.sec{font-family:var(--mono);font-size:9px;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;margin-top:18px}
+
+/* LAYOUT */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.card{background:var(--s2);border:0.5px solid var(--b2);border-radius:12px;padding:16px 18px}
+.card-t{font-size:12.5px;font-weight:500;margin-bottom:5px}
+.card-b{font-size:12px;color:var(--t2);line-height:1.65}
+.div{height:.5px;background:var(--b2);margin:16px 0}
+.tag{display:inline-block;font-family:var(--mono);font-size:9.5px;padding:2px 7px;border-radius:16px;margin:2px}
+.tg{background:var(--gd);color:var(--green);border:.5px solid rgba(34,197,94,.25)}
+.tr{background:var(--rd);color:var(--red);border:.5px solid rgba(239,68,68,.25)}
+.ta{background:var(--ad);color:var(--amber);border:.5px solid rgba(245,158,11,.25)}
+.tb{background:var(--bd);color:var(--blue);border:.5px solid rgba(79,140,245,.25)}
+.tc{background:var(--cd);color:var(--cyan);border:.5px solid rgba(0,212,255,.25)}
+.tp{background:var(--pd);color:var(--purple);border:.5px solid rgba(168,85,247,.25)}
+.tt{background:var(--tld);color:var(--teal);border:.5px solid rgba(20,184,166,.25)}
+.to{background:var(--od);color:var(--orange);border:.5px solid rgba(251,146,60,.25)}
+
+/* BUTTONS */
+.btn{font-family:var(--mono);font-size:10px;padding:6px 13px;border-radius:7px;border:.5px solid var(--b3);background:var(--s3);color:var(--tx);cursor:pointer;transition:all .2s;letter-spacing:.03em}
+.btn:hover{background:var(--b2)}
+.btn.p{background:var(--cd);border-color:var(--cyan);color:var(--cyan)}
+.btn.p:hover{background:rgba(0,212,255,.18)}
+.btn.g{background:var(--gd);border-color:var(--green);color:var(--green)}
+.btn.r{background:var(--rd);border-color:var(--red);color:var(--red)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* SIM boxes */
+.sim{background:var(--s1);border:.5px solid var(--b2);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.sim-stage{position:relative;width:100%}
+.sim-ctrl{padding:11px 15px;border-top:.5px solid var(--b1);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sim-log{font-family:var(--mono);font-size:9.5px;color:var(--t2);margin-left:auto;text-align:right;max-width:300px;min-height:14px;transition:color .3s}
+
+/* TABS */
+.tabs{display:flex;border-bottom:.5px solid var(--b2);margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{font-family:var(--mono);font-size:9.5px;padding:8px 14px;background:none;border:none;border-bottom:2px solid transparent;color:var(--t3);cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.tab.on{color:var(--cyan);border-bottom-color:var(--cyan)}
+.tp-panel{display:none}.tp-panel.on{display:block}
+
+/* FOOTER */
+#foot{display:flex;align-items:center;justify-content:space-between;padding:7px 20px;border-top:.5px solid var(--b1);background:var(--s1);flex-shrink:0}
+#foot-lbl{font-family:var(--mono);font-size:9.5px;color:var(--t3)}
+.fnav{display:flex;gap:7px}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.8}50%{opacity:.2}}
+@keyframes flowDash{to{stroke-dashoffset:-20}}
+@keyframes msgMove{0%{transform:translateX(0)}100%{transform:translateX(var(--tx,200px))}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes popIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes ripple{0%{r:6;opacity:.9}100%{r:28;opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.au{animation:fadeUp .35s ease both}
+
+@media(max-width:640px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .slide{padding:16px 14px 32px}
+  .title{font-size:22px}
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <button class="nb on"  onclick="go(0)">01 · Motivation &amp; Participants</button>
+  <button class="nb"     onclick="go(1)">02 · Req/Res vs Event-Driven</button>
+  <button class="nb"     onclick="go(2)">03 · Use Cases &amp; Patterns</button>
+  <button class="nb"     onclick="go(3)">04 · Delivery Semantics</button>
+  <button class="nb"     onclick="go(4)">05 · Saga Pattern</button>
+  <button class="nb"     onclick="go(5)">06 · CQRS Pattern</button>
+  <button class="nb"     onclick="go(6)">07 · Event Sourcing</button>
+</nav>
+
+<div id="slides">
+
+<!-- ═══════════════════════════════════════════════════════════ SLIDE 0 -->
+<div class="slide on" id="s0">
+  <div class="ey">Event-Driven Architecture · Foundations</div>
+  <div class="title">Why <em>Events?</em> — The Motivation</div>
+  <div class="sub">Synchronous request chains force users to wait for every downstream call. One slow service poisons the entire response. Events break that chain.</div>
+
+  <div class="sec">The synchronous problem</div>
+  <div class="sim">
+    <div class="sim-stage" style="height:170px"><svg id="sync-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div class="sim-ctrl">
+      <button class="btn p" onclick="syncDemo('ok')">▶ Normal flow</button>
+      <button class="btn r" onclick="syncDemo('slow')">Slow downstream</button>
+      <button class="btn r" onclick="syncDemo('fail')">Service fails</button>
+      <div class="sim-log" id="sync-log">Click to simulate synchronous chain</div>
+    </div>
+  </div>
+
+  <div class="sec">The three participants</div>
+  <div class="g3" style="margin-bottom:14px">
+    <div class="card" style="border-color:rgba(79,140,245,.3);text-align:center">
+      <div style="font-size:24px;margin-bottom:8px">📤</div>
+      <div class="card-t" style="color:var(--blue)">Producer</div>
+      <div class="card-b">Emits events when something happens. Doesn't know who listens. Doesn't wait for a response. Fully decoupled from consumers.</div>
+    </div>
+    <div class="card" style="border-color:rgba(245,158,11,.3);text-align:center">
+      <div style="font-size:24px;margin-bottom:8px">📡</div>
+      <div class="card-t" style="color:var(--amber)">Message Broker</div>
+      <div class="card-b">Receives, stores, and delivers events. Decouples producers from consumers in time and space. Acts as the nervous system of the architecture.</div>
+    </div>
+    <div class="card" style="border-color:rgba(34,197,94,.3);text-align:center">
+      <div style="font-size:24px;margin-bottom:8px">📥</div>
+      <div class="card-t" style="color:var(--green)">Consumer</div>
+      <div class="card-b">Subscribes to topics or queues. Processes events independently at its own pace. Multiple consumers can handle the same event differently.</div>
+    </div>
+  </div>
+
+  <div class="sec">Event flow animation</div>
+  <div class="sim">
+    <div class="sim-stage" style="height:140px"><svg id="flow-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div class="sim-ctrl">
+      <button class="btn p" id="flow-btn" onclick="startFlow()">▶ Emit event</button>
+      <button class="btn" onclick="resetFlow()">↺ Reset</button>
+      <div class="sim-log" id="flow-log">Producer emits → Broker stores → Consumers process independently</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ SLIDE 1 -->
+<div class="slide" id="s1">
+  <div class="ey">Architecture · Communication Models</div>
+  <div class="title">Request-Response <span class="red">vs</span> <em>Event-Driven</em></div>
+  <div class="sub">The fundamental difference isn't just sync vs async — it's about who controls the conversation and what each participant knows about the others.</div>
+
+  <div class="sec">Side-by-side comparison — click to simulate</div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="sim" style="margin-bottom:0">
+      <div style="padding:10px 14px;border-bottom:.5px solid var(--b1);font-family:var(--mono);font-size:10px;color:var(--red)">❌ Synchronous Request/Response</div>
+      <div class="sim-stage" style="height:155px"><svg id="rr-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <button class="btn r" style="width:100%" onclick="rrSim()">▶ Simulate request chain</button>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--t3)" id="rr-log">Service A must know about B, C, D</div>
+      </div>
+    </div>
+    <div class="sim" style="margin-bottom:0">
+      <div style="padding:10px 14px;border-bottom:.5px solid var(--b1);font-family:var(--mono);font-size:10px;color:var(--green)">✓ Asynchronous Event-Driven</div>
+      <div class="sim-stage" style="height:155px"><svg id="ed-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl" style="flex-direction:column;align-items:flex-start;gap:6px">
+        <button class="btn g" style="width:100%" onclick="edSim()">▶ Simulate event emission</button>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--t3)" id="ed-log">Producer emits once — broker fans out</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">Key differences</div>
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:460px">
+    <thead>
+      <tr style="border-bottom:.5px solid var(--b2)">
+        <th style="font-family:var(--mono);font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;text-align:left">Aspect</th>
+        <th style="font-family:var(--mono);font-size:9px;color:var(--red);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;text-align:left">Request / Response</th>
+        <th style="font-family:var(--mono);font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:.08em;padding:8px 12px;text-align:left">Event-Driven</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:.5px solid var(--b1)"><td style="padding:8px 12px;color:var(--t2)">Communication</td><td style="padding:8px 12px;color:var(--red)">Synchronous, blocking</td><td style="padding:8px 12px;color:var(--green)">Asynchronous, non-blocking</td></tr>
+      <tr style="border-bottom:.5px solid var(--b1)"><td style="padding:8px 12px;color:var(--t2)">Coupling</td><td style="padding:8px 12px;color:var(--red)">Tight — caller knows callee</td><td style="padding:8px 12px;color:var(--green)">Loose — producer unknown to consumer</td></tr>
+      <tr style="border-bottom:.5px solid var(--b1)"><td style="padding:8px 12px;color:var(--t2)">Control</td><td style="padding:8px 12px;color:var(--red)">Caller drives the flow</td><td style="padding:8px 12px;color:var(--green)">Inversion of control — broker routes</td></tr>
+      <tr style="border-bottom:.5px solid var(--b1)"><td style="padding:8px 12px;color:var(--t2)">Failure handling</td><td style="padding:8px 12px;color:var(--red)">One failure = whole chain fails</td><td style="padding:8px 12px;color:var(--green)">Consumers fail independently</td></tr>
+      <tr><td style="padding:8px 12px;color:var(--t2)">Scaling</td><td style="padding:8px 12px;color:var(--red)">All services scale together</td><td style="padding:8px 12px;color:var(--green)">Each consumer scales independently</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="card" style="margin-top:14px;border-color:rgba(0,212,255,.2)">
+    <div class="card-t" style="color:var(--cyan)">Reality: Use both</div>
+    <div class="card-b">No system is purely one or the other. <strong>Request/Response</strong> for immediate user-facing data (product listings, search). <strong>Event-driven</strong> for background processing, cross-service coordination, and anything that doesn't need an instant reply.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ SLIDE 2 -->
+<div class="slide" id="s2">
+  <div class="ey">Architecture · When To Use</div>
+  <div class="title">Use Cases &amp; <em>Delivery Patterns</em></div>
+  <div class="sub">Not every operation benefits from events. Know the use case, then pick the pattern.</div>
+
+  <div class="sec">Use case map — click each to learn more</div>
+  <div class="g3" style="margin-bottom:14px" id="uc-grid"></div>
+
+  <div id="uc-detail" class="card" style="border-color:rgba(0,212,255,.2);min-height:60px;margin-bottom:16px;display:none">
+    <div class="card-t" id="uc-detail-t"></div>
+    <div class="card-b" id="uc-detail-b"></div>
+  </div>
+
+  <div class="sec">Event Streaming vs Pub/Sub — animated comparison</div>
+  <div class="g2">
+    <div class="sim" style="margin-bottom:0">
+      <div style="padding:9px 13px;border-bottom:.5px solid var(--b1);font-family:var(--mono);font-size:9.5px;color:var(--blue)">📼 Event Streaming (Kafka-style)</div>
+      <div class="sim-stage" style="height:160px"><svg id="stream-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl">
+        <button class="btn p" onclick="streamSim()">▶ Play</button>
+        <button class="btn" onclick="streamReplay()">Replay from start</button>
+      </div>
+    </div>
+    <div class="sim" style="margin-bottom:0">
+      <div style="padding:9px 13px;border-bottom:.5px solid var(--b1);font-family:var(--mono);font-size:9.5px;color:var(--purple)">📢 Pub/Sub (RabbitMQ-style)</div>
+      <div class="sim-stage" style="height:160px"><svg id="pubsub-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl">
+        <button class="btn" style="border-color:rgba(168,85,247,.4);color:var(--purple)" onclick="pubsubSim()">▶ Play</button>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--t3)">New consumer gets only new events</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ SLIDE 3 -->
+<div class="slide" id="s3">
+  <div class="ey">Architecture · Reliability</div>
+  <div class="title">Message Delivery <em>Semantics</em></div>
+  <div class="sub">Messages can be lost at the producer, the broker, or the consumer. Delivery semantics define the guarantee — and every guarantee has a cost.</div>
+
+  <div class="sec">Where messages can be lost</div>
+  <div class="sim" style="margin-bottom:16px">
+    <div class="sim-stage" style="height:120px"><svg id="loss-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div class="sim-ctrl">
+      <button class="btn r" onclick="lossDemo('prod')">Producer drop</button>
+      <button class="btn r" onclick="lossDemo('broker')">Broker crash</button>
+      <button class="btn r" onclick="lossDemo('cons')">Consumer fail</button>
+      <div class="sim-log" id="loss-log">Click to show where messages can be lost</div>
+    </div>
+  </div>
+
+  <div class="sec">The three guarantees — animated</div>
+  <div class="tabs" id="sem-tabs">
+    <button class="tab on" onclick="semTab(0)">At-Most-Once</button>
+    <button class="tab" onclick="semTab(1)">At-Least-Once</button>
+    <button class="tab" onclick="semTab(2)">Exactly-Once</button>
+  </div>
+
+  <div class="tp-panel on" id="sem0">
+    <div class="sim">
+      <div class="sim-stage" style="height:140px"><svg id="amo-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl">
+        <button class="btn p" onclick="amoSim()">▶ Simulate</button>
+        <div class="sim-log" id="amo-log">Fire and forget — may drop, no duplicate</div>
+      </div>
+    </div>
+    <div class="g3">
+      <div class="card"><div class="card-t" style="color:var(--green)">✓ Pros</div><div class="card-b"><span class="tg">Lowest latency</span> <span class="tg">Least overhead</span> <span class="tg">Simplest impl</span></div></div>
+      <div class="card"><div class="card-t" style="color:var(--red)">✗ Cons</div><div class="card-b">Messages can be silently dropped. No retry on no-ACK. Data loss is accepted.</div></div>
+      <div class="card"><div class="card-t" style="color:var(--amber)">Use when</div><div class="card-b">Metrics, telemetry, logs. OK to lose a few data points. Real-time dashboards, sensor sampling.</div></div>
+    </div>
+  </div>
+
+  <div class="tp-panel" id="sem1">
+    <div class="sim">
+      <div class="sim-stage" style="height:140px"><svg id="alo-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl">
+        <button class="btn p" onclick="aloSim()">▶ Simulate</button>
+        <div class="sim-log" id="alo-log">Publisher retries until ACK — duplicates possible</div>
+      </div>
+    </div>
+    <div class="g3">
+      <div class="card"><div class="card-t" style="color:var(--green)">✓ Pros</div><div class="card-b">No message is ever lost. Guaranteed delivery. Consumers process everything.</div></div>
+      <div class="card"><div class="card-t" style="color:var(--red)">✗ Cons</div><div class="card-b"><span class="tr">Duplicate events possible</span>. Consumers must be <strong>idempotent</strong>. Higher latency.</div></div>
+      <div class="card"><div class="card-t" style="color:var(--amber)">Use when</div><div class="card-b">Push notifications, product reviews, emails. Missing one is worse than duplicate.</div></div>
+    </div>
+  </div>
+
+  <div class="tp-panel" id="sem2">
+    <div class="sim">
+      <div class="sim-stage" style="height:140px"><svg id="exo-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl">
+        <button class="btn p" onclick="exoSim()">▶ Simulate</button>
+        <div class="sim-log" id="exo-log">Exactly once — dedup + atomic commit</div>
+      </div>
+    </div>
+    <div class="g3">
+      <div class="card"><div class="card-t" style="color:var(--green)">✓ Pros</div><div class="card-b">Perfect guarantee. No duplicates. No drops. The holy grail of reliability.</div></div>
+      <div class="card"><div class="card-t" style="color:var(--red)">✗ Cons</div><div class="card-b"><span class="tr">Highest latency</span>. Not all brokers support it. Complex to implement.</div></div>
+      <div class="card"><div class="card-t" style="color:var(--amber)">Use when</div><div class="card-b">Financial transactions, inventory deductions, billing events. Every event must happen exactly one time.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ SLIDE 4 -->
+<div class="slide" id="s4">
+  <div class="ey">Design Patterns · Distributed Transactions</div>
+  <div class="title">The <em>Saga</em> Pattern</div>
+  <div class="sub">Microservices lose ACID transactions — each service has its own DB. The Saga pattern provides distributed transaction management through compensating operations.</div>
+
+  <div class="card" style="border-color:rgba(239,68,68,.2);background:var(--rd);margin-bottom:14px">
+    <div class="card-t" style="color:var(--red)">The Problem: Lost Atomicity</div>
+    <div class="card-b">In a monolith, updating Order + Payment + Inventory in one DB transaction is atomic — it all succeeds or all rolls back. In microservices, each service has its own DB. A partial failure leaves the system in an inconsistent state with no built-in rollback. Saga solves this.</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" onclick="sagaTab(0)">Orchestration (Workflow Service)</button>
+    <button class="tab" onclick="sagaTab(1)">Choreography (Event-Driven)</button>
+    <button class="tab" onclick="sagaTab(2)">Failure &amp; Compensation</button>
+  </div>
+
+  <div class="tp-panel on" id="saga0">
+    <div class="sim">
+      <div class="sim-stage" style="height:200px"><svg id="orch-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl">
+        <button class="btn p" id="orch-btn" onclick="orchStep()">▶ Start order (step through)</button>
+        <button class="btn" onclick="orchReset()">↺ Reset</button>
+        <div class="sim-log" id="orch-log">Orchestrator coordinates all services</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-t" style="color:var(--cyan)">How it works</div>
+      <div class="card-b">A dedicated <strong>Workflow Orchestration Service</strong> calls each microservice in sequence. It tracks state and knows what to do when a step fails. On failure: it calls compensating operations to undo completed steps. The orchestrator is the single source of truth for the transaction state.</div>
+    </div>
+  </div>
+
+  <div class="tp-panel" id="saga1">
+    <div class="sim">
+      <div class="sim-stage" style="height:200px"><svg id="choreo-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl">
+        <button class="btn p" id="choreo-btn" onclick="choreoStep()">▶ Start order (step through)</button>
+        <button class="btn" onclick="choreoReset()">↺ Reset</button>
+        <div class="sim-log" id="choreo-log">Services emit events, react to events</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-t" style="color:var(--purple)">How it works</div>
+      <div class="card-b">No central orchestrator. Each service listens for events and emits the next event when done. On failure: the failing service emits a <strong>compensating event</strong> that other services react to, undoing their work. More decoupled — but harder to visualize the overall flow.</div>
+    </div>
+  </div>
+
+  <div class="tp-panel" id="saga2">
+    <div class="sim">
+      <div class="sim-stage" style="height:200px"><svg id="comp-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+      <div class="sim-ctrl">
+        <button class="btn p" onclick="compSim('ok')">✓ Happy path</button>
+        <button class="btn r" onclick="compSim('fail')">💥 Payment fails → compensate</button>
+        <div class="sim-log" id="comp-log">See how compensation unwinds completed steps</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ SLIDE 5 -->
+<div class="slide" id="s5">
+  <div class="ey">Design Patterns · Read/Write Separation</div>
+  <div class="title">CQRS — Command &amp; Query <em>Responsibility Segregation</em></div>
+  <div class="sub">Separate the model that updates data (Commands) from the model that reads data (Queries). Optimize each independently. Scale each independently.</div>
+
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card" style="border-color:rgba(239,68,68,.25)">
+      <div class="card-t" style="color:var(--red)">Command Side (Writes)</div>
+      <div class="card-b">INSERT, UPDATE, DELETE operations. Optimized for consistency and write throughput. Single source of truth. When a command completes successfully, it publishes an event to the broker.</div>
+    </div>
+    <div class="card" style="border-color:rgba(34,197,94,.25)">
+      <div class="card-t" style="color:var(--green)">Query Side (Reads)</div>
+      <div class="card-b">READ operations only. Denormalized, pre-joined views optimized for query patterns. Can have multiple specialized read models (one for listing, one for analytics). Eventually consistent.</div>
+    </div>
+  </div>
+
+  <div class="sec">Interactive CQRS — write flows through broker to read replica</div>
+  <div class="sim">
+    <div class="sim-stage" style="height:190px"><svg id="cqrs-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div class="sim-ctrl">
+      <button class="btn p" onclick="cqrsSim('write')">📝 Write command</button>
+      <button class="btn g" onclick="cqrsSim('read')">🔍 Read query</button>
+      <button class="btn" style="border-color:var(--b3)" onclick="cqrsSim('scale')">⚡ Scale read replicas</button>
+      <div class="sim-log" id="cqrs-log">Select an operation</div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <div class="card-t" style="color:var(--amber)">Key Trade-off</div>
+      <div class="card-b">Eventual consistency — read model lags slightly behind write model. Not ACID. For most use-cases, sub-second lag is acceptable.</div>
+    </div>
+    <div class="card">
+      <div class="card-t" style="color:var(--cyan)">Scalability Win</div>
+      <div class="card-b">Scale read and write services <strong>independently</strong>. High read traffic? Add read replicas. High write load? Scale command service only.</div>
+    </div>
+    <div class="card">
+      <div class="card-t" style="color:var(--purple)">Cross-DB Joins</div>
+      <div class="card-b">With DB-per-service, joins are impossible. Create a dedicated <strong>read model</strong> that combines data from multiple services — a pre-joined view updated by events.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ SLIDE 6 -->
+<div class="slide" id="s6">
+  <div class="ey">Design Patterns · Audit &amp; History</div>
+  <div class="title">Event <em>Sourcing</em></div>
+  <div class="sub">Instead of storing the current state, store every event that led to that state. Replay events to reconstruct state at any point in time.</div>
+
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card" style="border-color:rgba(239,68,68,.25)">
+      <div class="card-t" style="color:var(--red)">Traditional State Storage ❌</div>
+      <div class="card-b">You store: <code style="font-family:var(--mono);font-size:10px;background:var(--s3);padding:1px 5px;border-radius:3px">balance = $450</code>. But how did it get there? No history. Can't audit. Can't reconstruct the past. When a bug corrupts state — it's gone.</div>
+    </div>
+    <div class="card" style="border-color:rgba(34,197,94,.25)">
+      <div class="card-t" style="color:var(--green)">Event Sourcing ✓</div>
+      <div class="card-b">You store: <code style="font-family:var(--mono);font-size:10px;background:var(--s3);padding:1px 5px;border-radius:3px">deposited $500 → withdrew $50</code>. The balance is derived. Complete audit trail. Replay to reconstruct any past state.</div>
+    </div>
+  </div>
+
+  <div class="sec">Interactive — event log replay</div>
+  <div class="sim">
+    <div class="sim-stage" style="height:200px"><svg id="es-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div class="sim-ctrl">
+      <button class="btn p" id="es-btn" onclick="esStep()">▶ Add event</button>
+      <button class="btn" onclick="esReplay()">⏮ Replay all</button>
+      <button class="btn" onclick="esSnapshot()">📸 Take snapshot</button>
+      <button class="btn" onclick="esReset()">↺ Reset</button>
+      <div class="sim-log" id="es-log">Events append, state is derived</div>
+    </div>
+  </div>
+
+  <div class="sec">The power combo: Event Sourcing + CQRS</div>
+  <div class="sim">
+    <div class="sim-stage" style="height:175px"><svg id="combo-svg" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div class="sim-ctrl">
+      <button class="btn p" onclick="comboSim()">▶ Animate full flow</button>
+      <div class="sim-log" id="combo-log">Write fast → Event log → Query service reads in-memory</div>
+    </div>
+  </div>
+
+  <div class="g3">
+    <div class="card"><div class="card-t" style="color:var(--green)">Complete audit history</div><div class="card-b">Every state change is recorded. Regulatory compliance, debugging, root-cause analysis — all trivial.</div></div>
+    <div class="card"><div class="card-t" style="color:var(--blue)">Fast writes</div><div class="card-b">Appending to an event log is the fastest write operation possible. No reads before writes. No update contention.</div></div>
+    <div class="card"><div class="card-t" style="color:var(--purple)">Snapshot optimization</div><div class="card-b">Instead of replaying 10,000 events, take periodic snapshots. Replay only from the latest snapshot — massive performance gain.</div></div>
+  </div>
+</div>
+
+</div><!-- /slides -->
+
+<div id="foot">
+  <div id="foot-lbl">Event-Driven Architecture</div>
+  <div class="fnav">
+    <button class="btn" onclick="prev()">‹ Prev</button>
+    <button class="btn p" onclick="next()">Next ›</button>
+  </div>
+</div>
+
+<script>
+// ─── NAV ────────────────────────────────────────────────────────────────────
+let cur=0;
+function go(n){
+  document.querySelectorAll('.slide').forEach((s,i)=>s.classList.toggle('on',i===n));
+  document.querySelectorAll('.nb').forEach((b,i)=>b.classList.toggle('on',i===n));
+  cur=n;
+  const inits=[initS0,initS1,initS2,initS3,initS4,initS5,initS6];
+  inits[n]&&inits[n]();
+}
+function next(){if(cur<6)go(cur+1);}
+function prev(){if(cur>0)go(cur-1);}
+
+// ─── SVG helpers ─────────────────────────────────────────────────────────────
+const NS='http://www.w3.org/2000/svg';
+function mk(tag,a){const e=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(a))e.setAttribute(k,v);return e;}
+function svgSetup(id,h){
+  const el=document.getElementById(id);
+  el.innerHTML='';
+  const W=el.parentElement.offsetWidth||700;
+  el.setAttribute('viewBox',`0 0 ${W} ${h}`);
+  return{el,W,H:h};
+}
+function sRect(s,x,y,w,h,fill,stroke,rx){s.appendChild(mk('rect',{x,y,width:w,height:h,rx:rx||8,fill,stroke:stroke||'none','stroke-width':'0.5'}));}
+function sTxt(s,x,y,str,sz,fill,anchor,mono,weight){
+  const t=mk('text',{x,y,'text-anchor':anchor||'middle','dominant-baseline':'central','font-size':sz||11,'font-family':mono?'JetBrains Mono,monospace':'Outfit,sans-serif','fill':fill||'#dde3f0','font-weight':weight||'400'});
+  t.textContent=str;s.appendChild(t);return t;
+}
+function sLine(s,x1,y1,x2,y2,stroke,w,dash){
+  const l=mk('line',{x1,y1,x2,y2,stroke:stroke||'rgba(255,255,255,0.2)','stroke-width':w||1.2});
+  if(dash)l.setAttribute('stroke-dasharray',dash);
+  s.appendChild(l);return l;
+}
+function sCirc(s,cx,cy,r,fill,stroke,sw){s.appendChild(mk('circle',{cx,cy,r,fill,stroke:stroke||'none','stroke-width':sw||0.5}));}
+function sPath(s,d,fill,stroke,sw,dash){const p=mk('path',{d,fill:fill||'none',stroke:stroke||'rgba(255,255,255,.2)','stroke-width':sw||1.2});if(dash)p.setAttribute('stroke-dasharray',dash);s.appendChild(p);return p;}
+
+function sBox(s,x,y,w,h,label,sublabel,color,bgAlpha=0.12,rx=8){
+  sRect(s,x,y,w,h,color+Math.round(bgAlpha*255).toString(16).padStart(2,'0'),color,rx);
+  sTxt(s,x+w/2,y+h/2-(sublabel?7:0),label,11,color,'middle',false,'500');
+  if(sublabel)sTxt(s,x+w/2,y+h/2+9,sublabel,8.5,color+'aa','middle',true);
+}
+
+function animPacket(s,x1,y1,x2,y2,color,delay,cb){
+  setTimeout(()=>{
+    const p=mk('circle',{cx:x1,cy:y1,r:5,fill:color,opacity:'0.9'});
+    s.appendChild(p);
+    let t=0;const iv=setInterval(()=>{
+      t+=0.04;if(t>=1){clearInterval(iv);p.remove();cb&&cb();return;}
+      p.setAttribute('cx',x1+(x2-x1)*t);
+      p.setAttribute('cy',y1+(y2-y1)*t);
+    },16);
+  },delay);
+}
+
+// ═══════════════════════ SLIDE 0 ════════════════════════════════════════════
+let s0init=false;
+function initS0(){if(s0init)return;s0init=true;drawSyncBase();drawFlowBase();}
+
+function drawSyncBase(){
+  const {el:s,W,H}=svgSetup('sync-svg',170);
+  const svcs=[{l:'Order Svc',c:'#4f8cf5'},{l:'Payment Svc',c:'#22c55e'},{l:'Notify Svc',c:'#a855f7'},{l:'Inventory Svc',c:'#f59e0b'}];
+  const gap=W/(svcs.length+1);
+  svcs.forEach((svc,i)=>{
+    const cx=gap*(i+1);
+    sBox(s,cx-52,30,104,44,svc.l,'',svc.c);
+    if(i<svcs.length-1){
+      sLine(s,cx+52,52,cx+gap-52,52,'rgba(255,255,255,0.15)',1,'5 4');
+      sTxt(s,cx+gap/2,42,'await',8.5,'#4a5168','middle',true);
+    }
+  });
+  sTxt(s,W/2,110,'User waits for ALL services to respond before getting a reply',10.5,'#4a5168','middle',true);
+  sRect(s,0,130,W,40,'rgba(239,68,68,0.04)','rgba(239,68,68,0.15)',0);
+  sTxt(s,W/2,150,'⏱ Total wait = sum of all service latencies',10,'#ef4444','middle',true);
+}
+
+function syncDemo(mode){
+  const {el:s,W}=svgSetup('sync-svg',170);
+  drawSyncBase();
+  const log=document.getElementById('sync-log');
+  const svcs=[{l:'Order',c:'#4f8cf5'},{l:'Payment',c:'#22c55e'},{l:'Notify',c:'#a855f7'},{l:'Inventory',c:'#f59e0b'}];
+  const gap=W/(svcs.length+1);
+  if(mode==='ok'){
+    log.style.color='#22c55e';log.textContent='✓ All OK — user waits ~400ms total';
+    svcs.forEach((sv,i)=>{
+      setTimeout(()=>{
+        const cx=gap*(i+1);
+        const fl=mk('rect',{x:cx-52,y:30,width:104,height:44,rx:8,fill:'rgba(34,197,94,0.2)',stroke:'#22c55e','stroke-width':'1'});
+        s.appendChild(fl);
+        setTimeout(()=>{fl.remove();},600);
+      },i*220);
+    });
+  } else if(mode==='slow'){
+    log.style.color='#f59e0b';log.textContent='⏱ Payment Svc slow → user stuck waiting 3s+';
+    const cx=gap*2;
+    const sp=mk('rect',{x:cx-52,y:30,width:104,height:44,rx:8,fill:'rgba(245,158,11,0.25)',stroke:'#f59e0b','stroke-width':'1.5'});
+    s.appendChild(sp);
+    const lb=mk('text',{x:cx,y:108,'text-anchor':'middle','dominant-baseline':'central','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#f59e0b'});
+    lb.textContent='⏱ 3000ms...'; s.appendChild(lb);
+  } else {
+    log.style.color='#ef4444';log.textContent='💥 Notify Svc fails → entire request throws exception';
+    const cx=gap*3;
+    const sp=mk('rect',{x:cx-52,y:30,width:104,height:44,rx:8,fill:'rgba(239,68,68,0.3)',stroke:'#ef4444','stroke-width':'1.5'});
+    s.appendChild(sp);
+    const lb=mk('text',{x:cx,y:108,'text-anchor':'middle','dominant-baseline':'central','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#ef4444'});
+    lb.textContent='500 Internal Server Error → User sees failure'; s.appendChild(lb);
+  }
+}
+
+let flowTimer=null,flowPhase=0;
+function drawFlowBase(){
+  const {el:s,W,H}=svgSetup('flow-svg',140);
+  const PROD={x:W*.1,y:55},BROKER={x:W*.5,y:55},CONS=[{x:W*.82,y:30},{x:W*.82,y:80}];
+  sBox(s,PROD.x-44,PROD.y-22,88,44,'Producer','Order Svc','#4f8cf5');
+  sBox(s,BROKER.x-52,BROKER.y-22,104,44,'Broker','Kafka/RabbitMQ','#f59e0b');
+  CONS.forEach((c,i)=>sBox(s,c.x-44,c.y-18,88,36,['Notify Svc','Inventory'][i],'Consumer',['#22c55e','#a855f7'][i],0.12,7));
+  sLine(s,PROD.x+44,PROD.y,BROKER.x-52,BROKER.y,'rgba(79,140,245,0.4)',1.5,'5 3');
+  CONS.forEach(c=>sLine(s,BROKER.x+52,BROKER.y,c.x-44,c.y,'rgba(245,158,11,0.3)',1.2,'5 3'));
+  sTxt(s,W/2,124,'Producer fires once → broker delivers to all consumers independently',10,'#434c63','middle',true);
+}
+
+function startFlow(){
+  clearInterval(flowTimer);flowPhase=0;
+  const {el:s,W}=svgSetup('flow-svg',140);
+  drawFlowBase();
+  const log=document.getElementById('flow-log');
+  const steps=[
+    ()=>{animPacket(s,W*.1,55,W*.5,55,'#4f8cf5',0);log.style.color='#4f8cf5';log.textContent='1. Producer emits order.created event';},
+    ()=>{
+      animPacket(s,W*.5,55,W*.82,30,'#f59e0b',0);
+      animPacket(s,W*.5,55,W*.82,80,'#f59e0b',100);
+      log.style.color='#f59e0b';log.textContent='2. Broker fans out to all subscribers simultaneously';
+    },
+    ()=>{log.style.color='#22c55e';log.textContent='3. Consumers process independently — producer is free';}
+  ];
+  let i=0;
+  flowTimer=setInterval(()=>{if(i<steps.length){steps[i]();i++;}else{clearInterval(flowTimer);}},800);
+}
+function resetFlow(){clearInterval(flowTimer);const{el:s,W}=svgSetup('flow-svg',140);drawFlowBase();document.getElementById('flow-log').textContent='Producer emits → Broker stores → Consumers process independently';}
+
+// ═══════════════════════ SLIDE 1 ════════════════════════════════════════════
+let s1init=false;
+function initS1(){if(s1init)return;s1init=true;drawRR();drawED();}
+
+function drawRR(){
+  const {el:s,W}=svgSetup('rr-svg',155);
+  const svcs=[{l:'Svc A',c:'#4f8cf5'},{l:'Svc B',c:'#22c55e'},{l:'Svc C',c:'#a855f7'},{l:'Svc D',c:'#f59e0b'}];
+  const gap=(W-20)/(svcs.length);
+  svcs.forEach((sv,i)=>{
+    sBox(s,10+i*gap+2,45,gap-8,44,sv.l,'',sv.c);
+    if(i<svcs.length-1)sLine(s,10+i*gap+gap-6,67,10+(i+1)*gap+2,67,'rgba(239,68,68,0.5)',1.2);
+  });
+  sTxt(s,W/2,18,'A must know B, C, D — direct dependencies',9.5,'#ef444499','middle',true);
+  sTxt(s,W/2,135,'Tight coupling: caller knows all downstream services',9,'#434c63','middle',true);
+}
+
+function drawED(){
+  const {el:s,W}=svgSetup('ed-svg',155);
+  const bx=W/2-50;
+  sBox(s,bx,55,100,44,'Broker','Event Bus','#f59e0b',0.12);
+  const prod={x:20,y:77};
+  sBox(s,prod.x,prod.y-20,90,40,'Producer','Svc A','#4f8cf5',0.12,7);
+  const cons=[{x:W-110,y:30},{x:W-110,y:72},{x:W-110,y:114}];
+  cons.forEach((c,i)=>{
+    sBox(s,c.x,c.y,100,30,['Svc B','Svc C','Svc D'][i],'Consumer',['#22c55e','#a855f7','#14b8a6'][i],0.12,6);
+    sLine(s,bx+100,77,c.x,c.y+15,'rgba(245,158,11,0.35)',1.2);
+  });
+  sLine(s,prod.x+90,prod.y,bx,77,'rgba(79,140,245,0.5)',1.5);
+  sTxt(s,W/2,135,'Producer knows only the broker — zero knowledge of consumers',9,'#434c63','middle',true);
+}
+
+function rrSim(){
+  const {el:s,W}=svgSetup('rr-svg',155);
+  drawRR();
+  const gap=(W-20)/4;
+  let step=0;
+  const log=document.getElementById('rr-log');
+  const iv=setInterval(()=>{
+    if(step>=3){clearInterval(iv);log.textContent='Total: user waits for all 4 services';return;}
+    animPacket(s,10+step*gap+gap/2+2,67,10+(step+1)*gap+gap/2+2,67,'#ef4444',0);
+    log.textContent=`→ Calling Svc ${'ABCD'[step+1]}... waiting`;
+    step++;
+  },500);
+}
+
+function edSim(){
+  const {el:s,W}=svgSetup('ed-svg',155);
+  drawED();
+  const log=document.getElementById('ed-log');
+  animPacket(s,110,57,W/2-50,77,'#4f8cf5',0);
+  setTimeout(()=>{
+    log.textContent='Broker fans out → 3 consumers notified simultaneously';
+    [30,72,114].forEach((y,i)=>animPacket(s,W/2+50,77,W-110,y+15,['#22c55e','#a855f7','#14b8a6'][i],i*80));
+    setTimeout(()=>{log.textContent='✓ Producer is free — all 3 handled independently';},900);
+  },500);
+}
+
+// ═══════════════════════ SLIDE 2 ════════════════════════════════════════════
+const USE_CASES=[
+  {icon:'🔔',name:'Fire & Forget',color:'#4f8cf5',ex:'Generating report, Submitting product review',detail:'Sender does not wait for immediate confirmation. The action is queued and processed asynchronously. Ideal when the user needs acknowledgment that the action was received, not completed.',model:'Event-Driven'},
+  {icon:'💸',name:'Reliable Delivery',color:'#22c55e',ex:'Order placement, Money transfer',detail:'The message must be delivered and processed exactly. Use at-least-once or exactly-once semantics. Failures must be retried. Critical for any financial or inventory operation.',model:'Event-Driven (exactly/at-least-once)'},
+  {icon:'📡',name:'Infinite Streams',color:'#f59e0b',ex:'Location data, IoT sensor readings',detail:'Continuous, high-volume data flow that never stops. Event Streaming (Kafka) is designed for this — append-only log, consumers process at their own pace, can replay history.',model:'Event Streaming'},
+  {icon:'🔍',name:'Anomaly Detection',color:'#a855f7',ex:'Fraud detection, Pattern recognition',detail:'Analyze an ongoing stream of events to detect patterns or outliers in real-time. Multiple consumers can apply different algorithms to the same stream simultaneously.',model:'Event Streaming'},
+  {icon:'📦',name:'State Broadcasting',color:'#14b8a6',ex:'Track & Trace, Order status',detail:'When state changes, broadcast the new state to all interested parties. Multiple systems (customer app, warehouse, logistics) receive the same update without direct coupling.',model:'Pub/Sub'},
+  {icon:'🌊',name:'Traffic Buffering',color:'#fb923c',ex:'Flash sale spike, Black Friday',detail:'Sudden bursts of requests would overwhelm downstream services. The broker acts as a buffer — producers write fast, consumers process at their own pace. Prevents cascading failures.',model:'Event Queue / Pub/Sub'},
+];
+
+let s2init=false;
+function initS2(){if(s2init)return;s2init=true;buildUCGrid();drawStream();drawPubSub();}
+
+function buildUCGrid(){
+  const g=document.getElementById('uc-grid');g.innerHTML='';
+  USE_CASES.forEach((uc,i)=>{
+    const d=document.createElement('div');
+    d.className='card';
+    d.style.cssText=`border-color:${uc.color}44;cursor:pointer;transition:all .2s`;
+    d.innerHTML=`<div style="font-size:20px;margin-bottom:6px">${uc.icon}</div><div class="card-t" style="color:${uc.color}">${uc.name}</div><div class="card-b" style="font-size:11px">${uc.ex}</div>`;
+    d.onmouseenter=()=>d.style.borderColor=uc.color;
+    d.onmouseleave=()=>d.style.borderColor=uc.color+'44';
+    d.onclick=()=>{
+      const det=document.getElementById('uc-detail');
+      document.getElementById('uc-detail-t').style.color=uc.color;
+      document.getElementById('uc-detail-t').textContent=`${uc.icon} ${uc.name} — ${uc.model}`;
+      document.getElementById('uc-detail-b').textContent=uc.detail;
+      det.style.display='block';det.style.borderColor=uc.color+'44';
+      det.style.animation='none';setTimeout(()=>det.style.animation='fadeUp .3s ease',10);
+    };
+    g.appendChild(d);
+  });
+}
+
+function drawStream(){
+  const {el:s,W,H}=svgSetup('stream-svg',160);
+  // Log tape
+  sRect(s,10,60,W-20,55,'rgba(79,140,245,0.08)','rgba(79,140,245,0.25)',6);
+  sTxt(s,W/2,72,'Persistent Event Log (append-only)',9,'#4f8cf5aa','middle',true);
+  const events=['ev1','ev2','ev3','ev4','ev5','ev6'];
+  events.forEach((ev,i)=>{
+    const ex=24+i*((W-48)/6);
+    sRect(s,ex,82,((W-48)/6)-4,24,`rgba(79,140,245,${0.08+i*0.03})`,`rgba(79,140,245,${0.3+i*0.05})`,4);
+    sTxt(s,ex+((W-48)/12)-2,94,ev,8,'#4f8cf5','middle',true);
+  });
+  // Two consumers at different offsets
+  sBox(s,10,128,W/2-15,'22','Consumer A','reads offset 3','#22c55e',0.1,6);
+  sBox(s,W/2+5,128,W/2-15,'22','Consumer B','reads from start','#a855f7',0.1,6);
+  sTxt(s,W/2,155,'Both consumers can read independently — log is never deleted',9,'#434c63','middle',true);
+}
+
+let streamPlaying=false;
+function streamSim(){
+  if(streamPlaying)return;streamPlaying=true;
+  const {el:s,W}=svgSetup('stream-svg',160);
+  drawStream();
+  const evW=(W-48)/6;
+  let i=0;
+  const iv=setInterval(()=>{
+    if(i>=6){clearInterval(iv);streamPlaying=false;return;}
+    const ex=24+i*evW;
+    const fl=mk('rect',{x:ex,y:82,width:evW-4,height:24,rx:4,fill:'rgba(79,140,245,0.4)',stroke:'#4f8cf5','stroke-width':'1.5'});
+    s.appendChild(fl);setTimeout(()=>{fl.setAttribute('fill',`rgba(79,140,245,${0.08+i*0.03})`);fl.setAttribute('stroke',`rgba(79,140,245,${0.3+i*0.05})`);fl.setAttribute('stroke-width','0.5');},400);
+    i++;
+  },300);
+}
+function streamReplay(){streamPlaying=false;const{el:s,W}=svgSetup('stream-svg',160);drawStream();animPacket(s,W*.05,94,W*.85,94,'#4f8cf5',0);}
+
+function drawPubSub(){
+  const {el:s,W,H}=svgSetup('pubsub-svg',160);
+  sBox(s,W/2-52,20,104,44,'Broker','Topic: orders','#a855f7');
+  const cons=[{x:W*.2,c:'#22c55e',l:'Consumer A'},{x:W*.8,c:'#14b8a6',l:'Consumer B (new)'}];
+  cons.forEach(c=>sBox(s,c.x-44,90,88,36,c.l,'',c.c,0.1,7));
+  sLine(s,W/2,64,W*.2,90,'rgba(168,85,247,0.4)',1.2);
+  sLine(s,W/2,64,W*.8,90,'rgba(168,85,247,0.3)',1.2,'5 3');
+  sRect(s,W*.8-44,90,88,36,'rgba(168,85,247,0.05)','rgba(168,85,247,0.3)',7);
+  sTxt(s,W*.8,108,'subscribes now',8.5,'#a855f799','middle',true);
+  sTxt(s,W/2,148,'Consumer B only gets NEW events — past events deleted from queue',9,'#434c63','middle',true);
+}
+let psDone=false;
+function pubsubSim(){
+  if(psDone)return;psDone=true;
+  const {el:s,W}=svgSetup('pubsub-svg',160);drawPubSub();
+  animPacket(s,W/2,64,W*.2,90,'#22c55e',0);
+  animPacket(s,W/2,64,W*.8,90,'#a855f7',80);
+  setTimeout(()=>{
+    const lb=mk('text',{x:W/2,y:148,'text-anchor':'middle','dominant-baseline':'central','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#f59e0b'});
+    lb.textContent='⚠ Consumer B only receives events AFTER subscribing';s.appendChild(lb);
+    psDone=false;
+  },800);
+}
+
+// ═══════════════════════ SLIDE 3 ════════════════════════════════════════════
+let s3init=false;
+function initS3(){if(s3init)return;s3init=true;drawLoss();}
+
+function drawLoss(){
+  const {el:s,W}=svgSetup('loss-svg',120);
+  const pts=[{l:'Producer',x:W*.15,c:'#4f8cf5'},{l:'Broker',x:W*.5,c:'#f59e0b'},{l:'Consumer',x:W*.85,c:'#22c55e'}];
+  pts.forEach(p=>{sBox(s,p.x-44,40,88,44,p.l,'',p.c,0.1);});
+  sLine(s,W*.15+44,62,W*.5-44,62,'rgba(255,255,255,0.15)',1.5,'5 3');
+  sLine(s,W*.5+44,62,W*.85-44,62,'rgba(255,255,255,0.15)',1.5,'5 3');
+  sTxt(s,W/2,16,'Message can be lost at 3 points',9.5,'#434c63','middle',true);
+  sTxt(s,W/2,108,'Click a scenario to see where it breaks',9,'#434c63','middle',true);
+}
+
+function lossDemo(where){
+  const {el:s,W}=svgSetup('loss-svg',120);drawLoss();
+  const log=document.getElementById('loss-log');
+  const map={prod:{x:W*.15,c:'#ef4444',msg:'Producer crashes before writing to broker — message never sent'},broker:{x:W*.5,c:'#ef4444',msg:'Broker crashes after receiving — message lost before delivery'},cons:{x:W*.85,c:'#ef4444',msg:'Consumer processes but crashes before ACK — broker may redeliver'}};
+  const{x,c,msg}=map[where];
+  const fl=mk('rect',{x:x-44,y:40,width:88,height:44,rx:8,fill:'rgba(239,68,68,0.3)',stroke:'#ef4444','stroke-width':'1.5'});
+  s.appendChild(fl);
+  const lb=mk('text',{x,y:108,'text-anchor':'middle','dominant-baseline':'central','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#ef4444'});
+  lb.textContent='💥 Lost here'; s.appendChild(lb);
+  log.style.color='#ef4444';log.textContent=msg;
+}
+
+function semTab(n){
+  document.querySelectorAll('#sem-tabs .tab').forEach((t,i)=>t.classList.toggle('on',i===n));
+  document.querySelectorAll('#sem0,#sem1,#sem2').forEach((p,i)=>p.classList.toggle('on',i===n));
+}
+
+function amoSim(){
+  const {el:s,W}=svgSetup('amo-svg',140);
+  const pts=[{l:'Producer',x:W*.2,c:'#4f8cf5'},{l:'Broker',x:W*.5,c:'#f59e0b'},{l:'Consumer',x:W*.8,c:'#22c55e'}];
+  pts.forEach(p=>sBox(s,p.x-44,48,88,44,p.l,'',p.c,0.1));
+  sLine(s,W*.2+44,70,W*.5-44,70,'rgba(255,255,255,.15)',1.2);
+  sLine(s,W*.5+44,70,W*.8-44,70,'rgba(255,255,255,.15)',1.2);
+  const log=document.getElementById('amo-log');
+  animPacket(s,W*.2+44,70,W*.5-44,70,'#4f8cf5',0,()=>{
+    log.style.color='#4f8cf5';log.textContent='Sent to broker...';
+    // No wait for ACK — producer moves on
+    const noAck=mk('text',{x:W*.35,y:38,'text-anchor':'middle','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#ef444488'});
+    noAck.textContent='no ACK wait'; s.appendChild(noAck);
+    animPacket(s,W*.5+44,70,W*.8-44,70,'#f59e0b',100,()=>{
+      log.style.color='#22c55e';log.textContent='✓ Delivered — or silently dropped. Producer already moved on.';
+    });
+  });
+}
+
+function aloSim(){
+  const {el:s,W}=svgSetup('alo-svg',140);
+  const pts=[{l:'Publisher',x:W*.18,c:'#4f8cf5'},{l:'Broker',x:W*.5,c:'#f59e0b'},{l:'Subscriber',x:W*.82,c:'#22c55e'}];
+  pts.forEach(p=>sBox(s,p.x-44,48,88,44,p.l,'',p.c,0.1));
+  sLine(s,W*.18+44,70,W*.5-44,70,'rgba(255,255,255,.15)',1.2);
+  sLine(s,W*.5+44,70,W*.82-44,70,'rgba(255,255,255,.15)',1.2);
+  const log=document.getElementById('alo-log');
+  // Send, timeout, resend, ACK
+  animPacket(s,W*.18+44,70,W*.5-44,70,'#4f8cf5',0,()=>{
+    log.textContent='Waiting for ACK... timeout!';
+    setTimeout(()=>{
+      const dup=mk('text',{x:W*.34,y:38,'text-anchor':'middle','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#f59e0b'});
+      dup.textContent='⏱ timeout → resend'; s.appendChild(dup);
+      animPacket(s,W*.18+44,70,W*.5-44,70,'#ef4444',0,()=>{
+        animPacket(s,W*.5+44,70,W*.82-44,70,'#f59e0b',100,()=>{
+          // ACK back
+          animPacket(s,W*.5-44,70,W*.18+44,70,'#22c55e',100,()=>{
+            log.style.color='#22c55e';log.textContent='✓ ACK received — duplicate possible but no loss';
+          });
+        });
+      });
+    },600);
+  });
+}
+
+function exoSim(){
+  const {el:s,W}=svgSetup('exo-svg',140);
+  const pts=[{l:'Producer',x:W*.18,c:'#4f8cf5'},{l:'Broker',x:W*.5,c:'#f59e0b'},{l:'Consumer',x:W*.82,c:'#22c55e'}];
+  pts.forEach(p=>sBox(s,p.x-44,48,88,44,p.l,'',p.c,0.1));
+  sLine(s,W*.18+44,70,W*.5-44,70,'rgba(255,255,255,.15)',1.2);
+  sLine(s,W*.5+44,70,W*.82-44,70,'rgba(255,255,255,.15)',1.2);
+  const log=document.getElementById('exo-log');
+  // Idempotent key shown
+  const key=mk('text',{x:W*.18,y:38,'text-anchor':'middle','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#a855f7'});
+  key.textContent='key:txn_001'; s.appendChild(key);
+  animPacket(s,W*.18+44,70,W*.5-44,70,'#4f8cf5',0,()=>{
+    // Broker dedup check
+    const dedup=mk('text',{x:W*.5,y:38,'text-anchor':'middle','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#f59e0b'});
+    dedup.textContent='dedup check ✓'; s.appendChild(dedup);
+    animPacket(s,W*.5+44,70,W*.82-44,70,'#f59e0b',200,()=>{
+      animPacket(s,W*.5-44,70,W*.18+44,70,'#22c55e',100,()=>{
+        log.style.color='#22c55e';log.textContent='✓ Exactly once — idempotent key prevents duplicate processing';
+      });
+    });
+  });
+}
+
+// ═══════════════════════ SLIDE 4 ════════════════════════════════════════════
+let s4init=false;
+function initS4(){if(s4init)return;s4init=true;drawOrch();drawChoreo();drawComp();}
+let orchStep_n=0,choreoStep_n=0;
+
+function sagaTab(n){
+  document.querySelectorAll('#s4 .tab').forEach((t,i)=>t.classList.toggle('on',i===n));
+  document.querySelectorAll('#saga0,#saga1,#saga2').forEach((p,i)=>p.classList.toggle('on',i===n));
+}
+
+const SAGA_STEPS=[
+  {svc:'Order Svc',action:'Create order (PENDING)',c:'#4f8cf5',ok:true},
+  {svc:'Payment Svc',action:'Reserve funds',c:'#22c55e',ok:true},
+  {svc:'Inventory Svc',action:'Reserve stock',c:'#a855f7',ok:true},
+  {svc:'Notify Svc',action:'Send confirmation',c:'#f59e0b',ok:true},
+];
+
+function drawOrch(){
+  const {el:s,W,H}=svgSetup('orch-svg',200);
+  sBox(s,W/2-56,12,112,40,'Orchestrator','Workflow Svc','#00d4ff',0.12,8);
+  const svcs=[{l:'Order Svc',c:'#4f8cf5'},{l:'Payment Svc',c:'#22c55e'},{l:'Inventory',c:'#a855f7'},{l:'Notify Svc',c:'#f59e0b'}];
+  const gap=(W-40)/svcs.length;
+  svcs.forEach((sv,i)=>{
+    const cx=20+i*gap+gap/2;
+    sBox(s,cx-46,118,92,42,sv.l,'',sv.c,0.1,7);
+    sLine(s,W/2,52,cx,118,'rgba(0,212,255,0.3)',1,'5 3');
+  });
+  sTxt(s,W/2,178,'Orchestrator calls each service in order, handles failures centrally',9.5,'#434c63','middle',true);
+}
+
+function orchStep(){
+  if(orchStep_n>=SAGA_STEPS.length){orchReset();return;}
+  const {el:s,W}=svgSetup('orch-svg',200);drawOrch();
+  const log=document.getElementById('orch-log');
+  const gap=(W-40)/4;
+  // Highlight completed steps
+  for(let i=0;i<orchStep_n+1;i++){
+    const cx=20+i*gap+gap/2;
+    const fl=mk('rect',{x:cx-46,y:118,width:92,height:42,rx:7,fill:'rgba(34,197,94,0.25)',stroke:'#22c55e','stroke-width':'1'});
+    s.appendChild(fl);
+    const lbl=mk('text',{x:cx,y:170,'text-anchor':'middle','font-size':9,'font-family':'JetBrains Mono,monospace','fill':'#22c55e'});
+    lbl.textContent='✓ done'; s.appendChild(lbl);
+    // Arrow from orchestrator
+    animPacket(s,W/2,52,cx,118,i===orchStep_n?'#00d4ff':'#22c55e55',0);
+  }
+  log.style.color='#00d4ff';log.textContent=`Step ${orchStep_n+1}: ${SAGA_STEPS[orchStep_n].svc} → ${SAGA_STEPS[orchStep_n].action}`;
+  orchStep_n++;
+  if(orchStep_n>=SAGA_STEPS.length){document.getElementById('orch-btn').textContent='↺ Reset';log.textContent='✓ All steps complete — transaction committed';}
+}
+function orchReset(){orchStep_n=0;drawOrch();document.getElementById('orch-btn').textContent='▶ Start order (step through)';document.getElementById('orch-log').textContent='Orchestrator coordinates all services';}
+
+function drawChoreo(){
+  const {el:s,W,H}=svgSetup('choreo-svg',200);
+  const bus={x:W/2,y:38};
+  sBox(s,bus.x-60,bus.y-18,120,36,'Event Bus','Message Broker','#f59e0b',0.1,7);
+  const svcs=[{l:'Order Svc',c:'#4f8cf5',x:.12},{l:'Payment Svc',c:'#22c55e',x:.38},{l:'Inventory',c:'#a855f7',x:.62},{l:'Notify Svc',c:'#f59e0b',x:.86}];
+  svcs.forEach(sv=>{ sBox(s,sv.x*W-44,110,88,44,sv.l,'',sv.c,0.1,7); sLine(s,bus.x,56,sv.x*W,110,'rgba(245,158,11,0.25)',1,'5 3'); });
+  sTxt(s,W/2,175,'Each service emits events; others listen and react',9.5,'#434c63','middle',true);
+}
+
+function choreoStep(){
+  if(choreoStep_n>=4){choreoReset();return;}
+  const {el:s,W}=svgSetup('choreo-svg',200);drawChoreo();
+  const log=document.getElementById('choreo-log');
+  const xArr=[.12,.38,.62,.86];
+  const events=['order.created','payment.reserved','inventory.reserved','email.sent'];
+  const colors=['#4f8cf5','#22c55e','#a855f7','#f59e0b'];
+  // Show events emitted so far
+  for(let i=0;i<=choreoStep_n;i++){
+    const px=xArr[i]*W;
+    animPacket(s,px,110,W/2,38,colors[i],i*80);
+    const lbl=mk('text',{x:(px+W/2)/2,y:i%2===0?72:82,'text-anchor':'middle','font-size':8.5,'font-family':'JetBrains Mono,monospace','fill':colors[i]+'aa'});
+    lbl.textContent=events[i];s.appendChild(lbl);
+    if(i<choreoStep_n){
+      // reaction arrow from bus to next svc
+      const nx=xArr[i+1]*W;
+      setTimeout(()=>animPacket(s,W/2,38,nx,110,colors[i+1],i*80+300),100);
+    }
+  }
+  log.style.color=colors[choreoStep_n];log.textContent=`${events[choreoStep_n]} emitted → triggers next service`;
+  choreoStep_n++;
+  if(choreoStep_n>=4){document.getElementById('choreo-btn').textContent='↺ Reset';}
+}
+function choreoReset(){choreoStep_n=0;drawChoreo();document.getElementById('choreo-btn').textContent='▶ Start order (step through)';document.getElementById('choreo-log').textContent='Services emit events, react to events';}
+
+function drawComp(){
+  const {el:s,W,H}=svgSetup('comp-svg',200);
+  sBox(s,W/2-56,12,112,36,'Orchestrator','',`#00d4ff`,0.1,7);
+  const svcs=[{l:'Order',c:'#4f8cf5',x:.15},{l:'Payment',c:'#22c55e',x:.38},{l:'Inventory',c:'#a855f7',x:.62},{l:'Notify',c:'#f59e0b',x:.85}];
+  svcs.forEach(sv=>{sBox(s,sv.x*W-38,100,76,38,sv.l,'',sv.c,0.1,6);sLine(s,W/2,48,sv.x*W,100,'rgba(0,212,255,0.25)',1,'4 3');});
+  sTxt(s,W/2,175,'Green = completed, Red = compensated (rolled back)',9.5,'#434c63','middle',true);
+}
+
+function compSim(mode){
+  const {el:s,W}=svgSetup('comp-svg',200);drawComp();
+  const log=document.getElementById('comp-log');
+  const svcs=[{x:.15,c:'#4f8cf5'},{x:.38,c:'#22c55e'},{x:.62,c:'#a855f7'},{x:.85,c:'#f59e0b'}];
+  if(mode==='ok'){
+    log.style.color='#22c55e';log.textContent='✓ All 4 steps succeeded — transaction committed';
+    svcs.forEach((sv,i)=>{
+      setTimeout(()=>{
+        const fl=mk('rect',{x:sv.x*W-38,y:100,width:76,height:38,rx:6,fill:'rgba(34,197,94,0.3)',stroke:'#22c55e','stroke-width':'1'});
+        s.appendChild(fl);animPacket(s,W/2,48,sv.x*W,100,'#00d4ff',0);
+      },i*200);
+    });
+  } else {
+    log.style.color='#ef4444';log.textContent='💥 Inventory fails → compensate Order + Payment';
+    // Steps 1,2 succeed
+    svcs.slice(0,2).forEach((sv,i)=>{
+      setTimeout(()=>{
+        const fl=mk('rect',{x:sv.x*W-38,y:100,width:76,height:38,rx:6,fill:'rgba(34,197,94,0.25)',stroke:'#22c55e','stroke-width':'1'});s.appendChild(fl);
+      },i*200);
+    });
+    // Step 3 fails
+    setTimeout(()=>{
+      const fail=mk('rect',{x:svcs[2].x*W-38,y:100,width:76,height:38,rx:6,fill:'rgba(239,68,68,0.35)',stroke:'#ef4444','stroke-width':'1.5'});s.appendChild(fail);
+      const flbl=mk('text',{x:svcs[2].x*W,y:172,'text-anchor':'middle','font-size':8.5,'font-family':'JetBrains Mono,monospace','fill':'#ef4444'});
+      flbl.textContent='💥 FAILED'; s.appendChild(flbl);
+      // Compensate 1 and 2
+      setTimeout(()=>{
+        [0,1].forEach(i=>{
+          const comp=mk('rect',{x:svcs[i].x*W-38,y:100,width:76,height:38,rx:6,fill:'rgba(239,68,68,0.2)',stroke:'rgba(239,68,68,0.5)','stroke-width':'1','stroke-dasharray':'4 3'});s.appendChild(comp);
+          const clbl=mk('text',{x:svcs[i].x*W,y:172,'text-anchor':'middle','font-size':8,'font-family':'JetBrains Mono,monospace','fill':'#ef4444aa'});
+          clbl.textContent='↺ compensated'; s.appendChild(clbl);
+        });
+        log.textContent='Compensating transactions: Order cancelled, funds released';
+      },600);
+    },500);
+  }
+}
+
+// ═══════════════════════ SLIDE 5 ════════════════════════════════════════════
+let s5init=false;
+function initS5(){if(s5init)return;s5init=true;drawCQRS();}
+
+function drawCQRS(){
+  const {el:s,W}=svgSetup('cqrs-svg',190);
+  // Command side
+  sBox(s,20,20,W*.38-10,55,'Command Service','Writes (INSERT/UPDATE/DELETE)','#ef4444',0.1,8);
+  sBox(s,20,92,W*.38-10,44,'Command DB','Write-optimized store','#ef4444',0.08,7);
+  // Broker
+  sBox(s,W/2-52,45,104,44,'Message Broker','Event bus','#f59e0b',0.1,8);
+  // Query side
+  sBox(s,W*.62+10,20,W*.38-30,55,'Query Service','Reads (SELECT)','#22c55e',0.1,8);
+  sBox(s,W*.62+10,92,W*.38-30,44,'Read Model DB','Denormalized views','#22c55e',0.08,7);
+  // Lines
+  sLine(s,W*.38-10+20,47,W/2-52,67,'rgba(239,68,68,0.5)',1.5);
+  sLine(s,W/2+52,67,W*.62+10,47,'rgba(34,197,94,0.5)',1.5);
+  sLine(s,W*.38-10/2+10,75,W*.38-10/2+10,92,'rgba(239,68,68,0.4)',1.2,'4 3');
+  sLine(s,W*.62+10+(W*.38-30)/2,75,W*.62+10+(W*.38-30)/2,92,'rgba(34,197,94,0.4)',1.2,'4 3');
+  sTxt(s,W/2,160,'Write and read paths are fully independent — scale separately',9.5,'#434c63','middle',true);
+  sTxt(s,W/2,175,'Eventual consistency: read model lags slightly after write',9,'#434c63','middle',true);
+}
+
+function cqrsSim(mode){
+  const {el:s,W}=svgSetup('cqrs-svg',190);drawCQRS();
+  const log=document.getElementById('cqrs-log');
+  const cmdX=(W*.38-10)/2+20,qX=W*.62+10+(W*.38-30)/2;
+  if(mode==='write'){
+    log.style.color='#ef4444';log.textContent='Write: Command → DB + publishes event → updates Read Model';
+    // Cmd to DB
+    animPacket(s,cmdX,75,cmdX,92,'#ef4444',0);
+    // Cmd to broker
+    setTimeout(()=>animPacket(s,W*.38-10+20,47,W/2-52,67,'#ef4444',0,()=>{
+      // Broker to query
+      animPacket(s,W/2+52,67,qX,75,'#f59e0b',0,()=>{
+        animPacket(s,qX,75,qX,92,'#22c55e',0,()=>{
+          log.textContent='✓ Write complete. Read model updated asynchronously.';
+        });
+      });
+    }),200);
+  } else if(mode==='read'){
+    log.style.color='#22c55e';log.textContent='Read: Query Service → Read DB (pre-joined, fast)';
+    animPacket(s,qX,75,qX,92,'#22c55e',0,()=>{
+      animPacket(s,qX,92,qX,75,'#22c55e',0,()=>{
+        log.textContent='✓ Read served from optimized read model — sub-millisecond';
+      });
+    });
+  } else {
+    // Scale read replicas
+    log.style.color='#14b8a6';log.textContent='⚡ Scaling read replicas without touching write service';
+    for(let i=0;i<3;i++){
+      setTimeout(()=>{
+        const rx=W*.62+10+(i*28);const ry=90;
+        const fl=mk('rect',{x:rx,y:ry,width:W*.38-30,height:44,rx:7,fill:'rgba(20,184,166,0.15)',stroke:'#14b8a6','stroke-width':'0.8'});
+        s.appendChild(fl);
+        const lt=mk('text',{x:rx+(W*.38-30)/2,y:ry+22,'text-anchor':'middle','dominant-baseline':'central','font-size':8.5,'font-family':'JetBrains Mono,monospace','fill':'#14b8a6aa'});
+        lt.textContent=`Replica ${i+1}`; s.appendChild(lt);
+      },i*200);
+    }
+    setTimeout(()=>{log.textContent='Read replicas added — write service unchanged';},700);
+  }
+}
+
+// ═══════════════════════ SLIDE 6 ════════════════════════════════════════════
+let s6init=false;
+const ES_EVENTS=[
+  {type:'deposit',amt:500,color:'#22c55e',icon:'↑'},
+  {type:'withdraw',amt:50,color:'#ef4444',icon:'↓'},
+  {type:'transfer_in',amt:200,color:'#22c55e',icon:'↑'},
+  {type:'withdraw',amt:100,color:'#ef4444',icon:'↓'},
+  {type:'deposit',amt:150,color:'#22c55e',icon:'↑'},
+];
+let esIdx=0,esBalance=0,esSnapshotAt=-1;
+
+function initS6(){if(s6init)return;s6init=true;drawES();drawCombo();}
+function drawES(){
+  const {el:s,W}=svgSetup('es-svg',200);
+  sRect(s,10,10,W-20,70,'rgba(79,140,245,0.05)','rgba(79,140,245,0.2)',8);
+  sTxt(s,W/2,24,'Event Log (append-only)',9,'#4f8cf5aa','middle',true);
+  sTxt(s,W/2,105,'State: $0.00 (derived by replaying events)',11,'#8992a8','middle',false,'500');
+  sTxt(s,W/2,120,'→ Add events to build history',9,'#434c63','middle',true);
+  sTxt(s,W/2,155,'Balance is always computed — never stored directly',9,'#434c63','middle',true);
+}
+
+function esStep(){
+  if(esIdx>=ES_EVENTS.length){document.getElementById('es-log').textContent='All events recorded — try Replay or Snapshot';return;}
+  const ev=ES_EVENTS[esIdx];
+  esBalance+=(ev.type.includes('deposit')||ev.type==='transfer_in'?1:-1)*ev.amt;
+  esIdx++;
+  renderES();
+  document.getElementById('es-log').style.color=ev.color;
+  document.getElementById('es-log').textContent=`${ev.icon} ${ev.type}: $${ev.amt} → Balance: $${esBalance}`;
+}
+
+function renderES(){
+  const {el:s,W}=svgSetup('es-svg',200);
+  sRect(s,10,10,W-20,70,'rgba(79,140,245,0.05)','rgba(79,140,245,0.2)',8);
+  sTxt(s,W/2,24,'Event Log (append-only)',9,'#4f8cf5aa','middle',true);
+  const evW=Math.min(90,(W-40)/Math.max(ES_EVENTS.length,1)-4);
+  ES_EVENTS.slice(0,esIdx).forEach((ev,i)=>{
+    const ex=16+i*(evW+4);
+    if(i===esSnapshotAt){
+      sRect(s,ex-2,32,evW+4,42,'rgba(245,158,11,0.2)','rgba(245,158,11,0.6)',6);
+      sTxt(s,ex+evW/2,68,'📸 snapshot',7,'#f59e0b','middle',true);
+    }
+    sRect(s,ex,34,evW,38,ev.color+'22',ev.color,5);
+    sTxt(s,ex+evW/2,48,ev.icon+' '+ev.type.replace('_',' '),8,ev.color,'middle',true);
+    sTxt(s,ex+evW/2,60,'$'+ev.amt,8,ev.color+'cc','middle',true);
+  });
+  const balColor=esBalance>=0?'#22c55e':'#ef4444';
+  sTxt(s,W/2,105,`Balance: $${esBalance} (derived from ${esIdx} events)`,11.5,balColor,'middle',false,'600');
+  if(esSnapshotAt>=0)sTxt(s,W/2,122,`Snapshot at event ${esSnapshotAt+1} — replay only from here`,9,'#f59e0b','middle',true);
+  sTxt(s,W/2,155,'Every cent is traceable — full audit history preserved',9,'#434c63','middle',true);
+}
+
+function esReplay(){
+  const orig=esIdx;esIdx=0;esBalance=0;
+  renderES();
+  let i=0;
+  const iv=setInterval(()=>{
+    if(i>=orig){clearInterval(iv);return;}
+    const ev=ES_EVENTS[i];
+    esBalance+=(ev.type.includes('deposit')||ev.type==='transfer_in'?1:-1)*ev.amt;
+    esIdx++;renderES();i++;
+  },350);
+}
+function esSnapshot(){
+  if(esIdx===0)return;
+  esSnapshotAt=esIdx-1;renderES();
+  document.getElementById('es-log').style.color='#f59e0b';
+  document.getElementById('es-log').textContent=`📸 Snapshot taken at event ${esIdx} — next replay starts here`;
+}
+function esReset(){esIdx=0;esBalance=0;esSnapshotAt=-1;drawES();document.getElementById('es-log').textContent='Events append, state is derived';}
+
+function drawCombo(){
+  const {el:s,W}=svgSetup('combo-svg',175);
+  // Command / event sourcing write path
+  sBox(s,10,18,W*.22,42,'Command Svc','Write path','#ef4444',0.1,7);
+  sBox(s,W*.27,18,W*.2,42,'Event Log','Append-only','#4f8cf5',0.1,7);
+  sBox(s,W*.52,18,W*.2,42,'Broker','Pub/Sub','#f59e0b',0.1,7);
+  sBox(s,W*.77,18,W*.21,42,'Query Svc','In-memory state','#22c55e',0.1,7);
+  // Arrows
+  sLine(s,W*.22,39,W*.27,39,'rgba(239,68,68,0.6)',1.5);
+  sLine(s,W*.47,39,W*.52,39,'rgba(79,140,245,0.6)',1.5);
+  sLine(s,W*.72,39,W*.77,39,'rgba(245,158,11,0.6)',1.5);
+  sTxt(s,W/2,90,'Command writes to Event Log → Broker distributes → Query Svc builds in-memory views',10,'#434c63','middle',true);
+  // Benefits
+  const bens=[{l:'Fast writes',c:'#ef4444',x:.12},{l:'Full history',c:'#4f8cf5',x:.37},{l:'Fast reads',c:'#22c55e',x:.62},{l:'Scalable',c:'#f59e0b',x:.87}];
+  bens.forEach(b=>{
+    sRect(s,b.x*W-42,108,84,34,'rgba(255,255,255,0.03)',b.c+'44',6);
+    sTxt(s,b.x*W,125,b.l,10.5,b.c,'middle',false,'500');
+  });
+  sTxt(s,W/2,158,'Eventual consistency only — but ideal for high-throughput audit systems',9,'#434c63','middle',true);
+}
+
+function comboSim(){
+  const {el:s,W}=svgSetup('combo-svg',175);drawCombo();
+  const log=document.getElementById('combo-log');
+  const pts=[W*.22,W*.47,W*.72,W*.77+W*.21/2];
+  const colors=['#ef4444','#4f8cf5','#f59e0b','#22c55e'];
+  const msgs=['Write: event appended to log','Broker distributes event','Query Svc receives + updates view','✓ Read model ready — sub-ms queries'];
+  let i=0;
+  const iv=setInterval(()=>{
+    if(i>=3){clearInterval(iv);log.style.color='#22c55e';log.textContent=msgs[3];return;}
+    animPacket(s,pts[i],39,pts[i+1]<W?pts[i+1]:W-30,39,colors[i],0);
+    log.style.color=colors[i];log.textContent=msgs[i];
+    i++;
+  },600);
+}
+
+// ─── Boot ────────────────────────────────────────────────────────────────────
+initS0();
+window.addEventListener('resize',()=>{s0init=s1init=s2init=s3init=s4init=s5init=s6init=false;go(cur);});
+</script>
+</body>
+</html>
