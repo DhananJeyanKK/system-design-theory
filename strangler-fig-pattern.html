@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strangler Fig Pattern – Migration Simulator</title>
+<style>
+  :root {
+    --bg: #f9f8f6;
+    --bg2: #f0efe9;
+    --bg3: #e8e7e0;
+    --card: #ffffff;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --text: #1a1a18;
+    --text2: #5f5e5a;
+    --text3: #9a9890;
+    --purple50: #EEEDFE; --purple100: #CECBF6; --purple600: #534AB7; --purple800: #3C3489;
+    --teal50: #E1F5EE;   --teal200: #5DCAA5;   --teal600: #0F6E56;   --teal800: #085041;
+    --coral50: #FAECE7;  --coral200: #F0997B;  --coral600: #993C1D;  --coral800: #712B13;
+    --amber50: #FAEEDA;  --amber200: #EF9F27;  --amber600: #854F0B;
+    --green50: #EAF3DE;  --green600: #3B6D11;  --green800: #27500A;
+    --blue50: #E6F1FB;   --blue200: #85B7EB;   --blue600: #185FA5;
+    --gray50: #F1EFE8;   --gray200: #B4B2A9;   --gray600: #5F5E5A;
+    --red50: #FCEBEB;    --red200: #F09595;    --red600: #A32D2D;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 0.5px rgba(0,0,0,0.1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #242422; --bg3: #2e2e2b;
+      --card: #262624;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.18);
+      --text: #e8e6dc; --text2: #a8a69e; --text3: #6a6860;
+      --purple50: #26215C; --purple100: #3C3489; --purple600: #AFA9EC; --purple800: #CECBF6;
+      --teal50: #04342C;   --teal200: #1D9E75;   --teal600: #5DCAA5;   --teal800: #9FE1CB;
+      --coral50: #4A1B0C;  --coral200: #D85A30;  --coral600: #F0997B;  --coral800: #F5C4B3;
+      --amber50: #412402;  --amber200: #BA7517;  --amber600: #EF9F27;
+      --green50: #173404;  --green600: #639922;  --green800: #97C459;
+      --blue50: #042C53;   --blue200: #378ADD;   --blue600: #85B7EB;
+      --gray50: #2C2C2A;   --gray200: #5F5E5A;   --gray600: #B4B2A9;
+      --red50: #501313;    --red200: #E24B4A;    --red600: #F09595;
+      --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 0 0 0.5px rgba(255,255,255,0.06);
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 24px 48px;
+    line-height: 1.6;
+  }
+
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  h2 { font-size: 16px; font-weight: 500; margin-bottom: 12px; }
+  p  { font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+  .page { max-width: 960px; margin: 0 auto; }
+
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    padding: 2px 10px; border-radius: 20px;
+    background: var(--purple50); color: var(--purple800);
+    border: 0.5px solid var(--border); margin-bottom: 10px;
+    letter-spacing: 0.02em;
+  }
+
+  .card {
+    background: var(--card); border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border); padding: 20px 24px;
+    box-shadow: var(--shadow);
+  }
+
+  /* Progress bar */
+  .progress-wrap {
+    display: flex; align-items: center; gap: 12px; margin: 24px 0;
+  }
+  .phase-dots { display: flex; gap: 8px; }
+  .phase-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500;
+    background: var(--bg3); color: var(--text3);
+    border: 0.5px solid var(--border);
+    transition: all 0.35s ease;
+  }
+  .phase-dot.active { background: var(--purple600); color: #fff; }
+  .phase-dot.done   { background: var(--teal600); color: #fff; }
+  .phase-label { font-size: 13px; color: var(--text2); }
+
+  /* Stage controls */
+  .controls {
+    display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0;
+  }
+  button {
+    font-size: 13px; font-weight: 500; padding: 8px 18px;
+    border-radius: var(--radius); border: 0.5px solid var(--border2);
+    background: var(--card); color: var(--text); cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+  button:hover { background: var(--bg2); }
+  button:active { transform: scale(0.97); }
+  button.primary {
+    background: var(--purple600); color: #fff;
+    border-color: transparent;
+  }
+  button.primary:hover { opacity: 0.9; }
+  button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* Main simulation layout */
+  .sim-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 20px 0;
+  }
+  @media (max-width: 640px) { .sim-layout { grid-template-columns: 1fr; } }
+
+  .sim-col { display: flex; flex-direction: column; gap: 12px; }
+
+  .arch-label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.05em;
+    color: var(--text3); text-transform: uppercase; margin-bottom: 6px;
+  }
+
+  /* Architecture boxes */
+  .arch-box {
+    border-radius: var(--radius); padding: 14px 16px;
+    border: 0.5px solid var(--border);
+    transition: all 0.5s ease;
+    position: relative; overflow: hidden;
+  }
+  .arch-box .box-title {
+    font-size: 13px; font-weight: 500; margin-bottom: 3px;
+  }
+  .arch-box .box-desc {
+    font-size: 12px; color: var(--text2);
+  }
+  .arch-box .box-pct {
+    position: absolute; top: 10px; right: 14px;
+    font-size: 11px; font-weight: 500; color: var(--text3);
+  }
+
+  /* Monolith */
+  .monolith-box { background: var(--coral50); border-color: var(--coral200); }
+  .monolith-box .box-title { color: var(--coral600); }
+
+  /* Facade */
+  .facade-box { background: var(--amber50); border-color: var(--amber200); }
+  .facade-box .box-title { color: var(--amber600); }
+
+  /* Microservices */
+  .ms-box { background: var(--teal50); border-color: var(--teal200); }
+  .ms-box .box-title { color: var(--teal600); }
+
+  /* Traffic bar */
+  .traffic-wrap { margin-top: 12px; }
+  .traffic-label {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: var(--text3); margin-bottom: 4px;
+  }
+  .traffic-bar {
+    height: 8px; border-radius: 4px;
+    background: var(--bg3); overflow: hidden;
+    border: 0.5px solid var(--border);
+  }
+  .traffic-fill {
+    height: 100%; border-radius: 4px;
+    transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+  }
+  .traffic-fill.monolith  { background: linear-gradient(90deg, #D85A30, #F0997B); }
+  .traffic-fill.ms        { background: linear-gradient(90deg, #1D9E75, #5DCAA5); }
+
+  /* Request animation */
+  .request-stream {
+    margin: 16px 0; background: var(--bg2); border-radius: var(--radius);
+    padding: 14px 16px; border: 0.5px solid var(--border);
+    min-height: 80px;
+  }
+  .request-stream .rs-title {
+    font-size: 11px; font-weight: 500; color: var(--text3);
+    letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 10px;
+  }
+  .request-row {
+    display: flex; gap: 6px; flex-wrap: wrap; min-height: 32px; align-items: center;
+  }
+  .req-pill {
+    font-size: 11px; font-weight: 500; padding: 3px 10px;
+    border-radius: 12px; border: 0.5px solid;
+    animation: slide-in 0.3s ease;
+    transition: opacity 0.5s;
+  }
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .req-pill.monolith { background: var(--coral50); border-color: var(--coral200); color: var(--coral600); }
+  .req-pill.ms       { background: var(--teal50);  border-color: var(--teal200);  color: var(--teal600);  }
+
+  /* Flow diagram SVG area */
+  .flow-area {
+    background: var(--card); border-radius: var(--radius-lg);
+    border: 0.5px solid var(--border); padding: 20px;
+    box-shadow: var(--shadow); margin: 20px 0;
+  }
+
+  /* Info panel */
+  .info-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px; margin: 16px 0;
+  }
+  .info-card {
+    background: var(--bg2); border-radius: var(--radius);
+    padding: 14px 16px; border: 0.5px solid var(--border);
+  }
+  .info-card .ic-num {
+    font-size: 24px; font-weight: 500; color: var(--text);
+    margin-bottom: 2px;
+  }
+  .info-card .ic-label {
+    font-size: 12px; color: var(--text2);
+  }
+
+  /* Phase description */
+  .phase-desc {
+    background: var(--blue50); border: 0.5px solid var(--blue200);
+    border-radius: var(--radius); padding: 14px 16px; margin: 12px 0;
+  }
+  .phase-desc .pd-phase {
+    font-size: 11px; font-weight: 500; color: var(--blue600);
+    text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;
+  }
+  .phase-desc .pd-title {
+    font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px;
+  }
+  .phase-desc .pd-text  { font-size: 13px; color: var(--text2); }
+
+  /* Service list */
+  .service-list { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+  .service-item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; transition: opacity 0.4s;
+  }
+  .service-item.inactive { opacity: 0.28; }
+  .service-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0; transition: background 0.4s;
+  }
+  .service-dot.on  { background: var(--teal600); }
+  .service-dot.off { background: var(--gray200); }
+
+  /* E-commerce example box */
+  .example-section {
+    background: var(--green50); border: 0.5px solid var(--green600);
+    border-radius: var(--radius-lg); padding: 20px 24px; margin: 24px 0;
+  }
+  .example-section h2 { color: var(--green800); }
+  .example-section p  { color: var(--green600); }
+
+  .step-list { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .step-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    font-size: 13px; color: var(--text2);
+  }
+  .step-num {
+    min-width: 22px; height: 22px; border-radius: 50%;
+    background: var(--teal600); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; flex-shrink: 0; margin-top: 1px;
+  }
+
+  /* Divider */
+  hr { border: none; border-top: 0.5px solid var(--border); margin: 24px 0; }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    font-size: 12px; color: var(--text2); align-items: center;
+    margin-bottom: 6px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch {
+    width: 12px; height: 12px; border-radius: 3px; border: 0.5px solid var(--border);
+  }
+
+  /* Speed controls */
+  .speed-wrap {
+    display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text2);
+  }
+  .speed-wrap input { width: 80px; }
+
+  footer {
+    margin-top: 40px; text-align: center;
+    font-size: 12px; color: var(--text3);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div style="margin-bottom: 20px;">
+    <span class="badge">Architecture Pattern</span>
+    <h1>Strangler Fig Pattern</h1>
+    <p style="margin-top: 6px;">An interactive simulation of migrating a monolith to microservices — step by step, without a big-bang rewrite.</p>
+  </div>
+
+  <!-- Concept explanation -->
+  <div class="card" style="margin-bottom: 20px;">
+    <h2>What is the Strangler Fig Pattern?</h2>
+    <p style="margin-top: 6px;">
+      Named after the strangler fig tree 🌿 that grows around an existing tree, gradually replacing it.
+      In software: you incrementally migrate functionality from a legacy monolith to new microservices
+      — routing more traffic to the new services over time — until the monolith can be safely retired.
+      No risky big-bang rewrite. Live traffic validates each step.
+    </p>
+  </div>
+
+  <!-- Phase indicator -->
+  <div class="progress-wrap">
+    <div class="phase-dots" id="phase-dots"></div>
+    <span class="phase-label" id="phase-label-text">Phase 0 — Initial State</span>
+  </div>
+
+  <!-- Phase description card -->
+  <div class="phase-desc" id="phase-desc">
+    <div class="pd-phase">Phase 0</div>
+    <div class="pd-title">Initial monolith — everything in one codebase</div>
+    <div class="pd-text">All traffic goes to the monolith. No facade yet. This is the starting point before any migration work begins.</div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="primary" id="btn-next" onclick="nextPhase()">▶ Next phase</button>
+    <button id="btn-prev" onclick="prevPhase()" disabled>← Previous</button>
+    <button onclick="resetSim()">↺ Reset</button>
+    <div class="speed-wrap">
+      <span>Speed</span>
+      <input type="range" id="speed-slider" min="200" max="2000" value="900" step="100"
+             oninput="updateSpeed(this.value)" title="Request animation speed">
+    </div>
+  </div>
+
+  <!-- Live simulation layout -->
+  <div class="sim-layout">
+    <div class="sim-col">
+      <div class="arch-label">Current architecture</div>
+
+      <!-- Facade -->
+      <div class="arch-box facade-box" id="box-facade" style="opacity:0.25;transition:opacity 0.5s">
+        <div class="box-title">🔀 Facade / API Gateway</div>
+        <div class="box-desc">Routes incoming requests to monolith or microservices based on migration rules.</div>
+      </div>
+
+      <!-- Monolith -->
+      <div class="arch-box monolith-box">
+        <div class="box-title">🧱 Monolith</div>
+        <div class="box-desc" id="monolith-desc">Handles 100% of traffic — auth, orders, inventory, notifications, payments.</div>
+        <div class="box-pct" id="monolith-pct">100%</div>
+        <div class="traffic-wrap">
+          <div class="traffic-label"><span>Traffic share</span><span id="mono-pct-lbl">100%</span></div>
+          <div class="traffic-bar"><div class="traffic-fill monolith" id="mono-bar" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <!-- Microservices -->
+      <div class="arch-box ms-box" id="box-ms" style="opacity:0.25;transition:opacity 0.5s">
+        <div class="box-title">⚙️ Microservices</div>
+        <div class="box-desc">Independent services handling extracted domains.</div>
+        <div class="box-pct" id="ms-pct">0%</div>
+        <div class="traffic-wrap">
+          <div class="traffic-label"><span>Traffic share</span><span id="ms-pct-lbl">0%</span></div>
+          <div class="traffic-bar"><div class="traffic-fill ms" id="ms-bar" style="width:0%"></div></div>
+        </div>
+        <div class="service-list" id="service-list" style="margin-top:12px;border-top:0.5px solid var(--border);padding-top:10px;">
+          <!-- dynamically populated -->
+        </div>
+      </div>
+    </div>
+
+    <div class="sim-col">
+      <div class="arch-label">Live request stream</div>
+      <div class="request-stream">
+        <div class="rs-title">Incoming requests</div>
+        <div class="request-row" id="req-row"></div>
+      </div>
+
+      <div class="arch-label" style="margin-top:4px;">Migration metrics</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="ic-num" id="metric-extracted">0</div>
+          <div class="ic-label">Services extracted</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-num" id="metric-traffic">0%</div>
+          <div class="ic-label">Traffic migrated</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-num" id="metric-phase">0 / 4</div>
+          <div class="ic-label">Phase progress</div>
+        </div>
+        <div class="info-card">
+          <div class="ic-num" id="metric-downtime">Zero</div>
+          <div class="ic-label">Downtime events</div>
+        </div>
+      </div>
+
+      <!-- Services at a glance -->
+      <div class="arch-label" style="margin-top:4px;">Domain services status</div>
+      <div class="card" style="padding: 14px 16px;">
+        <div id="global-service-status" class="service-list">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow diagram -->
+  <div class="flow-area">
+    <h2 style="margin-bottom: 4px;">Request routing flow</h2>
+    <p style="font-size:13px; margin-bottom: 16px;">How a request travels through the system in the current phase.</p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--coral50);border-color:var(--coral200)"></div> Monolith path</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--teal50);border-color:var(--teal200)"></div> New microservice path</div>
+      <div class="legend-item"><div class="legend-swatch" style="background:var(--amber50);border-color:var(--amber200)"></div> Facade / Gateway</div>
+    </div>
+    <svg id="flow-svg" width="100%" viewBox="0 0 680 240" style="overflow:visible">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <!-- Drawn by JS -->
+    </svg>
+  </div>
+
+  <hr>
+
+  <!-- Real-world example -->
+  <div class="example-section">
+    <h2>🛒 Real-world example — E-commerce platform</h2>
+    <p style="margin-top: 4px;">How a large e-commerce site might apply this pattern over 6–18 months</p>
+    <div class="step-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div><strong>Add facade</strong> — Deploy an API Gateway (e.g. AWS API Gateway, NGINX) in front of the existing monolith. Zero changes to the monolith code. All traffic still flows through.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div><strong>Extract User Auth</strong> — Build a standalone Auth Service. Update facade routing rules: <code>/auth/*</code> routes to the new service, everything else to monolith. Deploy, monitor, done.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div><strong>Extract Product Catalog</strong> — Build a Catalog Service backed by its own database. Gradually shift <code>/products/*</code> traffic. Run both services in parallel during the cutover window.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div><strong>Extract Orders & Payments</strong> — These are tightly coupled so migrate together. Use an event bus (Kafka/SQS) to sync order state between old and new systems during transition.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">5</div>
+        <div><strong>Retire the monolith</strong> — Once all domains are extracted and traffic is 0%, decommission the monolith. The strangler fig has completed the replacement.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key principles -->
+  <div class="card" style="margin-top:0">
+    <h2>Key principles</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px;">
+      <div style="background:var(--bg2);border-radius:var(--radius);padding:12px 14px;border:0.5px solid var(--border)">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">🔄 Incremental</div>
+        <div style="font-size:12px;color:var(--text2)">Migrate one bounded context at a time. Never freeze development.</div>
+      </div>
+      <div style="background:var(--bg2);border-radius:var(--radius);padding:12px 14px;border:0.5px solid var(--border)">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">🛡️ Safe rollback</div>
+        <div style="font-size:12px;color:var(--text2)">Route rules can flip back to monolith instantly if a new service misbehaves.</div>
+      </div>
+      <div style="background:var(--bg2);border-radius:var(--radius);padding:12px 14px;border:0.5px solid var(--border)">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">📊 Validated in prod</div>
+        <div style="font-size:12px;color:var(--text2)">Real traffic tests each extracted service before the monolith code is deleted.</div>
+      </div>
+      <div style="background:var(--bg2);border-radius:var(--radius);padding:12px 14px;border:0.5px solid var(--border)">
+        <div style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;">🧵 Co-existence</div>
+        <div style="font-size:12px;color:var(--text2)">Old and new systems run simultaneously. The facade is the seam between them.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Strangler Fig Pattern Simulator — for educational use</footer>
+</div>
+
+<script>
+const PHASES = [
+  {
+    id: 0,
+    label: "Initial monolith",
+    desc: { phase: "Phase 0", title: "Initial monolith — everything in one codebase", text: "All traffic goes to the monolith. No facade yet. This is the starting point before any migration work begins." },
+    monoTraffic: 100, msTraffic: 0,
+    facadeVisible: false, msVisible: false,
+    services: [
+      { name: "Auth Service",       active: false },
+      { name: "Product Catalog",    active: false },
+      { name: "Order Service",      active: false },
+      { name: "Payment Service",    active: false },
+      { name: "Notification Svc",   active: false },
+    ],
+    reqTypes: ["monolith","monolith","monolith","monolith"],
+    flowPhase: 0
+  },
+  {
+    id: 1,
+    label: "Facade added",
+    desc: { phase: "Phase 1", title: "Introduce the facade (API Gateway)", text: "An API Gateway is placed in front of the monolith. No code changes to the monolith. All traffic still routes to it — but we now have a routing seam to work with." },
+    monoTraffic: 100, msTraffic: 0,
+    facadeVisible: true, msVisible: false,
+    services: [
+      { name: "Auth Service",       active: false },
+      { name: "Product Catalog",    active: false },
+      { name: "Order Service",      active: false },
+      { name: "Payment Service",    active: false },
+      { name: "Notification Svc",   active: false },
+    ],
+    reqTypes: ["monolith","monolith","monolith","monolith"],
+    flowPhase: 1
+  },
+  {
+    id: 2,
+    label: "First service extracted",
+    desc: { phase: "Phase 2", title: "Extract Auth & Product Catalog services", text: "The Auth and Product Catalog domains are extracted. The facade now routes /auth/* and /products/* to the new services. ~40% of traffic is handled by microservices." },
+    monoTraffic: 60, msTraffic: 40,
+    facadeVisible: true, msVisible: true,
+    services: [
+      { name: "Auth Service",       active: true  },
+      { name: "Product Catalog",    active: true  },
+      { name: "Order Service",      active: false },
+      { name: "Payment Service",    active: false },
+      { name: "Notification Svc",   active: false },
+    ],
+    reqTypes: ["ms","monolith","ms","monolith","monolith","ms"],
+    flowPhase: 2
+  },
+  {
+    id: 3,
+    label: "Most services migrated",
+    desc: { phase: "Phase 3", title: "Extract Orders, Payments & Notifications", text: "Core transactional services are now migrated. Only legacy reporting remains in the monolith. ~85% of traffic is handled by microservices. An event bus handles cross-service communication." },
+    monoTraffic: 15, msTraffic: 85,
+    facadeVisible: true, msVisible: true,
+    services: [
+      { name: "Auth Service",       active: true },
+      { name: "Product Catalog",    active: true },
+      { name: "Order Service",      active: true },
+      { name: "Payment Service",    active: true },
+      { name: "Notification Svc",   active: false },
+    ],
+    reqTypes: ["ms","ms","ms","monolith","ms","ms","ms","ms"],
+    flowPhase: 3
+  },
+  {
+    id: 4,
+    label: "Monolith retired",
+    desc: { phase: "Phase 4", title: "Monolith fully retired — migration complete!", text: "All domains have been extracted. The monolith receives 0% of traffic and is decommissioned. The strangler fig has completed its work. The system is now fully microservice-based." },
+    monoTraffic: 0, msTraffic: 100,
+    facadeVisible: true, msVisible: true,
+    services: [
+      { name: "Auth Service",       active: true },
+      { name: "Product Catalog",    active: true },
+      { name: "Order Service",      active: true },
+      { name: "Payment Service",    active: true },
+      { name: "Notification Svc",   active: true },
+    ],
+    reqTypes: ["ms","ms","ms","ms","ms","ms"],
+    flowPhase: 4
+  }
+];
+
+let currentPhase = 0;
+let reqInterval = null;
+let speed = 900;
+
+function updateSpeed(v) {
+  speed = parseInt(v);
+  restartReqStream();
+}
+
+function buildPhaseDots() {
+  const c = document.getElementById("phase-dots");
+  c.innerHTML = "";
+  PHASES.forEach((p, i) => {
+    const d = document.createElement("div");
+    d.className = "phase-dot" + (i < currentPhase ? " done" : i === currentPhase ? " active" : "");
+    d.textContent = i;
+    d.title = p.label;
+    c.appendChild(d);
+  });
+}
+
+function renderPhase() {
+  const ph = PHASES[currentPhase];
+
+  buildPhaseDots();
+  document.getElementById("phase-label-text").textContent = `Phase ${ph.id} — ${ph.label}`;
+
+  // Phase desc
+  const pd = document.getElementById("phase-desc");
+  pd.querySelector(".pd-phase").textContent = ph.desc.phase;
+  pd.querySelector(".pd-title").textContent  = ph.desc.title;
+  pd.querySelector(".pd-text").textContent   = ph.desc.text;
+
+  // Traffic bars
+  document.getElementById("mono-bar").style.width = ph.monoTraffic + "%";
+  document.getElementById("ms-bar").style.width   = ph.msTraffic + "%";
+  document.getElementById("mono-pct-lbl").textContent = ph.monoTraffic + "%";
+  document.getElementById("ms-pct-lbl").textContent   = ph.msTraffic + "%";
+  document.getElementById("monolith-pct").textContent = ph.monoTraffic + "%";
+  document.getElementById("ms-pct").textContent       = ph.msTraffic + "%";
+
+  // Facade & MS box visibility
+  document.getElementById("box-facade").style.opacity = ph.facadeVisible ? "1" : "0.22";
+  document.getElementById("box-ms").style.opacity     = ph.msVisible ? "1" : "0.22";
+
+  // Service list inside MS box
+  const sl = document.getElementById("service-list");
+  sl.innerHTML = ph.services.map(s =>
+    `<div class="service-item ${s.active ? '' : 'inactive'}">
+      <div class="service-dot ${s.active ? 'on' : 'off'}"></div>
+      <span style="font-size:12px">${s.name}</span>
+      ${s.active ? '<span style="font-size:10px;color:var(--teal600);margin-left:auto">live</span>' : ''}
+    </div>`
+  ).join("");
+
+  // Global status
+  const gs = document.getElementById("global-service-status");
+  gs.innerHTML = ph.services.map(s =>
+    `<div class="service-item ${s.active ? '' : 'inactive'}">
+      <div class="service-dot ${s.active ? 'on' : 'off'}"></div>
+      <span style="font-size:13px">${s.name}</span>
+      <span style="font-size:11px;margin-left:auto;color:${s.active ? 'var(--teal600)' : 'var(--text3)'}">${s.active ? '✓ microservice' : '⬡ in monolith'}</span>
+    </div>`
+  ).join("");
+
+  // Metrics
+  const extracted = ph.services.filter(s => s.active).length;
+  document.getElementById("metric-extracted").textContent = extracted;
+  document.getElementById("metric-traffic").textContent   = ph.msTraffic + "%";
+  document.getElementById("metric-phase").textContent     = `${currentPhase} / 4`;
+  document.getElementById("metric-downtime").textContent  = "Zero";
+
+  // Monolith desc
+  if (ph.monoTraffic === 0) {
+    document.getElementById("monolith-desc").textContent = "Decommissioned — all traffic migrated.";
+    document.getElementById("box-facade").closest ? null : null;
+    // dim the monolith box
+    document.querySelector(".monolith-box").style.opacity = "0.35";
+  } else {
+    document.querySelector(".monolith-box").style.opacity = "1";
+    document.getElementById("monolith-desc").textContent =
+      ph.id === 0 ? "Handles 100% of traffic — auth, orders, inventory, notifications, payments."
+      : ph.id === 1 ? "Handles 100% of traffic via the new facade."
+      : ph.id === 2 ? "Handles auth/catalog via microservices; orders, payments, notifications remain here."
+      : "Handles legacy reporting only. Core services now on microservices.";
+  }
+
+  // Buttons
+  document.getElementById("btn-next").disabled = currentPhase >= PHASES.length - 1;
+  document.getElementById("btn-prev").disabled = currentPhase <= 0;
+  document.getElementById("btn-next").textContent = currentPhase >= PHASES.length - 1 ? "✓ Migration complete" : "▶ Next phase";
+
+  drawFlow(ph.flowPhase);
+  restartReqStream();
+}
+
+function nextPhase() {
+  if (currentPhase < PHASES.length - 1) { currentPhase++; renderPhase(); }
+}
+function prevPhase() {
+  if (currentPhase > 0) { currentPhase--; renderPhase(); }
+}
+function resetSim() {
+  currentPhase = 0; renderPhase();
+}
+
+// --- Request stream animation ---
+let reqQueue = [];
+function spawnReq() {
+  const ph = PHASES[currentPhase];
+  const types = ph.reqTypes;
+  const t = types[Math.floor(Math.random() * types.length)];
+  const labels = { ms: ["GET /auth", "POST /cart", "GET /products", "GET /orders", "POST /pay"], monolith: ["GET /report", "GET /legacy", "PUT /admin", "GET /invoice", "POST /batch"] };
+  const lbl = labels[t][Math.floor(Math.random() * labels[t].length)];
+  const row = document.getElementById("req-row");
+  const pill = document.createElement("div");
+  pill.className = `req-pill ${t}`;
+  pill.textContent = lbl;
+  row.appendChild(pill);
+  setTimeout(() => { pill.style.opacity = "0"; setTimeout(() => pill.remove(), 500); }, speed * 2.2);
+  // keep max 12 pills
+  const pills = row.querySelectorAll(".req-pill");
+  if (pills.length > 12) pills[0].remove();
+}
+function restartReqStream() {
+  if (reqInterval) clearInterval(reqInterval);
+  reqInterval = setInterval(spawnReq, speed);
+}
+
+// --- Flow diagram drawing ---
+function drawFlow(phaseId) {
+  const svg = document.getElementById("flow-svg");
+  const W = 680, H = 200;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+
+  const co = getComputedStyle(document.documentElement);
+  const text    = co.getPropertyValue('--text').trim()    || '#1a1a18';
+  const text2   = co.getPropertyValue('--text2').trim()   || '#5f5e5a';
+  const border  = 'rgba(0,0,0,0.12)';
+
+  const CORAL_BG    = "#FAECE7"; const CORAL_STR = "#D85A30"; const CORAL_TXT = "#993C1D";
+  const TEAL_BG     = "#E1F5EE"; const TEAL_STR  = "#1D9E75"; const TEAL_TXT  = "#0F6E56";
+  const AMBER_BG    = "#FAEEDA"; const AMBER_STR = "#EF9F27"; const AMBER_TXT = "#854F0B";
+  const GRAY_BG     = "#F1EFE8"; const GRAY_STR  = "#B4B2A9"; const GRAY_TXT  = "#5F5E5A";
+  const BLUE_BG     = "#E6F1FB"; const BLUE_STR  = "#378ADD"; const BLUE_TXT  = "#185FA5";
+
+  const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const CB = dark?"#4A1B0C":CORAL_BG; const CS = dark?"#F0997B":CORAL_STR; const CT = dark?"#F5C4B3":CORAL_TXT;
+  const TB = dark?"#04342C":TEAL_BG;  const TS = dark?"#5DCAA5":TEAL_STR;  const TT = dark?"#9FE1CB":TEAL_TXT;
+  const AB = dark?"#412402":AMBER_BG; const AS = dark?"#EF9F27":AMBER_STR; const AT = dark?"#FAC775":AMBER_TXT;
+  const GB = dark?"#2C2C2A":GRAY_BG;  const GS = dark?"#5F5E5A":GRAY_STR;  const GT = dark?"#B4B2A9":GRAY_TXT;
+  const BB = dark?"#042C53":BLUE_BG;  const BSt= dark?"#378ADD":BLUE_STR;  const BT = dark?"#85B7EB":BLUE_TXT;
+
+  function box(x,y,w,h,rx,fill,stroke,label,sublabel,bold) {
+    return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="0.5"/>
+    <text x="${x+w/2}" y="${sublabel ? y+h/2-8 : y+h/2}" text-anchor="middle" dominant-baseline="central"
+      font-size="12" font-weight="${bold?'500':'400'}" fill="${GT}">${label}</text>
+    ${sublabel ? `<text x="${x+w/2}" y="${y+h/2+10}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="${GT}">${sublabel}</text>` : ''}`;
+  }
+
+  function arrow(x1,y1,x2,y2,color,dashed) {
+    const dash = dashed ? `stroke-dasharray="5,4"` : '';
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="1.5" ${dash} marker-end="url(#arr-${color.replace('#','')})"/>`;
+  }
+
+  function arrowPath(d, color) {
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="1.5" marker-end="url(#arr-${color.replace('#','')})"/>`;
+  }
+
+  function markerDef(color) {
+    const id = `arr-${color.replace('#','')}`;
+    return `<marker id="${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>`;
+  }
+
+  let markers = [CS,TS,AS,GS,BSt].map(markerDef).join("\n");
+  let content = "";
+
+  if (phaseId === 0) {
+    // Client → Monolith
+    content += box(40, 80, 100, 44, 8, GB, GS, "Client", null, true);
+    content += box(300, 80, 160, 44, 8, CB, CS, "Monolith", "all services", true);
+    content += arrow(142, 102, 298, 102, CS);
+    content += `<text x="220" y="90" text-anchor="middle" font-size="10" fill="${CT}">100% traffic</text>`;
+  }
+  else if (phaseId === 1) {
+    // Client → Facade → Monolith
+    content += box(20, 80, 90, 44, 8, GB, GS, "Client", null, true);
+    content += box(260, 80, 120, 44, 8, AB, AS, "Facade", "API Gateway", true);
+    content += box(480, 80, 140, 44, 8, CB, CS, "Monolith", "100% routed", true);
+    content += arrow(112, 102, 258, 102, AS);
+    content += arrow(382, 102, 478, 102, CS);
+    content += `<text x="185" y="90" text-anchor="middle" font-size="10" fill="${AT}">all requests</text>`;
+    content += `<text x="430" y="90" text-anchor="middle" font-size="10" fill="${CT}">100%</text>`;
+  }
+  else if (phaseId === 2) {
+    // Client → Facade → Monolith (60%) + Microservices (40%)
+    content += box(20, 90, 80, 40, 8, GB, GS, "Client", null, true);
+    content += box(230, 90, 110, 40, 8, AB, AS, "Facade", "gateway", true);
+    content += box(460, 50, 140, 40, 8, CB, CS, "Monolith", "60% traffic", true);
+    content += box(460, 130, 140, 40, 8, TB, TS, "Microservices", "40% traffic", true);
+    content += arrow(102, 110, 228, 110, AS);
+    content += arrowPath(`M340 100 Q400 100 400 70 L458 70`, CS);
+    content += arrowPath(`M340 120 Q400 120 400 150 L458 150`, TS);
+    content += `<text x="415" y="62" text-anchor="middle" font-size="10" fill="${CT}">orders, legacy</text>`;
+    content += `<text x="415" y="145" text-anchor="middle" font-size="10" fill="${TT}">auth, catalog</text>`;
+  }
+  else if (phaseId === 3) {
+    // Client → Facade → Monolith (15%) + Microservices (85%)
+    content += box(20, 90, 80, 40, 8, GB, GS, "Client", null, true);
+    content += box(230, 90, 110, 40, 8, AB, AS, "Facade", "gateway", true);
+    content += box(460, 50, 140, 40, 8, CB, CS, "Monolith", "15% — legacy", true);
+    content += box(460, 130, 140, 40, 8, TB, TS, "Microservices", "85% traffic", true);
+    content += arrow(102, 110, 228, 110, AS);
+    content += arrowPath(`M340 100 Q400 100 400 70 L458 70`, CS);
+    content += arrowPath(`M340 120 Q400 120 400 150 L458 150`, TS);
+    content += `<text x="415" y="62" text-anchor="middle" font-size="10" fill="${CT}">legacy only</text>`;
+    content += `<text x="415" y="145" text-anchor="middle" font-size="10" fill="${TT}">most services</text>`;
+  }
+  else if (phaseId === 4) {
+    // Client → Facade → Microservices (100%) — monolith gone
+    content += box(20, 80, 80, 44, 8, GB, GS, "Client", null, true);
+    content += box(230, 80, 110, 44, 8, AB, AS, "Facade", "gateway", true);
+    content += box(460, 80, 160, 44, 8, TB, TS, "Microservices", "100% traffic", true);
+    content += arrow(102, 102, 228, 102, AS);
+    content += arrow(342, 102, 458, 102, TS);
+    content += `<text x="395" y="90" text-anchor="middle" font-size="10" fill="${TT}">100%</text>`;
+    content += `<text x="390" y="160" text-anchor="middle" font-size="11" fill="${GT}">Monolith retired ✓</text>`;
+  }
+
+  svg.innerHTML = `<defs>${markers}</defs>${content}`;
+}
+
+// Init
+renderPhase();
+</script>
+</body>
+</html>
