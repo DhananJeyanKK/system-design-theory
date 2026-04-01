@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introduction to Microservices — Architecture Series</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#080b10;
+  --s1:#0e1219;
+  --s2:#141921;
+  --s3:#1c2230;
+  --b1:rgba(255,255,255,0.06);
+  --b2:rgba(255,255,255,0.11);
+  --b3:rgba(255,255,255,0.18);
+  --text:#dde2ee;
+  --t2:#8b93a8;
+  --t3:#4a5168;
+  --blue:#5b9cf6;
+  --blue-d:rgba(91,156,246,0.13);
+  --green:#34d399;
+  --green-d:rgba(52,211,153,0.12);
+  --amber:#fbbf24;
+  --amber-d:rgba(251,191,36,0.12);
+  --red:#f87171;
+  --red-d:rgba(248,113,113,0.12);
+  --purple:#c084fc;
+  --purple-d:rgba(192,132,252,0.12);
+  --teal:#22d3ee;
+  --teal-d:rgba(34,211,238,0.11);
+  --coral:#fb7185;
+  --coral-d:rgba(251,113,133,0.11);
+  --font:'DM Sans',sans-serif;
+  --serif:'Fraunces',serif;
+  --mono:'DM Mono',monospace;
+}
+
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* ── Nav bar ── */
+#navbar{
+  display:flex;align-items:center;gap:0;
+  border-bottom:0.5px solid var(--b2);
+  background:var(--s1);
+  overflow-x:auto;
+  flex-shrink:0;
+  scrollbar-width:none;
+}
+#navbar::-webkit-scrollbar{display:none}
+.nav-btn{
+  font-family:var(--mono);font-size:10px;letter-spacing:0.04em;
+  padding:10px 14px;border:none;background:none;color:var(--t3);
+  cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;
+  transition:all .2s;flex-shrink:0;
+}
+.nav-btn:hover{color:var(--t2);background:var(--b1)}
+.nav-btn.active{color:var(--blue);border-bottom-color:var(--blue);background:var(--blue-d)}
+
+/* ── Slide container ── */
+#slides{flex:1;overflow:hidden;position:relative}
+.slide{
+  position:absolute;inset:0;
+  display:none;flex-direction:column;
+  overflow-y:auto;padding:32px 40px 40px;
+  scrollbar-width:thin;scrollbar-color:var(--b3) transparent;
+}
+.slide.active{display:flex}
+.slide::-webkit-scrollbar{width:4px}
+.slide::-webkit-scrollbar-track{background:transparent}
+.slide::-webkit-scrollbar-thumb{background:var(--b3);border-radius:4px}
+
+/* ── Typography ── */
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:0.14em;color:var(--blue);text-transform:uppercase;margin-bottom:8px}
+.slide-title{font-family:var(--serif);font-size:34px;font-weight:600;line-height:1.15;letter-spacing:-0.02em;margin-bottom:6px}
+.slide-title em{font-style:italic;color:var(--green)}
+.slide-title span.red{color:var(--red)}
+.slide-subtitle{font-size:14px;color:var(--t2);line-height:1.6;margin-bottom:28px;max-width:600px}
+.section-label{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px}
+
+/* Cards & Grids */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.card{background:var(--s2);border:0.5px solid var(--b2);border-radius:14px;padding:20px 22px}
+.card-title{font-size:13px;font-weight:500;margin-bottom:6px}
+.card-body{font-size:12px;color:var(--t2);line-height:1.65}
+
+/* Pill tags */
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:20px;font-weight:400;margin:2px}
+.tag-green{background:var(--green-d);color:var(--green);border:0.5px solid rgba(52,211,153,0.25)}
+.tag-red{background:var(--red-d);color:var(--red);border:0.5px solid rgba(248,113,113,0.25)}
+.tag-amber{background:var(--amber-d);color:var(--amber);border:0.5px solid rgba(251,191,36,0.25)}
+.tag-blue{background:var(--blue-d);color:var(--blue);border:0.5px solid rgba(91,156,246,0.25)}
+.tag-purple{background:var(--purple-d);color:var(--purple);border:0.5px solid rgba(192,132,252,0.25)}
+
+/* Divider */
+.divider{height:0.5px;background:var(--b2);margin:24px 0}
+
+/* Buttons */
+.btn{font-family:var(--mono);font-size:11px;padding:7px 16px;border-radius:8px;border:0.5px solid var(--b3);background:var(--s3);color:var(--text);cursor:pointer;transition:all .2s;letter-spacing:0.03em}
+.btn:hover{background:var(--b2);border-color:var(--t3)}
+.btn.primary{background:var(--blue-d);border-color:var(--blue);color:var(--blue)}
+.btn.primary:hover{background:rgba(91,156,246,0.22)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/* SLIDE 1 — What is Microservices */
+/* ─────────────────────────────────────────────────────────────────── */
+.benefit-row{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.benefit-card{flex:1;min-width:160px;background:var(--s2);border:0.5px solid var(--b2);border-radius:12px;padding:16px 18px}
+.benefit-icon{font-size:20px;margin-bottom:8px}
+.benefit-title{font-size:12px;font-weight:500;margin-bottom:4px}
+.benefit-text{font-size:11px;color:var(--t2);line-height:1.6}
+
+/* Vs bar */
+.vs-wrap{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:20px 0;border:0.5px solid var(--b2);border-radius:14px;overflow:hidden}
+.vs-col{padding:20px 22px;background:var(--s2)}
+.vs-vs{display:flex;align-items:center;justify-content:center;padding:0 14px;background:var(--s1);border-left:0.5px solid var(--b1);border-right:0.5px solid var(--b1)}
+.vs-label{font-family:var(--serif);font-size:11px;font-weight:600;color:var(--t3);letter-spacing:0.1em}
+.vs-title{font-size:13px;font-weight:500;margin-bottom:12px}
+.vs-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:12px;color:var(--t2);line-height:1.5}
+.vs-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+
+/* Gear animation */
+#gear-sim{background:var(--s2);border:0.5px solid var(--b2);border-radius:14px;padding:22px 24px;margin-bottom:20px}
+#gear-canvas{width:100%;height:160px;position:relative;display:flex;align-items:center;justify-content:center;gap:0}
+.gear-track{flex:1;height:80px;position:relative;display:flex;align-items:center}
+.gear-car{position:absolute;font-size:22px;top:50%;transform:translateY(-50%);transition:left 0.05s linear}
+.gear-road{position:absolute;bottom:10px;left:0;right:0;height:3px;border-radius:2px}
+.gear-label{position:absolute;top:4px;left:0;font-family:var(--mono);font-size:10px}
+.gear-speed{position:absolute;top:4px;right:0;font-family:var(--mono);font-size:10px}
+#gear-controls{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/* SLIDE 2 — Challenges */
+/* ─────────────────────────────────────────────────────────────────── */
+.challenge-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.challenge-card{background:var(--s2);border:0.5px solid var(--b2);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+.challenge-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0}
+.cc-red::before{background:var(--red)}
+.cc-amber::before{background:var(--amber)}
+.cc-blue::before{background:var(--blue)}
+.cc-purple::before{background:var(--purple)}
+.challenge-num{font-family:var(--mono);font-size:10px;color:var(--t3);margin-bottom:6px}
+.challenge-title{font-size:13px;font-weight:500;margin-bottom:8px}
+.challenge-body{font-size:12px;color:var(--t2);line-height:1.65}
+
+/* Network sim */
+#network-sim{background:var(--s1);border:0.5px solid var(--b2);border-radius:14px;overflow:hidden;margin-bottom:20px}
+#network-stage{position:relative;width:100%;height:200px}
+#network-stage svg{position:absolute;inset:0;width:100%;height:100%}
+.svc-node{position:absolute;width:70px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:500;border:0.5px solid;transform:translate(-50%,-50%);transition:all .3s}
+.packet{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;transition:opacity .3s}
+#network-controls{display:flex;gap:10px;padding:14px 18px;border-top:0.5px solid var(--b1);align-items:center;flex-wrap:wrap}
+#network-log{font-family:var(--mono);font-size:10px;color:var(--t2);margin-left:auto;max-width:300px;text-align:right}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/* SLIDE 3 — Boundaries & Cohesion */
+/* ─────────────────────────────────────────────────────────────────── */
+.attempt-tabs{display:flex;gap:0;border-bottom:0.5px solid var(--b2);margin-bottom:20px}
+.atab{font-family:var(--mono);font-size:11px;padding:9px 18px;background:none;border:none;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s}
+.atab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.atab-panel{display:none}.atab-panel.active{display:block}
+
+#boundary-stage{position:relative;width:100%;height:240px;background:var(--s1);border:0.5px solid var(--b2);border-radius:12px;overflow:hidden;margin-bottom:16px}
+#boundary-svg{position:absolute;inset:0;width:100%;height:100%}
+
+/* Principles */
+.principle-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.principle-card{background:var(--s2);border:0.5px solid var(--b2);border-radius:12px;padding:18px;text-align:center}
+.principle-icon{font-size:24px;margin-bottom:10px}
+.principle-name{font-size:13px;font-weight:500;margin-bottom:6px}
+.principle-def{font-size:11px;color:var(--t2);line-height:1.6}
+.principle-card.lit{border-color:var(--green);background:var(--green-d)}
+.principle-card.lit .principle-name{color:var(--green)}
+
+/* Decomposition comparison */
+.decomp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
+.decomp-table th{font-family:var(--mono);font-size:10px;color:var(--t3);letter-spacing:0.08em;text-transform:uppercase;padding:8px 12px;text-align:left;border-bottom:0.5px solid var(--b2)}
+.decomp-table td{padding:9px 12px;border-bottom:0.5px solid var(--b1);color:var(--t2)}
+.decomp-table td:first-child{color:var(--text);font-weight:500}
+.win{color:var(--green);font-weight:500}
+.lose{color:var(--t3)}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/* SLIDE 4 — Migration */
+/* ─────────────────────────────────────────────────────────────────── */
+.approach-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.approach-card{background:var(--s2);border:0.5px solid var(--b2);border-radius:12px;padding:20px 22px}
+.approach-card.bad{border-color:rgba(248,113,113,0.3)}
+.approach-card.good{border-color:rgba(52,211,153,0.3)}
+.approach-verdict{font-family:var(--mono);font-size:10px;margin-bottom:8px}
+
+/* Strangler animation */
+#strangler-sim{background:var(--s1);border:0.5px solid var(--b2);border-radius:14px;overflow:hidden;margin-bottom:20px}
+#strangler-stage{position:relative;width:100%;height:220px}
+#strangler-controls{display:flex;gap:10px;padding:14px 18px;border-top:0.5px solid var(--b1);align-items:center;flex-wrap:wrap}
+#strangler-step-label{font-family:var(--mono);font-size:11px;color:var(--t2);margin-left:auto}
+
+/* Candidate picker */
+#candidate-sim{background:var(--s2);border:0.5px solid var(--b2);border-radius:14px;padding:20px 22px;margin-bottom:20px}
+.cand-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.cand-item{background:var(--s1);border:0.5px solid var(--b2);border-radius:10px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .25s;position:relative}
+.cand-item:hover{border-color:var(--b3)}
+.cand-item.selected{border-color:var(--green);background:var(--green-d)}
+.cand-item.bad-candidate{border-color:rgba(248,113,113,0.3)}
+.cand-name{font-size:11px;font-weight:500;margin-bottom:6px}
+.cand-bar-wrap{height:4px;background:var(--b2);border-radius:2px;margin-bottom:4px}
+.cand-bar{height:4px;border-radius:2px;transition:width .4s}
+.cand-bar-label{font-family:var(--mono);font-size:9px;color:var(--t3)}
+.cand-score{position:absolute;top:6px;right:8px;font-family:var(--mono);font-size:9px}
+
+/* Tips */
+.tip-list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.tip-item{display:flex;gap:12px;align-items:flex-start;background:var(--s2);border:0.5px solid var(--b2);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.6}
+.tip-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.tip-item strong{color:var(--text)}
+
+/* ─────────────────────────────────────────────────────────────────── */
+/* Summary slide */
+/* ─────────────────────────────────────────────────────────────────── */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.summary-section{background:var(--s2);border:0.5px solid var(--b2);border-radius:12px;padding:18px 20px}
+.summary-section-title{font-family:var(--mono);font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px}
+.summary-item{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:12px;color:var(--t2);line-height:1.5}
+.si-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px}
+
+/* Footer nav */
+#footer{display:flex;align-items:center;justify-content:space-between;padding:8px 24px;border-top:0.5px solid var(--b1);background:var(--s1);flex-shrink:0}
+#footer-label{font-family:var(--mono);font-size:10px;color:var(--t3)}
+.footer-nav{display:flex;gap:8px}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.7}50%{opacity:.25}}
+@keyframes flowRight{0%{left:0%}100%{left:100%}}
+@keyframes popIn{from{opacity:0;transform:scale(0.75)}to{opacity:1;transform:scale(1)}}
+.anim-in{animation:fadeUp .4s ease both}
+
+/* Responsive */
+@media(max-width:680px){
+  .grid-2,.challenge-grid,.approach-grid,.summary-grid,.principle-trio{grid-template-columns:1fr}
+  .cand-grid{grid-template-columns:repeat(2,1fr)}
+  .slide{padding:20px 18px 32px}
+  .slide-title{font-size:26px}
+  .vs-wrap{grid-template-columns:1fr;gap:0}
+  .vs-vs{padding:8px 0;border:none;border-top:0.5px solid var(--b1);border-bottom:0.5px solid var(--b1)}
+}
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav id="navbar">
+  <button class="nav-btn active" onclick="goSlide(0)">01 · What is Microservices</button>
+  <button class="nav-btn" onclick="goSlide(1)">02 · Challenges</button>
+  <button class="nav-btn" onclick="goSlide(2)">03 · Boundaries &amp; Principles</button>
+  <button class="nav-btn" onclick="goSlide(3)">04 · Migration Strategy</button>
+  <button class="nav-btn" onclick="goSlide(4)">05 · Summary</button>
+</nav>
+
+<div id="slides">
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 0: What is Microservices -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="slide active" id="slide-0">
+  <div class="eyebrow">Architecture Series · Microservices</div>
+  <div class="slide-title">Business logic as a collection of<br><em>loosely coupled</em>, independently deployable components</div>
+  <div class="slide-subtitle">Each service owns its own codebase, database, and deployment pipeline — built around a single business capability.</div>
+
+  <div class="benefit-row">
+    <div class="benefit-card anim-in" style="animation-delay:.05s;border-color:rgba(91,156,246,0.25)">
+      <div class="benefit-icon">🏗️</div>
+      <div class="benefit-title" style="color:var(--blue)">Organizational Scalability</div>
+      <div class="benefit-text">Small codebase, small focused team. Quick to build, test, and reason about. Fast onboarding. More features shipped on time.</div>
+    </div>
+    <div class="benefit-card anim-in" style="animation-delay:.1s;border-color:rgba(52,211,153,0.25)">
+      <div class="benefit-icon">⚡</div>
+      <div class="benefit-title" style="color:var(--green)">System Scalability</div>
+      <div class="benefit-text">Small services run on small machines — less memory, less CPU. Each team picks the best technology stack. Scale only the bottlenecks.</div>
+    </div>
+    <div class="benefit-card anim-in" style="animation-delay:.15s;border-color:rgba(251,191,36,0.25)">
+      <div class="benefit-icon">🛡️</div>
+      <div class="benefit-title" style="color:var(--amber)">Higher Stability</div>
+      <div class="benefit-text">Bugs and memory leaks are contained within service boundaries. A failing service doesn't take down the entire system.</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Gear simulation -->
+  <div class="section-label">Analogy — The Gear Metaphor</div>
+  <div id="gear-sim">
+    <div id="gear-canvas">
+      <div class="gear-track" id="gt-mono">
+        <div class="gear-road" style="background:var(--red);opacity:0.4"></div>
+        <div class="gear-label" style="color:var(--red)">Monolith (1st gear)</div>
+        <div class="gear-speed" id="gs-mono" style="color:var(--red)">0 km/h</div>
+        <div class="gear-car" id="car-mono" style="left:5%">🚗</div>
+      </div>
+      <div style="width:1px;background:var(--b2);height:60px;margin:0 16px;flex-shrink:0"></div>
+      <div class="gear-track" id="gt-micro">
+        <div class="gear-road" style="background:var(--green);opacity:0.4"></div>
+        <div class="gear-label" style="color:var(--green)">Microservices (high gear)</div>
+        <div class="gear-speed" id="gs-micro" style="color:var(--green)">0 km/h</div>
+        <div class="gear-car" id="car-micro" style="left:5%">🏎️</div>
+      </div>
+    </div>
+    <div id="gear-controls">
+      <button class="btn primary" id="gear-start-btn" onclick="startGear()">▶ Start race</button>
+      <button class="btn" onclick="resetGear()">↺ Reset</button>
+      <span style="font-size:12px;color:var(--t2);margin-left:8px" id="gear-msg">Monolith picks up fast, then plateaus. Microservices takes time to spin up — then outruns it.</span>
+    </div>
+  </div>
+
+  <!-- Monolith vs Microservices -->
+  <div class="section-label">Side-by-Side Comparison</div>
+  <div class="vs-wrap">
+    <div class="vs-col">
+      <div class="vs-title" style="color:var(--red)">🏛️ Monolith</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--green)"></div>Fast initial build & pickup</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--green)"></div>Simple to deploy early on</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--red)"></div>Grows into a big ball of mud</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--red)"></div>Entire system restarts on deploy</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--red)"></div>Shared DB = tight coupling</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--red)"></div>Scale everything or nothing</div>
+    </div>
+    <div class="vs-vs"><div class="vs-label">VS</div></div>
+    <div class="vs-col">
+      <div class="vs-title" style="color:var(--green)">🔬 Microservices</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--amber)"></div>Higher setup cost upfront</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--green)"></div>Teams deploy independently</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--green)"></div>Small, focused codebases</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--green)"></div>Fault isolation — one fails, rest live</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--green)"></div>Own DB per service — loose coupling</div>
+      <div class="vs-row"><div class="vs-dot" style="background:var(--green)"></div>Scale only the bottleneck service</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 1: Challenges -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-1">
+  <div class="eyebrow">The Hard Part</div>
+  <div class="slide-title">Challenges of <em>Microservices</em></div>
+  <div class="slide-subtitle">Moving from a centralized system to a highly distributed one introduces a new class of problems. Predictability disappears. Networks lie.</div>
+
+  <div class="challenge-grid">
+    <div class="challenge-card cc-red">
+      <div class="challenge-num">01</div>
+      <div class="challenge-title">Distributed System Complexity</div>
+      <div class="challenge-body">Centralized = <span class="tag tag-green">predictable</span> behavior, success, performance.<br>Distributed = <span class="tag tag-red">unpredictable</span> — networks fail, latency spikes, packets get lost. Every assumption breaks.</div>
+    </div>
+    <div class="challenge-card cc-amber">
+      <div class="challenge-num">02</div>
+      <div class="challenge-title">Testing — Who Owns Integration?</div>
+      <div class="challenge-body">Unit testing one service is easy. But <strong>integration tests</strong> cross service boundaries. Who writes them? Who runs them? Who owns the failures? Time-consuming and often ungoverned.</div>
+    </div>
+    <div class="challenge-card cc-blue">
+      <div class="challenge-num">03</div>
+      <div class="challenge-title">Troubleshooting & Debugging</div>
+      <div class="challenge-body">A request hops across 5 services. One returns an error. Which service caused it? Distributed tracing, correlation IDs, and centralized logging become survival tools — not nice-to-haves.</div>
+    </div>
+    <div class="challenge-card cc-purple">
+      <div class="challenge-num">04</div>
+      <div class="challenge-title">Responsibilities & Coupling Risk</div>
+      <div class="challenge-body">If every change your team makes requires another team in a meeting — <strong>you've rebuilt a monolith</strong> in disguise. The result: <span class="tag tag-red">Distributed Monolith</span> — a "Big Ball of Mud" at scale.</div>
+    </div>
+  </div>
+
+  <div class="section-label">Interactive — Network Chaos Simulator</div>
+  <div id="network-sim">
+    <div id="network-stage">
+      <svg id="nsv"></svg>
+      <!-- nodes injected by JS -->
+    </div>
+    <div id="network-controls">
+      <button class="btn primary" onclick="sendPacket('ok')">Send Request (healthy)</button>
+      <button class="btn" style="border-color:rgba(251,191,36,0.4);color:var(--amber)" onclick="sendPacket('slow')">Simulate Latency</button>
+      <button class="btn" style="border-color:rgba(248,113,113,0.4);color:var(--red)" onclick="sendPacket('fail')">Simulate Failure</button>
+      <div id="network-log">Click to send a request through the chain →</div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:4px">The Distributed Monolith Warning</div>
+  <div class="card" style="border-color:rgba(248,113,113,0.2);background:var(--red-d)">
+    <div class="card-title" style="color:var(--red)">⚠️ How good intentions create a Big Ball of Mud</div>
+    <div class="card-body">
+      Many companies split their monolith into services but kept shared databases, tightly coupled APIs, and mandatory cross-team sync meetings for every release. The result is the <strong>worst of both worlds</strong>: distributed complexity WITH monolith coupling. The industry learned this the hard way — which is why we now have established principles and best practices for a <em>successful</em> microservices migration.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 2: Boundaries & Principles -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-2">
+  <div class="eyebrow">Where To Draw The Lines</div>
+  <div class="slide-title">Microservice <em>Boundaries</em> &amp; Core Principles</div>
+  <div class="slide-subtitle">Three failed attempts teach us the three rules that actually work.</div>
+
+  <!-- Tabs -->
+  <div class="attempt-tabs">
+    <button class="atab active" onclick="showAttempt(0)">Attempt 1 — By Layer</button>
+    <button class="atab" onclick="showAttempt(1)">Attempt 2 — By Technology</button>
+    <button class="atab" onclick="showAttempt(2)">Attempt 3 — By Size</button>
+    <button class="atab" onclick="showAttempt(3)">✓ The 3 Principles</button>
+    <button class="atab" onclick="showAttempt(4)">Decomposition Methods</button>
+  </div>
+
+  <div class="atab-panel active" id="ap-0">
+    <div id="boundary-stage"><svg id="bsv0"></svg></div>
+    <div class="card" style="border-color:rgba(248,113,113,0.2);background:var(--red-d)">
+      <div class="card-title" style="color:var(--red)">❌ Why splitting by application layer fails</div>
+      <div class="card-body">Every new feature touches Presentation, Application, and Data layers simultaneously. You need to coordinate across all three "microservices" for every single change — exactly the same problem as the monolith. <br><br>
+      → This violates <strong>Cohesion</strong>: things that change together must stay together. The logic that changes should live within a single service boundary.</div>
+    </div>
+  </div>
+
+  <div class="atab-panel" id="ap-1">
+    <div id="boundary-stage2" style="background:var(--s1);border:0.5px solid var(--b2);border-radius:12px;overflow:hidden;width:100%;height:200px;position:relative;margin-bottom:16px"><svg id="bsv1" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div class="card" style="border-color:rgba(248,113,113,0.2);background:var(--red-d)">
+      <div class="card-title" style="color:var(--red)">❌ Why splitting by technology fails</div>
+      <div class="card-body">Stakeholders don't know which team to approach for a business feature. The business/logic layer becomes a dumping ground because technology alone can't cleanly carve business concerns.<br><br>
+      → This violates <strong>Single Responsibility</strong>: every service should do exactly one business thing. Bounded to a given context.</div>
+    </div>
+  </div>
+
+  <div class="atab-panel" id="ap-2">
+    <div id="boundary-stage3" style="background:var(--s1);border:0.5px solid var(--b2);border-radius:12px;overflow:hidden;width:100%;height:200px;position:relative;margin-bottom:16px"><svg id="bsv2" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div class="card" style="border-color:rgba(248,113,113,0.2);background:var(--red-d)">
+      <div class="card-title" style="color:var(--red)">❌ Why minimizing size (micro = tiny) fails</div>
+      <div class="card-body">Splitting into too-tiny services creates a web of dependencies. Services call each other constantly — this is <em>tight coupling</em> distributed across the network. Now you've just made a monolith that's also slow and unreliable.<br><br>
+      → <strong>Size doesn't matter.</strong> "Micro" means small responsibility, not small code.</div>
+    </div>
+  </div>
+
+  <div class="atab-panel" id="ap-3">
+    <div class="principle-trio">
+      <div class="principle-card lit" style="animation-delay:.05s">
+        <div class="principle-icon">🔗</div>
+        <div class="principle-name">Cohesion</div>
+        <div class="principle-def">Elements that change together stay together. The logic for a capability lives inside one service boundary — never split across services.</div>
+      </div>
+      <div class="principle-card lit" style="animation-delay:.1s">
+        <div class="principle-icon">🎯</div>
+        <div class="principle-name">Single Responsibility</div>
+        <div class="principle-def">Each service does exactly one thing. Creates clear APIs and is bounded to a specific business context. Easy to reason about, replace, or scale.</div>
+      </div>
+      <div class="principle-card lit" style="animation-delay:.15s">
+        <div class="principle-icon">🔓</div>
+        <div class="principle-name">Loose Coupling</div>
+        <div class="principle-def">Little or no dependency on other services. Minimum inter-service communication. The size of a service is irrelevant — the coupling is what counts.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;border-color:rgba(52,211,153,0.2)">
+      <div class="card-title" style="color:var(--green)">✅ The Golden Rule</div>
+      <div class="card-body">A service is correctly sized when it is <strong>Cohesive + Single Responsibility + Loosely Coupled</strong>. "Micro" does not mean tiny. A service that satisfies all three principles is the right size, whatever that size may be.</div>
+    </div>
+  </div>
+
+  <div class="atab-panel" id="ap-4">
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="card-title" style="color:var(--blue)">Decomposition by Business Capabilities</div>
+        <div class="card-body" style="margin-bottom:10px">Split services along what the business <em>does</em>. Each service maps 1:1 to a business capability: Order Management, Customer Accounts, Payments, Inventory.<br><br>
+        <span class="tag tag-green">Stable</span> — capabilities rarely change. <span class="tag tag-green">Clear ownership</span> by business unit.</div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="color:var(--purple)">Decomposition by Domain (DDD)</div>
+        <div class="card-body" style="margin-bottom:10px">Split along domain model boundaries: Core domain (your competitive edge), Supporting domains (enable the core), Generic domains (commodity, buy not build).<br><br>
+        <span class="tag tag-green">Right-sized</span> services. <span class="tag tag-green">Engineering clarity</span>.</div>
+      </div>
+    </div>
+    <table class="decomp-table">
+      <thead><tr><th>Criterion</th><th>Business Capabilities</th><th>Domain-Driven (DDD)</th></tr></thead>
+      <tbody>
+        <tr><td>Loose Coupling</td><td class="win">✓ Winner</td><td class="lose">Good</td></tr>
+        <tr><td>Right Service Size</td><td class="lose">Good</td><td class="win">✓ Winner</td></tr>
+        <tr><td>Engineering Ease</td><td class="lose">Moderate</td><td class="win">✓ Winner</td></tr>
+        <tr><td>Design Stability</td><td class="win">✓ Winner</td><td class="lose">Moderate</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 3: Migration -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-3">
+  <div class="eyebrow">The Path Forward</div>
+  <div class="slide-title">Migrating to <em>Microservices</em></div>
+  <div class="slide-subtitle">Where you start matters more than how fast you go. Choose the incremental path — every time.</div>
+
+  <div class="approach-grid">
+    <div class="approach-card bad">
+      <div class="approach-verdict" style="color:var(--red)">❌ Big Bang Approach</div>
+      <div class="card-title">Stop everything. Rebuild it all.</div>
+      <div class="card-body">
+        <div class="vs-row" style="margin-bottom:6px"><div class="vs-dot" style="background:var(--red)"></div>Too many developers in the kitchen — chaos</div>
+        <div class="vs-row" style="margin-bottom:6px"><div class="vs-dot" style="background:var(--red)"></div>Impossible to estimate full effort upfront</div>
+        <div class="vs-row" style="margin-bottom:6px"><div class="vs-dot" style="background:var(--red)"></div>High abandonment risk — projects get cancelled</div>
+        <div class="vs-row"><div class="vs-dot" style="background:var(--red)"></div>Business is completely disrupted</div>
+      </div>
+    </div>
+    <div class="approach-card good">
+      <div class="approach-verdict" style="color:var(--green)">✅ Incremental &amp; Continuous</div>
+      <div class="card-title">Extract one candidate at a time.</div>
+      <div class="card-body">
+        <div class="vs-row" style="margin-bottom:6px"><div class="vs-dot" style="background:var(--green)"></div>No hard deadline pressure</div>
+        <div class="vs-row" style="margin-bottom:6px"><div class="vs-dot" style="background:var(--green)"></div>Business runs normally throughout</div>
+        <div class="vs-row" style="margin-bottom:6px"><div class="vs-dot" style="background:var(--green)"></div>Each extraction validates your approach</div>
+        <div class="vs-row"><div class="vs-dot" style="background:var(--green)"></div>Team learns and adjusts continuously</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Candidate picker -->
+  <div class="section-label">Pick the Best Extraction Candidates</div>
+  <div id="candidate-sim">
+    <div style="font-size:13px;font-weight:500;margin-bottom:4px">Your Monolith Components <span style="font-size:11px;color:var(--t2);font-weight:400">— click a component to evaluate it as a microservice candidate</span></div>
+    <div class="cand-grid" id="cand-grid"></div>
+    <div id="cand-verdict" style="margin-top:14px;font-size:12px;color:var(--t2);min-height:36px;line-height:1.7"></div>
+  </div>
+
+  <!-- Strangler Fig -->
+  <div class="section-label">The Strangler Fig Pattern</div>
+  <div id="strangler-sim">
+    <div id="strangler-stage"><svg id="ssv" style="position:absolute;inset:0;width:100%;height:100%"></svg></div>
+    <div id="strangler-controls">
+      <button class="btn primary" id="sstep-btn" onclick="stranglerStep()">Next step ›</button>
+      <button class="btn" onclick="stranglerReset()">↺ Reset</button>
+      <div id="strangler-step-label">Step 1 of 4 — Initial state: all traffic hits the monolith</div>
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <div class="section-label">Tips for a Smooth Migration</div>
+  <div class="tip-list">
+    <div class="tip-item"><div class="tip-icon">🧪</div><div><strong>Add test coverage first.</strong> Before extracting any component, ensure it has solid unit and integration tests. You need a safety net.</div></div>
+    <div class="tip-item"><div class="tip-icon">📐</div><div><strong>Define the component API explicitly.</strong> Treat the component as if it were already a separate service. Document its interface before you move it.</div></div>
+    <div class="tip-item"><div class="tip-icon">✂️</div><div><strong>Isolate before extracting.</strong> Remove interdependencies between the candidate component and the rest of the monolith first. Don't extract a tangled mess.</div></div>
+    <div class="tip-item"><div class="tip-icon">🔒</div><div><strong>Keep the same tech stack.</strong> Changing language or framework at the same time as extracting a service doubles your risk. Do one hard thing at a time.</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SLIDE 4: Summary -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<div class="slide" id="slide-4">
+  <div class="eyebrow">Putting It All Together</div>
+  <div class="slide-title">Microservices — <em>The Full Picture</em></div>
+  <div class="slide-subtitle">A successful microservices architecture isn't about splitting code — it's about aligning services with business capabilities and team ownership.</div>
+
+  <div class="summary-grid">
+    <div class="summary-section">
+      <div class="summary-section-title">Benefits</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--green)"></div>Organizational scalability — small teams move fast</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--green)"></div>System scalability — scale only what needs scaling</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--green)"></div>Fault isolation — one service fails, not everything</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--green)"></div>Independent deployment — release on your own schedule</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--green)"></div>Technology freedom — right tool per problem</div>
+    </div>
+    <div class="summary-section">
+      <div class="summary-section-title">Challenges</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--red)"></div>Network is unreliable — latency, failures, loss</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--red)"></div>Integration testing ownership is unclear</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--red)"></div>Distributed tracing &amp; debugging complexity</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--amber)"></div>Risk of building a distributed monolith</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--amber)"></div>Higher operational overhead</div>
+    </div>
+    <div class="summary-section">
+      <div class="summary-section-title">The 3 Core Principles</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--blue)"></div><strong>Cohesion</strong> — things that change together, stay together</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--blue)"></div><strong>Single Responsibility</strong> — each service does one business thing</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--blue)"></div><strong>Loose Coupling</strong> — minimal cross-service dependencies</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--t2)"></div>Size doesn't matter — principles do</div>
+    </div>
+    <div class="summary-section">
+      <div class="summary-section-title">Migration Playbook</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--green)"></div>Never Big Bang — always Incremental</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--green)"></div>Pick candidates with high change rate, scalability needs</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--green)"></div>Isolate, test, define API before extracting</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--green)"></div>Use Strangler Fig Pattern — route via API Gateway</div>
+      <div class="summary-item"><div class="si-dot" style="background:var(--amber)"></div>Keep same tech stack during migration</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+    <div style="background:var(--s2);border:0.5px solid var(--b2);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-family:var(--serif);font-size:28px;font-weight:600;color:var(--green)">3</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">Core principles every service must satisfy</div>
+    </div>
+    <div style="background:var(--s2);border:0.5px solid var(--b2);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-family:var(--serif);font-size:28px;font-weight:600;color:var(--amber)">3</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">Failed boundary attempts before the right approach</div>
+    </div>
+    <div style="background:var(--s2);border:0.5px solid var(--b2);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-family:var(--serif);font-size:28px;font-weight:600;color:var(--blue)">2</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">Decomposition strategies (BC vs DDD)</div>
+    </div>
+    <div style="background:var(--s2);border:0.5px solid var(--b2);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-family:var(--serif);font-size:28px;font-weight:600;color:var(--red)">1</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:4px">Migration approach that works (incremental)</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /slides -->
+
+<!-- Footer -->
+<div id="footer">
+  <div id="footer-label">Microservices Architecture Series</div>
+  <div class="footer-nav">
+    <button class="btn" onclick="prevSlide()">‹ Prev</button>
+    <button class="btn primary" onclick="nextSlide()">Next ›</button>
+  </div>
+</div>
+
+<script>
+// ─── Slide navigation ────────────────────────────────────────────────────────
+let currentSlide = 0;
+const TOTAL = 5;
+
+function goSlide(n) {
+  document.querySelectorAll('.slide').forEach((s,i) => s.classList.toggle('active', i === n));
+  document.querySelectorAll('.nav-btn').forEach((b,i) => b.classList.toggle('active', i === n));
+  currentSlide = n;
+  if (n === 1) initNetworkSim();
+  if (n === 2) initBoundarySim();
+  if (n === 3) { initCandidates(); initStrangler(); }
+}
+function nextSlide() { if (currentSlide < TOTAL-1) goSlide(currentSlide+1); }
+function prevSlide() { if (currentSlide > 0) goSlide(currentSlide-1); }
+
+// ─── SLIDE 0: Gear simulation ─────────────────────────────────────────────────
+let gearTimer = null, gearT = 0;
+const MONO_CAP = 42, MICRO_CAP = 110;
+
+function gearSpeed(t, cap, lag) {
+  if (t < lag) return Math.max(0, (t / lag) * 20);
+  return Math.min(cap, 20 + (cap - 20) * (1 - Math.exp(-(t - lag) / 8)));
+}
+
+function startGear() {
+  if (gearTimer) return;
+  gearT = 0;
+  document.getElementById('gear-start-btn').disabled = true;
+  document.getElementById('gear-msg').textContent = 'Watch the difference as time passes…';
+  gearTimer = setInterval(() => {
+    gearT += 0.25;
+    const sm = gearSpeed(gearT, MONO_CAP, 1);
+    const sc = gearSpeed(gearT, MICRO_CAP, 5);
+    const pm = Math.min(90, 5 + (sm / MONO_CAP) * 85);
+    const pc = Math.min(90, 5 + (sc / MICRO_CAP) * 85);
+    document.getElementById('car-mono').style.left = pm + '%';
+    document.getElementById('car-micro').style.left = pc + '%';
+    document.getElementById('gs-mono').textContent = Math.round(sm) + ' km/h';
+    document.getElementById('gs-micro').textContent = Math.round(sc) + ' km/h';
+    if (gearT > 4 && sm < sc) {
+      document.getElementById('gear-msg').textContent = '✓ Microservices has overtaken the monolith. High gear pays off.';
+    }
+    if (gearT > 40) { clearInterval(gearTimer); gearTimer = null; }
+  }, 80);
+}
+
+function resetGear() {
+  clearInterval(gearTimer); gearTimer = null;
+  document.getElementById('car-mono').style.left = '5%';
+  document.getElementById('car-micro').style.left = '5%';
+  document.getElementById('gs-mono').textContent = '0 km/h';
+  document.getElementById('gs-micro').textContent = '0 km/h';
+  document.getElementById('gear-start-btn').disabled = false;
+  document.getElementById('gear-msg').textContent = 'Monolith picks up fast, then plateaus. Microservices takes time — then outruns it.';
+}
+
+// ─── SLIDE 1: Network chaos sim ───────────────────────────────────────────────
+const NODES = [
+  { id:'client', label:'Client',   x:8,  y:50, color:'#5b9cf6', bg:'rgba(91,156,246,0.15)' },
+  { id:'gw',     label:'API GW',   x:26, y:50, color:'#34d399', bg:'rgba(52,211,153,0.15)' },
+  { id:'auth',   label:'Auth Svc', x:44, y:25, color:'#c084fc', bg:'rgba(192,132,252,0.15)' },
+  { id:'order',  label:'Order Svc',x:62, y:50, color:'#fbbf24', bg:'rgba(251,191,36,0.15)' },
+  { id:'db',     label:'DB',       x:82, y:50, color:'#f87171', bg:'rgba(248,113,113,0.15)' },
+];
+const EDGES = [['client','gw'],['gw','auth'],['gw','order'],['order','db']];
+let networkInited = false;
+
+function initNetworkSim() {
+  if (networkInited) return;
+  networkInited = true;
+  const stage = document.getElementById('network-stage');
+  const w = stage.offsetWidth || 600;
+  const h = stage.offsetHeight || 200;
+
+  NODES.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'svc-node';
+    el.id = 'nsn-' + n.id;
+    el.style.cssText = `left:${n.x}%;top:${n.y}%;background:${n.bg};border-color:${n.color};color:${n.color}`;
+    el.textContent = n.label;
+    stage.appendChild(el);
+  });
+
+  const svg = document.getElementById('nsv');
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  EDGES.forEach(([a, b]) => {
+    const na = NODES.find(n => n.id === a);
+    const nb = NODES.find(n => n.id === b);
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', na.x / 100 * w);
+    line.setAttribute('y1', na.y / 100 * h);
+    line.setAttribute('x2', nb.x / 100 * w);
+    line.setAttribute('y2', nb.y / 100 * h);
+    line.setAttribute('stroke', 'rgba(255,255,255,0.08)');
+    line.setAttribute('stroke-width', '1');
+    svg.appendChild(line);
+  });
+}
+
+function sendPacket(mode) {
+  const stage = document.getElementById('network-stage');
+  const w = stage.offsetWidth || 600;
+  const h = stage.offsetHeight || 200;
+  const log = document.getElementById('network-log');
+
+  const color = mode === 'ok' ? '#34d399' : mode === 'slow' ? '#fbbf24' : '#f87171';
+  const msgs = {
+    ok: '✓ Request completed successfully in 42ms',
+    slow: '⏱ Latency spike — 850ms response (timeout risk!)',
+    fail: '✗ Order Svc failed — which service caused it?'
+  };
+  log.style.color = color;
+  log.textContent = 'Sending…';
+
+  const path = mode === 'fail' ? EDGES.slice(0,3) : EDGES;
+  let step = 0;
+
+  function animateStep() {
+    if (step >= path.length) {
+      log.textContent = msgs[mode];
+      return;
+    }
+    const [a, b] = path[step];
+    const na = NODES.find(n => n.id === a);
+    const nb = NODES.find(n => n.id === b);
+    const pkt = document.createElement('div');
+    pkt.className = 'packet';
+    pkt.style.cssText = `background:${color};left:${na.x}%;top:${na.y}%`;
+    stage.appendChild(pkt);
+
+    const delay = mode === 'slow' ? 500 : 120;
+    setTimeout(() => {
+      pkt.style.transition = `left ${delay}ms linear, top ${delay}ms linear`;
+      if (mode === 'fail' && step === path.length - 1) {
+        pkt.style.background = '#f87171';
+        pkt.style.transform = 'translate(-50%,-50%) scale(2)';
+        pkt.style.opacity = '0';
+        setTimeout(() => { pkt.remove(); log.textContent = msgs[mode]; }, delay);
+      } else {
+        pkt.style.left = nb.x + '%';
+        pkt.style.top = nb.y + '%';
+        setTimeout(() => { pkt.remove(); step++; animateStep(); }, delay + 50);
+      }
+    }, 30);
+  }
+  animateStep();
+}
+
+// ─── SLIDE 2: Boundary diagrams ───────────────────────────────────────────────
+function initBoundarySim() {
+  drawLayerSplit();
+  drawTechSplit();
+  drawTinySplit();
+}
+
+function svgRect(svg, x, y, w, h, fill, stroke, rx, label, sublabel, textColor) {
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+  r.setAttribute('x', x); r.setAttribute('y', y);
+  r.setAttribute('width', w); r.setAttribute('height', h);
+  r.setAttribute('rx', rx || 8);
+  r.setAttribute('fill', fill); r.setAttribute('stroke', stroke);
+  r.setAttribute('stroke-width', '0.5');
+  g.appendChild(r);
+  if (label) {
+    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t.setAttribute('x', x + w / 2); t.setAttribute('y', y + h / 2 - (sublabel ? 7 : 0));
+    t.setAttribute('text-anchor', 'middle'); t.setAttribute('dominant-baseline', 'central');
+    t.setAttribute('font-size', '12'); t.setAttribute('font-weight', '500');
+    t.setAttribute('font-family', 'DM Sans, sans-serif');
+    t.setAttribute('fill', textColor || '#dde2ee');
+    t.textContent = label;
+    g.appendChild(t);
+  }
+  if (sublabel) {
+    const t2 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    t2.setAttribute('x', x + w / 2); t2.setAttribute('y', y + h / 2 + 10);
+    t2.setAttribute('text-anchor', 'middle'); t2.setAttribute('dominant-baseline', 'central');
+    t2.setAttribute('font-size', '9'); t2.setAttribute('font-family', 'DM Mono, monospace');
+    t2.setAttribute('fill', textColor ? textColor + '99' : '#8b93a8');
+    t2.textContent = sublabel;
+    g.appendChild(t2);
+  }
+  svg.appendChild(g);
+}
+
+function svgLine(svg, x1, y1, x2, y2, stroke, dashed) {
+  const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  l.setAttribute('x1', x1); l.setAttribute('y1', y1);
+  l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+  l.setAttribute('stroke', stroke || 'rgba(255,87,87,0.5)');
+  l.setAttribute('stroke-width', '1.5');
+  if (dashed) l.setAttribute('stroke-dasharray', '4 3');
+  svg.appendChild(l);
+}
+
+function svgText(svg, x, y, text, size, color, anchor, mono) {
+  const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  t.setAttribute('x', x); t.setAttribute('y', y);
+  t.setAttribute('text-anchor', anchor || 'middle');
+  t.setAttribute('font-size', size || 11);
+  t.setAttribute('font-family', mono ? 'DM Mono, monospace' : 'DM Sans, sans-serif');
+  t.setAttribute('fill', color || '#8b93a8');
+  t.textContent = text;
+  svg.appendChild(t);
+}
+
+function drawLayerSplit() {
+  const el = document.getElementById('bsv0');
+  if (!el) return;
+  const W = document.getElementById('boundary-stage').offsetWidth || 700;
+  el.setAttribute('viewBox', `0 0 ${W} 240`);
+  el.style.position = 'absolute'; el.style.inset = '0'; el.style.width = '100%'; el.style.height = '100%';
+
+  // Three "services" by layer - shown side by side
+  const cols = ['Presentation Svc', 'Application Svc', 'Data Svc'];
+  const colors = ['#5b9cf6', '#c084fc', '#fbbf24'];
+  const bgs = ['rgba(91,156,246,0.1)', 'rgba(192,132,252,0.1)', 'rgba(251,191,36,0.1)'];
+  const cw = (W - 80) / 3;
+
+  cols.forEach((name, i) => {
+    const x = 30 + i * (cw + 10);
+    svgRect(el, x, 30, cw - 10, 140, bgs[i], colors[i], 10, name, '', colors[i]);
+    // Inner sub-box showing it needs all layers
+    svgRect(el, x + 8, 52, cw - 26, 100, 'rgba(255,255,255,0.03)', 'rgba(255,255,255,0.06)', 6, '', '');
+    svgText(el, x + cw/2 - 5, 85, '← UI', 10, '#8b93a8');
+    svgText(el, x + cw/2 - 5, 102, '← Logic', 10, '#8b93a8');
+    svgText(el, x + cw/2 - 5, 119, '← DB', 10, '#8b93a8');
+  });
+
+  // New feature arrow hitting all three
+  svgText(el, W/2, 14, 'New feature → must touch ALL 3 services', 11, '#f87171', 'middle');
+  svgLine(el, W/2 - 80, 22, 40 + cw/2 - 5, 30, 'rgba(248,113,113,0.6)');
+  svgLine(el, W/2, 22, 40 + cw + 10 + cw/2 - 5, 30, 'rgba(248,113,113,0.6)');
+  svgLine(el, W/2 + 80, 22, 40 + 2*(cw+10) + cw/2 - 5, 30, 'rgba(248,113,113,0.6)');
+
+  // Cross-service coordination lines
+  svgLine(el, 30 + cw - 10, 100, 30 + cw + 10, 100, 'rgba(248,113,113,0.5)', true);
+  svgLine(el, 30 + 2*cw, 100, 30 + 2*cw + 10, 100, 'rgba(248,113,113,0.5)', true);
+  svgText(el, W/2, 195, '❌ Cohesion violated: a single feature is split across 3 services', 11, '#f87171', 'middle');
+  svgText(el, W/2, 215, 'Cross-service coordination needed for every change = same as monolith', 10, '#4a5168', 'middle', true);
+}
+
+function drawTechSplit() {
+  const el = document.getElementById('bsv1');
+  if (!el) return;
+  const W = 700;
+  el.setAttribute('viewBox', `0 0 ${W} 200`);
+  const techs = [{l:'React / Vue', c:'#5b9cf6', bg:'rgba(91,156,246,0.12)'}, {l:'Node.js / Java', c:'#34d399', bg:'rgba(52,211,153,0.12)'}, {l:'PostgreSQL', c:'#fbbf24', bg:'rgba(251,191,36,0.12)'}];
+  techs.forEach((t, i) => {
+    svgRect(el, 30 + i * 220, 30, 190, 120, t.bg, t.c, 10, t.l, '', t.c);
+  });
+  svgText(el, 350, 170, '❌ Single Responsibility violated: stakeholders don\'t know which team to contact', 11, '#f87171', 'middle');
+  svgText(el, 350, 188, 'Business logic bleeds across tech boundaries — can\'t split cleanly by tech alone', 10, '#4a5168', 'middle', true);
+  // Question marks
+  svgText(el, 350, 20, '? Whose responsibility is "add a discount feature"?', 11, '#fbbf24', 'middle');
+}
+
+function drawTinySplit() {
+  const el = document.getElementById('bsv2');
+  if (!el) return;
+  const W = 700;
+  el.setAttribute('viewBox', `0 0 ${W} 200`);
+  const tiny = ['User', 'Email', 'Token', 'Profile', 'Pref', 'Notify', 'Audit', 'Avatar'];
+  const cols = ['#5b9cf6','#c084fc','#34d399','#fbbf24','#f87171','#22d3ee','#fb7185','#a78bfa'];
+  tiny.forEach((name, i) => {
+    const x = 20 + (i % 4) * 168;
+    const y = 20 + Math.floor(i / 4) * 75;
+    svgRect(el, x, y, 150, 55, cols[i]+'22', cols[i], 8, name, 'Svc', cols[i]);
+  });
+  // Coupling lines
+  [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[0,4],[1,5],[2,6]].forEach(([a,b]) => {
+    const ax = 20 + (a%4)*168+75, ay = 20 + Math.floor(a/4)*75+27;
+    const bx = 20 + (b%4)*168+75, by = 20 + Math.floor(b/4)*75+27;
+    svgLine(el, ax, ay, bx, by, 'rgba(248,113,113,0.3)', true);
+  });
+  svgText(el, 350, 190, '❌ Loose Coupling violated: too-tiny services become tightly tangled', 11, '#f87171', 'middle');
+}
+
+// Attempt tabs
+function showAttempt(n) {
+  document.querySelectorAll('.atab').forEach((t, i) => t.classList.toggle('active', i === n));
+  document.querySelectorAll('.atab-panel').forEach((p, i) => p.classList.toggle('active', i === n));
+  if (n === 0) drawLayerSplit();
+  if (n === 1) drawTechSplit();
+  if (n === 2) drawTinySplit();
+}
+
+// ─── SLIDE 3: Candidate picker ────────────────────────────────────────────────
+const CANDIDATES = [
+  { name:'User Auth', changeRate:85, scalability:60, debtLevel:30, verdict:'good', why:'Frequently modified, manageable tech debt, high security isolation benefit.' },
+  { name:'Payments',  changeRate:70, scalability:90, debtLevel:25, verdict:'good', why:'High scalability requirements & critical isolation — excellent microservice candidate.' },
+  { name:'Reports',   changeRate:20, scalability:40, debtLevel:70, verdict:'bad',  why:'High technical debt makes extraction risky. Clean it up first.' },
+  { name:'Notifications', changeRate:65, scalability:75, debtLevel:35, verdict:'good', why:'Isolated concern, high change rate, independently scalable. Great candidate.' },
+  { name:'Legacy ETL', changeRate:10, scalability:20, debtLevel:90, verdict:'bad',  why:'Very high debt, low change rate. Not worth the extraction effort now.' },
+  { name:'Inventory', changeRate:80, scalability:85, debtLevel:40, verdict:'good', why:'Frequent changes, scalability pressure, reasonable debt. Strong candidate.' },
+  { name:'Analytics', changeRate:55, scalability:70, debtLevel:55, verdict:'neutral', why:'Moderate debt. Define APIs clearly before extracting — manageable.' },
+  { name:'Search',    changeRate:75, scalability:95, debtLevel:30, verdict:'good', why:'High scalability need (can use Elasticsearch), low debt. Excellent candidate.' },
+];
+
+function initCandidates() {
+  const grid = document.getElementById('cand-grid');
+  if (grid.children.length) return;
+  CANDIDATES.forEach((c, i) => {
+    const score = Math.round((c.changeRate + c.scalability + (100-c.debtLevel)) / 3);
+    const scoreColor = c.verdict === 'good' ? '#34d399' : c.verdict === 'bad' ? '#f87171' : '#fbbf24';
+    const item = document.createElement('div');
+    item.className = 'cand-item' + (c.verdict === 'bad' ? ' bad-candidate' : '');
+    item.innerHTML = `
+      <div class="cand-score" style="color:${scoreColor}">${score}</div>
+      <div class="cand-name">${c.name}</div>
+      <div class="cand-bar-label">Change rate</div>
+      <div class="cand-bar-wrap"><div class="cand-bar" style="width:${c.changeRate}%;background:#5b9cf6"></div></div>
+      <div class="cand-bar-label">Scalability need</div>
+      <div class="cand-bar-wrap"><div class="cand-bar" style="width:${c.scalability}%;background:#34d399"></div></div>
+      <div class="cand-bar-label">Tech debt (inverse)</div>
+      <div class="cand-bar-wrap"><div class="cand-bar" style="width:${100-c.debtLevel}%;background:#fbbf24"></div></div>
+    `;
+    item.onclick = () => {
+      document.querySelectorAll('.cand-item').forEach(el => el.classList.remove('selected'));
+      item.classList.add('selected');
+      const icon = c.verdict === 'good' ? '✅' : c.verdict === 'bad' ? '❌' : '⚠️';
+      document.getElementById('cand-verdict').innerHTML = `<strong style="color:${scoreColor}">${icon} ${c.name}:</strong> ${c.why}`;
+    };
+    grid.appendChild(item);
+  });
+}
+
+// ─── Strangler Fig ─────────────────────────────────────────────────────────────
+let stranglerPhase = 0;
+const STRANGLER_STEPS = [
+  { label: 'Step 1 of 4 — Initial: all traffic hits the Monolith directly', draw: drawStrangler0 },
+  { label: 'Step 2 of 4 — Add Strangler Façade (API Gateway) in front', draw: drawStrangler1 },
+  { label: 'Step 3 of 4 — New Microservice ready; route its traffic through Gateway', draw: drawStrangler2 },
+  { label: 'Step 4 of 4 — Monolith component retired; Microservice owns it fully', draw: drawStrangler3 },
+];
+
+function stranglerStep() {
+  stranglerPhase = Math.min(stranglerPhase + 1, STRANGLER_STEPS.length - 1);
+  renderStrangler();
+}
+function stranglerReset() { stranglerPhase = 0; renderStrangler(); }
+
+function renderStrangler() {
+  const s = STRANGLER_STEPS[stranglerPhase];
+  document.getElementById('strangler-step-label').textContent = s.label;
+  document.getElementById('sstep-btn').disabled = stranglerPhase >= STRANGLER_STEPS.length - 1;
+  const svg = document.getElementById('ssv');
+  svg.innerHTML = '';
+  const W = document.getElementById('strangler-stage').offsetWidth || 700;
+  svg.setAttribute('viewBox', `0 0 ${W} 220`);
+  s.draw(svg, W);
+}
+
+function sRect(svg, x, y, w, h, fill, stroke, label, sub, tc) {
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  r.setAttribute('x',x);r.setAttribute('y',y);r.setAttribute('width',w);r.setAttribute('height',h);
+  r.setAttribute('rx','8');r.setAttribute('fill',fill);r.setAttribute('stroke',stroke);r.setAttribute('stroke-width','0.5');
+  g.appendChild(r);
+  if(label){
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x+w/2);t.setAttribute('y',y+h/2-(sub?7:0));
+    t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
+    t.setAttribute('font-size','12');t.setAttribute('font-weight','500');
+    t.setAttribute('font-family','DM Sans,sans-serif');t.setAttribute('fill',tc||'#dde2ee');
+    t.textContent=label;g.appendChild(t);
+  }
+  if(sub){
+    const t2=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t2.setAttribute('x',x+w/2);t2.setAttribute('y',y+h/2+10);
+    t2.setAttribute('text-anchor','middle');t2.setAttribute('dominant-baseline','central');
+    t2.setAttribute('font-size','9');t2.setAttribute('font-family','DM Mono,monospace');
+    t2.setAttribute('fill',(tc||'#dde2ee')+'88');t2.textContent=sub;g.appendChild(t2);
+  }
+  svg.appendChild(g);
+}
+
+function sLine(svg,x1,y1,x2,y2,color,dash,label){
+  const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+  l.setAttribute('stroke',color||'rgba(91,156,246,0.6)');l.setAttribute('stroke-width','1.5');
+  if(dash)l.setAttribute('stroke-dasharray','5 3');svg.appendChild(l);
+  if(label){
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',(x1+x2)/2+4);t.setAttribute('y',(y1+y2)/2-5);
+    t.setAttribute('font-size','9');t.setAttribute('font-family','DM Mono,monospace');
+    t.setAttribute('fill','rgba(255,255,255,0.4)');t.textContent=label;svg.appendChild(t);
+  }
+}
+
+function sText(svg,x,y,txt,size,color,anchor){
+  const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+  t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anchor||'middle');
+  t.setAttribute('font-size',size||11);t.setAttribute('font-family','DM Sans,sans-serif');
+  t.setAttribute('fill',color||'#8b93a8');t.textContent=txt;svg.appendChild(t);
+}
+
+function drawStrangler0(svg,W){
+  sRect(svg,30,80,100,50,'rgba(91,156,246,0.15)','#5b9cf6','Client','',null);
+  sRect(svg,W/2-120,60,240,100,'rgba(248,113,113,0.1)','#f87171','Monolith','All business logic',null);
+  sLine(svg,130,105,W/2-120,110,'rgba(91,156,246,0.5)',false,'All traffic');
+}
+function drawStrangler1(svg,W){
+  sRect(svg,20,85,90,45,'rgba(91,156,246,0.15)','#5b9cf6','Client','',null);
+  sRect(svg,W/2-70,80,140,55,'rgba(52,211,153,0.15)','#34d399','API Gateway','Strangler Façade',null);
+  sRect(svg,W-210,70,180,75,'rgba(248,113,113,0.1)','#f87171','Monolith','All logic still here',null);
+  sLine(svg,110,107,W/2-70,107,'rgba(91,156,246,0.5)');
+  sLine(svg,W/2+70,107,W-210,107,'rgba(248,113,113,0.5)',false,'routes to');
+  sText(svg,W/2,'200','Gateway added — traffic still flows to monolith. Nothing broken.',11,'#34d399');
+}
+function drawStrangler2(svg,W){
+  sRect(svg,14,90,80,40,'rgba(91,156,246,0.15)','#5b9cf6','Client','',null);
+  sRect(svg,W/2-65,82,130,50,'rgba(52,211,153,0.15)','#34d399','API Gateway','',null);
+  sRect(svg,W-200,40,175,65,'rgba(248,113,113,0.1)','rgba(248,113,113,0.4)','Monolith','(shrinking)',null);
+  sRect(svg,W-200,120,175,65,'rgba(52,211,153,0.15)','#34d399','New Microservice','✓ live',null);
+  sLine(svg,94,110,W/2-65,107,'rgba(91,156,246,0.5)');
+  sLine(svg,W/2+65,95,W-200,72,'rgba(248,113,113,0.4)',true,'old routes');
+  sLine(svg,W/2+65,115,W-200,152,'rgba(52,211,153,0.7)',false,'new route');
+  sText(svg,W/2,205,'Microservice ready — Gateway now routes its traffic away from Monolith.',11,'#34d399');
+}
+function drawStrangler3(svg,W){
+  sRect(svg,14,90,80,40,'rgba(91,156,246,0.15)','#5b9cf6','Client','',null);
+  sRect(svg,W/2-65,82,130,50,'rgba(52,211,153,0.15)','#34d399','API Gateway','',null);
+  sRect(svg,W-190,40,165,55,'rgba(255,255,255,0.03)','rgba(255,255,255,0.08)','Monolith','(retired component)',null);
+  sRect(svg,W-190,115,165,60,'rgba(52,211,153,0.15)','#34d399','Microservice','Fully owns feature',null);
+  sLine(svg,94,110,W/2-65,107,'rgba(91,156,246,0.5)');
+  sLine(svg,W/2+65,107,W-190,145,'rgba(52,211,153,0.8)',false,'all traffic');
+  sText(svg,W/2,200,'✓ Strangler complete. Old monolith component retired. Microservice runs independently.',11,'#34d399');
+}
+
+function initStrangler() {
+  if (document.getElementById('ssv').innerHTML) return;
+  renderStrangler();
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  if (currentSlide === 2) initBoundarySim();
+  if (currentSlide === 1) { networkInited = false; initNetworkSim(); }
+  if (currentSlide === 3) renderStrangler();
+});
+</script>
+</body>
+</html>

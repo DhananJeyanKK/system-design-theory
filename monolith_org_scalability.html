@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monolith Architecture — Organizational Scalability</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --text2: #8b90a0;
+    --text3: #555a6a;
+    --blue: #4a9eff;
+    --blue-dim: rgba(74,158,255,0.12);
+    --green: #3ecf8e;
+    --green-dim: rgba(62,207,142,0.12);
+    --amber: #f5a623;
+    --amber-dim: rgba(245,166,35,0.12);
+    --red: #ff5757;
+    --red-dim: rgba(255,87,87,0.12);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.12);
+    --teal: #22d3ee;
+    --font: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 24px 60px;
+  }
+
+  /* Header */
+  .header { text-align: center; margin-bottom: 36px; }
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--blue);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+  .header h1 span { color: var(--red); }
+  .header p { font-size: 14px; color: var(--text2); max-width: 540px; margin: 0 auto; line-height: 1.6; }
+
+  /* Main container */
+  .card {
+    width: 100%;
+    max-width: 900px;
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  /* Metrics bar */
+  #metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 0.5px solid var(--border);
+  }
+  .metric {
+    padding: 16px 20px;
+    border-right: 0.5px solid var(--border);
+  }
+  .metric:last-child { border-right: none; }
+  .metric-label { font-size: 11px; color: var(--text3); font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 600; transition: color 0.6s; }
+  .ok   { color: var(--green); }
+  .warn { color: var(--amber); }
+  .bad  { color: var(--red); }
+  .critical { color: var(--red); animation: blink 1.2s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* Stage */
+  #stage {
+    position: relative;
+    width: 100%;
+    height: 380px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* Shared DB / codebase label at bottom */
+  #shared-layer {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    border-top: 0.5px dashed rgba(245,166,35,0.3);
+    background: rgba(245,166,35,0.04);
+    transition: all 0.8s ease;
+  }
+  .shared-pill {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 0.5px solid rgba(245,166,35,0.3);
+    color: var(--amber);
+    background: rgba(245,166,35,0.07);
+  }
+  .shared-warning {
+    font-size: 10px;
+    color: var(--red);
+    font-family: var(--mono);
+    opacity: 0;
+    transition: opacity 0.6s;
+  }
+
+  #lines-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  /* Teams */
+  .zone {
+    position: absolute;
+    border-radius: 12px;
+    border: 0.5px dashed;
+    transition: all 0.9s cubic-bezier(0.4,0,0.2,1);
+  }
+  .zone-label {
+    position: absolute;
+    top: 8px; left: 12px;
+    font-size: 10px;
+    font-family: var(--mono);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Engineers */
+  .eng {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    transition: all 0.9s cubic-bezier(0.4,0,0.2,1);
+    cursor: default;
+    user-select: none;
+  }
+  .eng-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--mono);
+    border: 1.5px solid transparent;
+    transition: all 0.6s;
+  }
+  .eng-name {
+    font-size: 9px;
+    color: var(--text3);
+    font-family: var(--mono);
+    transition: color 0.6s;
+  }
+
+  /* Problem badges */
+  .badge {
+    position: absolute;
+    font-size: 9px;
+    font-family: var(--mono);
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+    pointer-events: none;
+    animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 10;
+  }
+  @keyframes popIn { from{opacity:0;transform:scale(0.7)} to{opacity:1;transform:scale(1)} }
+
+  /* Meeting pulse rings */
+  .meeting-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid;
+    pointer-events: none;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.7;transform:scale(1)} 50%{opacity:0.2;transform:scale(1.2)} }
+
+  /* Controls */
+  #controls {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 0.5px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 7px 16px;
+    border-radius: 8px;
+    border: 0.5px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.04em;
+  }
+  .btn:hover { background: var(--surface); border-color: var(--text3); }
+  .btn.primary { background: var(--blue-dim); border-color: var(--blue); color: var(--blue); }
+  .btn.primary:hover { background: rgba(74,158,255,0.2); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .phase-dots { display: flex; gap: 6px; align-items: center; margin-left: 4px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border2); transition: all 0.3s; }
+  .dot.active { background: var(--blue); box-shadow: 0 0 6px var(--blue); }
+  .dot.done { background: var(--text3); }
+
+  .phase-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    margin-left: auto;
+  }
+  .phase-tag span { color: var(--text); font-weight: 500; }
+
+  /* Annotation */
+  #annotation {
+    padding: 18px 24px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text2);
+    border-top: 0.5px solid var(--border);
+    min-height: 80px;
+    transition: all 0.3s;
+  }
+  #annotation strong { color: var(--text); }
+  #annotation .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-right: 4px;
+    font-weight: 500;
+  }
+  .tag-red { background: var(--red-dim); color: var(--red); }
+  .tag-amber { background: var(--amber-dim); color: var(--amber); }
+  .tag-blue { background: var(--blue-dim); color: var(--blue); }
+
+  /* Formula bar */
+  #formula {
+    padding: 12px 24px;
+    background: var(--surface2);
+    border-top: 0.5px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  #formula span { color: var(--text2); }
+  #formula strong { color: var(--amber); }
+
+  /* Legend */
+  #legend {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding: 0 4px;
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-line { width: 20px; height: 1.5px; }
+  .legend-dashed { background: repeating-linear-gradient(90deg, var(--amber) 0, var(--amber) 4px, transparent 4px, transparent 8px); height: 1px; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    #metrics { grid-template-columns: repeat(2,1fr); }
+    #stage { height: 320px; }
+    h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">Architecture Series · Interactive Simulation</div>
+  <h1>Monolith Architecture<br><span>Organizational Scalability Breakdown</span></h1>
+  <p>Step through each growth phase to see how a shared codebase turns coordination into chaos as your engineering team scales.</p>
+</div>
+
+<div class="card">
+  <!-- Metrics -->
+  <div id="metrics">
+    <div class="metric">
+      <div class="metric-label">Engineers</div>
+      <div class="metric-value ok" id="m-eng">3</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Meetings / week</div>
+      <div class="metric-value ok" id="m-meet">2</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Coordination cost</div>
+      <div class="metric-value ok" id="m-coord">Low</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Deploy risk</div>
+      <div class="metric-value ok" id="m-risk">Low</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <button class="btn primary" id="btn-next" onclick="nextPhase()">Next phase ›</button>
+    <button class="btn" onclick="resetSim()">↺ Reset</button>
+    <div class="phase-dots" id="phase-dots"></div>
+    <div class="phase-tag">Phase: <span id="phase-name">Startup</span></div>
+  </div>
+
+  <!-- Stage -->
+  <div id="stage">
+    <svg id="lines-svg"></svg>
+    <!-- Shared DB layer -->
+    <div id="shared-layer">
+      <div class="shared-pill">⬡ Shared Database</div>
+      <div class="shared-pill">{ } Shared Codebase</div>
+      <div class="shared-pill">⌂ Shared File System</div>
+      <div class="shared-warning" id="shared-warning">⚠ Strong coupling — changes affect everyone</div>
+    </div>
+  </div>
+
+  <!-- Annotation -->
+  <div id="annotation">
+    <strong>Phase 1 — Startup:</strong> A tiny team shares one codebase and one database. Everyone knows the whole system. Coordination is trivial — a quick chat replaces any meeting. Deployments are fast and fearless.
+  </div>
+
+  <!-- Formula bar -->
+  <div id="formula">
+    <span>Communication links: <strong id="f-links">3</strong></span>
+    <span>Brooks's Law: <strong>n(n−1)/2</strong></span>
+    <span>Merge conflicts / week: <strong id="f-merges">~1</strong></span>
+    <span>Release cadence: <strong id="f-cadence">Daily</strong></span>
+  </div>
+</div>
+
+<div id="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Frontend team</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Backend team</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Data team</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> Infra / DevOps</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Mobile team</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> QA / Release</div>
+  <div class="legend-item"><div style="width:20px;height:1.5px;background:var(--red);opacity:0.5;"></div> Cross-team dependency</div>
+  <div class="legend-item"><div class="legend-line legend-dashed"></div> Shared infrastructure boundary</div>
+</div>
+
+<script>
+// ─── Phase data ───────────────────────────────────────────────────────────────
+const PHASES = [
+  {
+    name: "Startup",
+    engs: 3, meets: 2, coord: "Low", coordClass: "ok",
+    risk: "Low", riskClass: "ok",
+    links: 3, merges: "~1", cadence: "Daily",
+    teams: [
+      { id: "all", label: "Full team", x: 80, y: 30, w: 580, h: 260, color: "#4a9eff", borderAlpha: 0.3, fillAlpha: 0.05 }
+    ],
+    engineers: [
+      { id:"e1", label:"Ali", team:"all", ox:0.18, oy:0.35, color:"#4a9eff", bg:"rgba(74,158,255,0.18)", init:"AL" },
+      { id:"e2", label:"Ben", team:"all", ox:0.50, oy:0.55, color:"#4a9eff", bg:"rgba(74,158,255,0.18)", init:"BE" },
+      { id:"e3", label:"Cam", team:"all", ox:0.80, oy:0.35, color:"#4a9eff", bg:"rgba(74,158,255,0.18)", init:"CA" }
+    ],
+    lines: [],
+    meetings: [],
+    problems: [],
+    sharedWarning: false,
+    note: '<strong>Phase 1 — Startup:</strong> A tiny team shares one codebase and one database. Everyone knows the whole system. Coordination is trivial — a quick chat replaces any meeting. Deployments are fast and fearless.'
+  },
+  {
+    name: "Growth",
+    engs: 12, meets: 8, coord: "Medium", coordClass: "warn",
+    risk: "Medium", riskClass: "warn",
+    links: 66, merges: "~15", cadence: "Weekly",
+    teams: [
+      { id:"fe", label:"Frontend",  x:15,  y:20,  w:235, h:180, color:"#4a9eff", borderAlpha:0.4, fillAlpha:0.06 },
+      { id:"be", label:"Backend",   x:265, y:20,  w:240, h:180, color:"#3ecf8e", borderAlpha:0.4, fillAlpha:0.06 },
+      { id:"db", label:"Data",      x:145, y:210, w:210, h:130, color:"#f5a623", borderAlpha:0.4, fillAlpha:0.06 }
+    ],
+    engineers: [
+      { id:"e1",  label:"Ali",  team:"fe", ox:0.15, oy:0.4,  color:"#4a9eff", bg:"rgba(74,158,255,0.2)",  init:"AL" },
+      { id:"e2",  label:"Ben",  team:"fe", ox:0.45, oy:0.6,  color:"#4a9eff", bg:"rgba(74,158,255,0.2)",  init:"BE" },
+      { id:"e3",  label:"Cam",  team:"fe", ox:0.75, oy:0.35, color:"#4a9eff", bg:"rgba(74,158,255,0.2)",  init:"CA" },
+      { id:"e4",  label:"Dan",  team:"fe", ox:0.85, oy:0.65, color:"#4a9eff", bg:"rgba(74,158,255,0.2)",  init:"DA" },
+      { id:"e5",  label:"Eve",  team:"be", ox:0.15, oy:0.4,  color:"#3ecf8e", bg:"rgba(62,207,142,0.2)",  init:"EV" },
+      { id:"e6",  label:"Fay",  team:"be", ox:0.45, oy:0.6,  color:"#3ecf8e", bg:"rgba(62,207,142,0.2)",  init:"FA" },
+      { id:"e7",  label:"Gil",  team:"be", ox:0.75, oy:0.35, color:"#3ecf8e", bg:"rgba(62,207,142,0.2)",  init:"GI" },
+      { id:"e8",  label:"Han",  team:"be", ox:0.85, oy:0.65, color:"#3ecf8e", bg:"rgba(62,207,142,0.2)",  init:"HA" },
+      { id:"e9",  label:"Ida",  team:"db", ox:0.15, oy:0.45, color:"#f5a623", bg:"rgba(245,166,35,0.2)",  init:"ID" },
+      { id:"e10", label:"Jay",  team:"db", ox:0.45, oy:0.55, color:"#f5a623", bg:"rgba(245,166,35,0.2)",  init:"JA" },
+      { id:"e11", label:"Kim",  team:"db", ox:0.70, oy:0.4,  color:"#f5a623", bg:"rgba(245,166,35,0.2)",  init:"KI" },
+      { id:"e12", label:"Leo",  team:"db", ox:0.87, oy:0.65, color:"#f5a623", bg:"rgba(245,166,35,0.2)",  init:"LE" }
+    ],
+    lines: [
+      { from:"fe", to:"be", color:"rgba(255,87,87,0.5)", label:"API contract" },
+      { from:"be", to:"db", color:"rgba(255,87,87,0.5)", label:"Schema deps" }
+    ],
+    meetings: [
+      { team:"fe", label:"Standup" },
+      { team:"be", label:"Standup" }
+    ],
+    problems: [
+      { team:"fe", ox:0.5, oy:-0.12, text:"Merge conflicts", color:"#f5a623", bg:"rgba(245,166,35,0.15)" }
+    ],
+    sharedWarning: true,
+    note: '<strong>Phase 2 — Growth:</strong> Three teams form around layers. <span class="tag tag-amber">API contracts</span> and <span class="tag tag-amber">schema changes</span> require cross-team alignment. Merge conflicts appear daily. Weekly all-hands start. <em>n(n−1)/2 = 66 communication channels between 12 engineers.</em>'
+  },
+  {
+    name: "Scaling",
+    engs: 30, meets: 22, coord: "High", coordClass: "bad",
+    risk: "High", riskClass: "bad",
+    links: 435, merges: "~80", cadence: "Bi-weekly",
+    teams: [
+      { id:"fe",     label:"Frontend",  x:8,   y:15,  w:175, h:120, color:"#4a9eff", borderAlpha:0.45, fillAlpha:0.06 },
+      { id:"api",    label:"API",       x:200, y:15,  w:175, h:120, color:"#3ecf8e", borderAlpha:0.45, fillAlpha:0.06 },
+      { id:"core",   label:"Core",      x:390, y:15,  w:175, h:120, color:"#a78bfa", borderAlpha:0.45, fillAlpha:0.06 },
+      { id:"data",   label:"Data",      x:8,   y:155, w:175, h:120, color:"#f5a623", borderAlpha:0.45, fillAlpha:0.06 },
+      { id:"infra",  label:"Infra",     x:200, y:155, w:175, h:120, color:"#22d3ee", borderAlpha:0.45, fillAlpha:0.06 },
+      { id:"mobile", label:"Mobile",    x:390, y:155, w:175, h:120, color:"#ff5757", borderAlpha:0.45, fillAlpha:0.06 }
+    ],
+    engineers: [
+      { id:"e1",  label:"Ali",  team:"fe",    ox:0.2,  oy:0.4,  color:"#4a9eff", bg:"rgba(74,158,255,0.2)",   init:"AL" },
+      { id:"e2",  label:"Ben",  team:"fe",    ox:0.55, oy:0.6,  color:"#4a9eff", bg:"rgba(74,158,255,0.2)",   init:"BE" },
+      { id:"e3",  label:"Cam",  team:"fe",    ox:0.8,  oy:0.35, color:"#4a9eff", bg:"rgba(74,158,255,0.2)",   init:"CA" },
+      { id:"e4",  label:"Dan",  team:"api",   ox:0.2,  oy:0.4,  color:"#3ecf8e", bg:"rgba(62,207,142,0.2)",   init:"DA" },
+      { id:"e5",  label:"Eve",  team:"api",   ox:0.55, oy:0.6,  color:"#3ecf8e", bg:"rgba(62,207,142,0.2)",   init:"EV" },
+      { id:"e6",  label:"Fay",  team:"api",   ox:0.8,  oy:0.38, color:"#3ecf8e", bg:"rgba(62,207,142,0.2)",   init:"FA" },
+      { id:"e7",  label:"Gil",  team:"core",  ox:0.2,  oy:0.42, color:"#a78bfa", bg:"rgba(167,139,250,0.2)",  init:"GI" },
+      { id:"e8",  label:"Han",  team:"core",  ox:0.55, oy:0.6,  color:"#a78bfa", bg:"rgba(167,139,250,0.2)",  init:"HA" },
+      { id:"e9",  label:"Ida",  team:"core",  ox:0.8,  oy:0.35, color:"#a78bfa", bg:"rgba(167,139,250,0.2)",  init:"ID" },
+      { id:"e10", label:"Jay",  team:"core",  ox:0.45, oy:0.75, color:"#a78bfa", bg:"rgba(167,139,250,0.2)",  init:"JA" },
+      { id:"e11", label:"Kim",  team:"data",  ox:0.2,  oy:0.42, color:"#f5a623", bg:"rgba(245,166,35,0.2)",   init:"KI" },
+      { id:"e12", label:"Leo",  team:"data",  ox:0.55, oy:0.6,  color:"#f5a623", bg:"rgba(245,166,35,0.2)",   init:"LE" },
+      { id:"e13", label:"Mia",  team:"data",  ox:0.82, oy:0.38, color:"#f5a623", bg:"rgba(245,166,35,0.2)",   init:"MI" },
+      { id:"e14", label:"Ned",  team:"data",  ox:0.45, oy:0.75, color:"#f5a623", bg:"rgba(245,166,35,0.2)",   init:"NE" },
+      { id:"e15", label:"Ola",  team:"infra", ox:0.2,  oy:0.42, color:"#22d3ee", bg:"rgba(34,211,238,0.2)",   init:"OL" },
+      { id:"e16", label:"Pat",  team:"infra", ox:0.55, oy:0.6,  color:"#22d3ee", bg:"rgba(34,211,238,0.2)",   init:"PA" },
+      { id:"e17", label:"Qin",  team:"infra", ox:0.82, oy:0.38, color:"#22d3ee", bg:"rgba(34,211,238,0.2)",   init:"QI" },
+      { id:"e18", label:"Raj",  team:"mobile",ox:0.2,  oy:0.42, color:"#ff5757", bg:"rgba(255,87,87,0.2)",    init:"RA" },
+      { id:"e19", label:"Sue",  team:"mobile",ox:0.55, oy:0.6,  color:"#ff5757", bg:"rgba(255,87,87,0.2)",    init:"SU" },
+      { id:"e20", label:"Tom",  team:"mobile",ox:0.82, oy:0.38, color:"#ff5757", bg:"rgba(255,87,87,0.2)",    init:"TO" }
+    ],
+    lines: [
+      { from:"fe",    to:"api",    color:"rgba(255,87,87,0.4)", label:"REST calls" },
+      { from:"api",   to:"core",   color:"rgba(255,87,87,0.4)", label:"Internal" },
+      { from:"core",  to:"data",   color:"rgba(255,87,87,0.4)", label:"DB writes" },
+      { from:"infra", to:"core",   color:"rgba(255,87,87,0.35)", label:"Deploys" },
+      { from:"mobile",to:"api",    color:"rgba(255,87,87,0.35)", label:"API calls" },
+      { from:"fe",    to:"mobile", color:"rgba(255,87,87,0.25)", label:"Design sync" }
+    ],
+    meetings: [
+      { team:"fe",    label:"Stand-up" },
+      { team:"api",   label:"Sync" },
+      { team:"core",  label:"Arch review" },
+      { team:"infra", label:"On-call" }
+    ],
+    problems: [
+      { team:"fe",    ox:0.5, oy:-0.15, text:"Slow builds",      color:"#ff5757", bg:"rgba(255,87,87,0.12)" },
+      { team:"core",  ox:0.5, oy:-0.15, text:"Shared DB lock",   color:"#ff5757", bg:"rgba(255,87,87,0.12)" },
+      { team:"infra", ox:0.5, oy:-0.15, text:"Deploy fear",      color:"#f5a623", bg:"rgba(245,166,35,0.12)"}
+    ],
+    sharedWarning: true,
+    note: '<strong>Phase 3 — Scaling:</strong> Six teams, 20+ engineers, <strong>435 communication channels</strong>. <span class="tag tag-red">Shared DB</span> becomes a bottleneck — one schema migration affects everyone. <span class="tag tag-red">Deploy fear</span> sets in: any change could break an unrelated module. Onboarding takes weeks just to understand the codebase structure.'
+  },
+  {
+    name: "Crisis",
+    engs: 60, meets: 50, coord: "Critical", coordClass: "critical",
+    risk: "Critical", riskClass: "critical",
+    links: 1770, merges: "~300+", cadence: "Monthly",
+    teams: [
+      { id:"fe",      label:"Frontend",  x:5,   y:10,  w:135, h:105, color:"#4a9eff", borderAlpha:0.5, fillAlpha:0.06 },
+      { id:"api",     label:"API GW",    x:150, y:10,  w:135, h:105, color:"#3ecf8e", borderAlpha:0.5, fillAlpha:0.06 },
+      { id:"core",    label:"Core",      x:295, y:10,  w:135, h:105, color:"#a78bfa", borderAlpha:0.5, fillAlpha:0.06 },
+      { id:"orders",  label:"Orders",    x:440, y:10,  w:130, h:105, color:"#ff5757", borderAlpha:0.5, fillAlpha:0.06 },
+      { id:"data",    label:"Data",      x:5,   y:128, w:135, h:105, color:"#f5a623", borderAlpha:0.5, fillAlpha:0.06 },
+      { id:"infra",   label:"Infra",     x:150, y:128, w:135, h:105, color:"#22d3ee", borderAlpha:0.5, fillAlpha:0.06 },
+      { id:"mobile",  label:"Mobile",    x:295, y:128, w:135, h:105, color:"#ff5757", borderAlpha:0.5, fillAlpha:0.06 },
+      { id:"qa",      label:"QA",        x:440, y:128, w:130, h:105, color:"#a78bfa", borderAlpha:0.5, fillAlpha:0.06 }
+    ],
+    engineers: [
+      { id:"e1",  label:"Ali", team:"fe",     ox:0.2, oy:0.4, color:"#4a9eff", bg:"rgba(74,158,255,0.2)",  init:"AL" },
+      { id:"e2",  label:"Ben", team:"fe",     ox:0.6, oy:0.65,color:"#4a9eff", bg:"rgba(74,158,255,0.2)",  init:"BE" },
+      { id:"e3",  label:"Dan", team:"api",    ox:0.2, oy:0.4, color:"#3ecf8e", bg:"rgba(62,207,142,0.2)",  init:"DA" },
+      { id:"e4",  label:"Eve", team:"api",    ox:0.6, oy:0.65,color:"#3ecf8e", bg:"rgba(62,207,142,0.2)",  init:"EV" },
+      { id:"e5",  label:"Gil", team:"core",   ox:0.2, oy:0.4, color:"#a78bfa", bg:"rgba(167,139,250,0.2)", init:"GI" },
+      { id:"e6",  label:"Han", team:"core",   ox:0.6, oy:0.65,color:"#a78bfa", bg:"rgba(167,139,250,0.2)", init:"HA" },
+      { id:"e7",  label:"Raj", team:"orders", ox:0.2, oy:0.4, color:"#ff5757", bg:"rgba(255,87,87,0.2)",   init:"RA" },
+      { id:"e8",  label:"Sue", team:"orders", ox:0.6, oy:0.65,color:"#ff5757", bg:"rgba(255,87,87,0.2)",   init:"SU" },
+      { id:"e9",  label:"Kim", team:"data",   ox:0.2, oy:0.4, color:"#f5a623", bg:"rgba(245,166,35,0.2)",  init:"KI" },
+      { id:"e10", label:"Leo", team:"data",   ox:0.6, oy:0.65,color:"#f5a623", bg:"rgba(245,166,35,0.2)",  init:"LE" },
+      { id:"e11", label:"Ola", team:"infra",  ox:0.2, oy:0.4, color:"#22d3ee", bg:"rgba(34,211,238,0.2)",  init:"OL" },
+      { id:"e12", label:"Pat", team:"infra",  ox:0.6, oy:0.65,color:"#22d3ee", bg:"rgba(34,211,238,0.2)",  init:"PA" },
+      { id:"e13", label:"Tom", team:"mobile", ox:0.2, oy:0.4, color:"#ff5757", bg:"rgba(255,87,87,0.2)",   init:"TO" },
+      { id:"e14", label:"Mia", team:"mobile", ox:0.6, oy:0.65,color:"#ff5757", bg:"rgba(255,87,87,0.2)",   init:"MI" },
+      { id:"e15", label:"Qin", team:"qa",     ox:0.2, oy:0.4, color:"#a78bfa", bg:"rgba(167,139,250,0.2)", init:"QI" },
+      { id:"e16", label:"Ned", team:"qa",     ox:0.6, oy:0.65,color:"#a78bfa", bg:"rgba(167,139,250,0.2)", init:"NE" }
+    ],
+    lines: [
+      { from:"fe",     to:"api",    color:"rgba(255,87,87,0.55)" },
+      { from:"api",    to:"core",   color:"rgba(255,87,87,0.55)" },
+      { from:"core",   to:"data",   color:"rgba(255,87,87,0.55)" },
+      { from:"orders", to:"core",   color:"rgba(255,87,87,0.45)" },
+      { from:"orders", to:"data",   color:"rgba(255,87,87,0.45)" },
+      { from:"mobile", to:"api",    color:"rgba(255,87,87,0.4)" },
+      { from:"infra",  to:"core",   color:"rgba(255,87,87,0.4)" },
+      { from:"infra",  to:"data",   color:"rgba(255,87,87,0.4)" },
+      { from:"qa",     to:"orders", color:"rgba(255,87,87,0.35)" },
+      { from:"qa",     to:"core",   color:"rgba(255,87,87,0.35)" },
+      { from:"fe",     to:"mobile", color:"rgba(255,87,87,0.3)" }
+    ],
+    meetings: [
+      { team:"fe",    label:"All-hands" },
+      { team:"core",  label:"Arch" },
+      { team:"qa",    label:"Release board" },
+      { team:"infra", label:"Incident" }
+    ],
+    problems: [
+      { team:"fe",     ox:0.5, oy:-0.18, text:"10min builds",   color:"#ff5757", bg:"rgba(255,87,87,0.15)" },
+      { team:"core",   ox:0.5, oy:-0.18, text:"Fear of change", color:"#ff5757", bg:"rgba(255,87,87,0.15)" },
+      { team:"data",   ox:0.5, oy:-0.18, text:"DB bottleneck",  color:"#ff5757", bg:"rgba(255,87,87,0.15)" },
+      { team:"qa",     ox:0.5, oy:-0.18, text:"3-wk freeze",    color:"#ff5757", bg:"rgba(255,87,87,0.15)" },
+      { team:"orders", ox:0.5, oy:-0.18, text:"Blocked by core",color:"#f5a623", bg:"rgba(245,166,35,0.15)"}
+    ],
+    sharedWarning: true,
+    note: '<strong>Phase 4 — Crisis:</strong> 60 engineers, <strong>1,770 communication channels</strong>. The monolith collapses under its own weight. <span class="tag tag-red">Monthly releases</span> with 3-week code freezes. New engineers take <strong>3+ months</strong> to onboard. A single bug fix risks a catastrophic production outage. The shared database is a <span class="tag tag-red">single point of failure</span> for all 8 teams. → Time to consider microservices.'
+  }
+];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let currentPhase = 0;
+const stage = document.getElementById('stage');
+const svg = document.getElementById('lines-svg');
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function buildDots() {
+  const d = document.getElementById('phase-dots');
+  d.innerHTML = PHASES.map((p, i) => `<div class="dot ${i===0?'active':''}" id="dot-${i}"></div>`).join('');
+}
+
+function getTeamCenter(teamId, teams) {
+  const t = teams.find(t => t.id === teamId);
+  if (!t) return { x: 300, y: 150 };
+  const sw = stage.offsetWidth || 750;
+  const frac = sw / 750;
+  return {
+    x: (t.x + t.w / 2) * frac,
+    y: (t.y + t.h / 2)
+  };
+}
+
+function getTeamBounds(teamId, teams) {
+  const t = teams.find(t => t.id === teamId);
+  if (!t) return null;
+  const sw = stage.offsetWidth || 750;
+  const frac = sw / 750;
+  return { x: t.x * frac, y: t.y, w: t.w * frac, h: t.h };
+}
+
+function renderPhase(idx) {
+  const ph = PHASES[idx];
+  const sw = stage.offsetWidth || 750;
+  const frac = sw / 750;
+  const stageH = stage.offsetHeight || 360;
+  const sharedH = 52;
+  const usableH = stageH - sharedH;
+
+  // Metrics
+  document.getElementById('m-eng').textContent = ph.engs;
+  document.getElementById('m-eng').className = 'metric-value ' + (ph.engs > 30 ? 'critical' : ph.engs > 10 ? 'bad' : 'ok');
+  document.getElementById('m-meet').textContent = ph.meets;
+  document.getElementById('m-meet').className = 'metric-value ' + (ph.meets > 30 ? 'critical' : ph.meets > 10 ? 'warn' : 'ok');
+  document.getElementById('m-coord').textContent = ph.coord;
+  document.getElementById('m-coord').className = 'metric-value ' + ph.coordClass;
+  document.getElementById('m-risk').textContent = ph.risk;
+  document.getElementById('m-risk').className = 'metric-value ' + ph.riskClass;
+
+  // Formula
+  document.getElementById('f-links').textContent = ph.links.toLocaleString();
+  document.getElementById('f-merges').textContent = ph.merges;
+  document.getElementById('f-cadence').textContent = ph.cadence;
+
+  // Phase name / dots
+  document.getElementById('phase-name').textContent = ph.name;
+  PHASES.forEach((_, i) => {
+    const d = document.getElementById('dot-' + i);
+    if (d) d.className = 'dot' + (i === idx ? ' active' : i < idx ? ' done' : '');
+  });
+
+  // Buttons
+  document.getElementById('btn-next').disabled = idx >= PHASES.length - 1;
+
+  // Shared warning
+  const sw2 = document.getElementById('shared-warning');
+  sw2.style.opacity = ph.sharedWarning ? '1' : '0';
+
+  // Clear stage (keep svg and shared-layer)
+  Array.from(stage.children).forEach(el => {
+    if (el.id !== 'lines-svg' && el.id !== 'shared-layer') el.remove();
+  });
+  svg.innerHTML = '';
+
+  // Draw team zones
+  ph.teams.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'zone';
+    const scaledX = t.x * frac;
+    const scaledW = t.w * frac;
+    el.style.cssText = `
+      left:${scaledX}px; top:${t.y}px;
+      width:${scaledW}px; height:${t.h}px;
+      border-color:${t.color};
+      border-opacity:${t.borderAlpha};
+      border: 0.5px dashed ${t.color};
+      background: ${t.color}${Math.round(t.fillAlpha*255).toString(16).padStart(2,'0')};
+    `;
+    const lbl = document.createElement('div');
+    lbl.className = 'zone-label';
+    lbl.style.color = t.color;
+    lbl.textContent = t.label;
+    el.appendChild(lbl);
+    stage.appendChild(el);
+  });
+
+  // Draw connection lines
+  ph.lines.forEach(line => {
+    const fc = getTeamCenter(line.from, ph.teams);
+    const tc = getTeamCenter(line.to, ph.teams);
+    const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    l.setAttribute('x1', fc.x); l.setAttribute('y1', fc.y);
+    l.setAttribute('x2', tc.x); l.setAttribute('y2', tc.y);
+    l.setAttribute('stroke', line.color || 'rgba(255,87,87,0.4)');
+    l.setAttribute('stroke-width', '1.5');
+    l.setAttribute('stroke-dasharray', '4 4');
+    svg.appendChild(l);
+
+    if (line.label) {
+      const mx = (fc.x + tc.x) / 2;
+      const my = (fc.y + tc.y) / 2;
+      const t2 = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t2.setAttribute('x', mx);
+      t2.setAttribute('y', my - 5);
+      t2.setAttribute('text-anchor', 'middle');
+      t2.setAttribute('font-size', '9');
+      t2.setAttribute('font-family', 'IBM Plex Mono, monospace');
+      t2.setAttribute('fill', 'rgba(255,87,87,0.7)');
+      t2.textContent = line.label;
+      svg.appendChild(t2);
+    }
+  });
+
+  // Draw engineers
+  ph.engineers.forEach(eng => {
+    const team = ph.teams.find(t => t.id === eng.team);
+    if (!team) return;
+    const tx = team.x * frac;
+    const tw = team.w * frac;
+    const th = team.h;
+    const ty = team.y;
+    const ex = tx + eng.ox * tw;
+    const ey = ty + eng.oy * th;
+
+    const el = document.createElement('div');
+    el.className = 'eng';
+    el.style.left = (ex - 15) + 'px';
+    el.style.top  = (ey - 18) + 'px';
+
+    const icon = document.createElement('div');
+    icon.className = 'eng-icon';
+    icon.style.background = eng.bg;
+    icon.style.borderColor = eng.color;
+    icon.style.color = eng.color;
+    icon.textContent = eng.init;
+
+    const name = document.createElement('div');
+    name.className = 'eng-name';
+    name.textContent = eng.label;
+
+    el.appendChild(icon);
+    el.appendChild(name);
+    stage.appendChild(el);
+  });
+
+  // Meeting rings
+  ph.meetings.forEach(m => {
+    const c = getTeamCenter(m.team, ph.teams);
+    const ring = document.createElement('div');
+    ring.className = 'meeting-ring';
+    const sz = 48;
+    ring.style.cssText = `
+      left:${c.x - sz/2}px; top:${c.y - sz/2}px;
+      width:${sz}px; height:${sz}px;
+      border-color:#f5a623;
+    `;
+    stage.appendChild(ring);
+
+    const badge = document.createElement('div');
+    badge.className = 'badge';
+    badge.style.cssText = `left:${c.x - 20}px; top:${c.y + 28}px; background:rgba(245,166,35,0.15); color:#f5a623; border:0.5px solid rgba(245,166,35,0.3);`;
+    badge.textContent = m.label;
+    stage.appendChild(badge);
+  });
+
+  // Problem badges
+  ph.problems.forEach(p => {
+    const team = ph.teams.find(t => t.id === p.team);
+    if (!team) return;
+    const tx = team.x * frac;
+    const tw = team.w * frac;
+    const px = tx + p.ox * tw;
+    const py = team.y + p.oy * team.h;
+    const badge = document.createElement('div');
+    badge.className = 'badge';
+    badge.style.cssText = `left:${px - 36}px; top:${Math.max(4, py)}px; background:${p.bg}; color:${p.color}; border:0.5px solid ${p.color}40;`;
+    badge.textContent = p.text;
+    stage.appendChild(badge);
+  });
+
+  // Annotation
+  document.getElementById('annotation').innerHTML = ph.note;
+}
+
+function nextPhase() {
+  if (currentPhase < PHASES.length - 1) {
+    currentPhase++;
+    renderPhase(currentPhase);
+  }
+}
+
+function resetSim() {
+  currentPhase = 0;
+  renderPhase(0);
+}
+
+// Init
+buildDots();
+renderPhase(0);
+window.addEventListener('resize', () => renderPhase(currentPhase));
+</script>
+</body>
+</html>
